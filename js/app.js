@@ -208,17 +208,31 @@ function recHtml(r) {
 function viewRecs() {
   const recs = generateRecs();
   const valueRecs = recs.filter(r => r.edge !== undefined && r.edge > 0);
+  // הרשימה הראשית: קצרה ומגוונת — מקסימום המלצה אחת לכל בית/קטגוריה, עד 8
+  const top = [], seen = new Set();
+  for (const r of recs) {
+    if (valueRecs.includes(r)) continue;
+    if (seen.has(r.group)) continue;
+    seen.add(r.group);
+    top.push(r);
+    if (top.length === 8) break;
+  }
+  const rest = recs.filter(r => !valueRecs.includes(r) && !top.includes(r));
   return `
   <div class="card">
-    <h3>🎯 איך לקרוא את ההמלצות</h3>
+    <h3>🎯 ההמלצות המובילות עכשיו</h3>
     <p class="note">
-      לכל המלצה: <b>הסתברות המודל</b>, <b>יחס הוגן</b> (1/p) ו<b>"כדאי מ-"</b> — היחס המינימלי בווינר שממנו ההימור בעל ערך (כולל מרווח ביטחון 7%).
-      הזינו את היחס בפועל מאתר הווינר — והמערכת תחשב Edge ותסמן <span class="pill value-flag">VALUE</span>.
-      <b>כלל הברזל:</b> מהמרים רק כשהיחס בווינר ≥ "כדאי מ-". סינגלים, לא צירופים.
+      8 ההמלצות החזקות לפי המודל — אחת לכל בית, מגוונות ובטווח יחסים שימושי.
+      ליד כל אחת: <b>"כדאי מ-"</b> = היחס המינימלי בווינר שממנו יש ערך. בדקו בווינר — אם היחס גבוה מזה, יש הימור. אם נמוך — מוותרים.
+      הזנת היחס בשדה תחשב Edge מדויק ותסמן <span class="pill value-flag">VALUE</span>.
     </p>
   </div>
-  ${valueRecs.length ? `<div class="card"><h3>💎 הימורי ערך מאומתים (לפי היחסים שהזנת)</h3>${valueRecs.map(recHtml).join("")}</div><h3 style="margin:14px 0">שאר ההמלצות</h3>` : ""}
-  ${recs.filter(r => !valueRecs.includes(r)).map(recHtml).join("")}`;
+  ${valueRecs.length ? `<div class="card"><h3>💎 הימורי ערך מאומתים (לפי היחסים שהזנת)</h3>${valueRecs.map(recHtml).join("")}</div>` : ""}
+  ${top.map(recHtml).join("")}
+  <details style="margin-top:16px">
+    <summary style="cursor:pointer;color:var(--gold);font-weight:700;padding:10px">📋 עוד ${rest.length} המלצות (לפי בתים, שערים, העפלות...)</summary>
+    ${rest.map(recHtml).join("")}
+  </details>`;
 }
 
 /* ============================================================
@@ -419,7 +433,8 @@ function matchDetail(a, b, ko = false) {
     </div>
     <h3 style="margin:16px 0 8px">🔥 3 ההמלצות החזקות למשחק</h3>
     ${matchTopPicks(a, b, ko).map(pickCard).join("")}
-    <h3 style="margin:18px 0 8px">כל השווקים</h3>
+    <details style="margin-top:18px">
+    <summary style="cursor:pointer;color:var(--gold);font-weight:700;padding:6px 0">📊 למתקדמים: כל השווקים והמספרים המלאים</summary>
     <table class="market-table">
       <tr><th>שוק</th><th>P מודל</th><th>יחס הוגן</th><th>כדאי מ-</th><th>יחס ווינר</th><th>Edge</th></tr>
       ${rows.map(([lbl, p, key]) => `<tr>
@@ -442,6 +457,7 @@ function matchDetail(a, b, ko = false) {
       </table>
       <p class="note">שווקי המחציות מחושבים בהנחת חלוקת 45%/55% של תוחלת השערים בין המחציות (ממוצע היסטורי).
       ⚠️ ביחסים גבוהים (תוצאה מדויקת, מחצית/סיום) עמלת הווינר גבוהה במיוחד — דרשו פער גדול מ"כדאי מ-".</p>
+    </details>
     </details>
     <p class="note">🎯 תוצאות סבירות: ${m.topScores.map(s => `<b>${s.h}–${s.a}</b> (${pct1(s.p)})`).join(" · ")}</p>
   </div>`;
