@@ -2,11 +2,24 @@
    FifaWinner — ממשק משתמש
    ============================================================ */
 
+/* אחסון עמיד: בסביבות sandbox (תצוגה מקדימה בנייד, iframe) localStorage חסום
+   וזריקת SecurityError הפילה את כל האפליקציה — נופלים לאחסון בזיכרון */
+const STORE = (() => {
+  try {
+    localStorage.setItem("__fw_t", "1");
+    localStorage.removeItem("__fw_t");
+    return localStorage;
+  } catch (e) {
+    const mem = {};
+    return { getItem: (k) => (k in mem ? mem[k] : null), setItem: (k, v) => { mem[k] = String(v); } };
+  }
+})();
+
 let SIM = null;   // תוצאות סימולציית בתים
 let KO = null;    // תוצאות סימולציית אלוף
-let ODDS = JSON.parse(localStorage.getItem("fw_odds") || "{}");
+let ODDS = JSON.parse(STORE.getItem("fw_odds") || "{}");
 // סוגריים הנוק-אאוט — ממולאים בממשק בסוף שלב הבתים (27.6)
-let BRACKET = JSON.parse(localStorage.getItem("fw_bracket") || "null")
+let BRACKET = JSON.parse(STORE.getItem("fw_bracket") || "null")
   || { r32: Array.from({ length: 16 }, () => [null, null]), winners: {} };
 let selKoMatch = null;
 let activeTab = "recs";
@@ -21,8 +34,8 @@ const T = (id) => DATA.teams[id];
 const tn = (id) => `${T(id).flag} ${T(id).nameHe}`;
 const stars = (n) => "★".repeat(n) + "☆".repeat(5 - n);
 
-function saveOdds() { localStorage.setItem("fw_odds", JSON.stringify(ODDS)); }
-function saveBracket() { localStorage.setItem("fw_bracket", JSON.stringify(BRACKET)); }
+function saveOdds() { STORE.setItem("fw_odds", JSON.stringify(ODDS)); }
+function saveBracket() { STORE.setItem("fw_bracket", JSON.stringify(BRACKET)); }
 
 function playedSet() {
   const s = new Set();
@@ -38,6 +51,14 @@ function resultOf(a, b) {
 }
 
 /* ---------- אתחול ---------- */
+// כל שגיאה — על המסך במקום תקיעה שקטה על מסך הטעינה
+window.addEventListener("error", (e) => {
+  const el = document.querySelector("#content");
+  if (el && !SIM) el.innerHTML =
+    `<div class="card"><h3>😕 שגיאה בטעינה</h3><p class="note">${e.message || e.type}</p>
+     <p class="note">נסו לפתוח את הקובץ בדפדפן מלא (Safari/Chrome) דרך כפתור השיתוף.</p></div>`;
+});
+
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".tab-btn").forEach(btn =>
     btn.addEventListener("click", () => {

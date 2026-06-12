@@ -3,7 +3,8 @@ global.DATA = require("../js/data.js");
 global.MODEL = require("../js/model.js");
 
 // סטאבים מינימליים של דפדפן
-global.localStorage = { getItem: () => null, setItem: () => {} };
+global.localStorage = { getItem: () => null, setItem: () => {}, removeItem: () => {} };
+global.window = { addEventListener: () => {} };
 global.document = {
   addEventListener: () => {},
   querySelector: () => null,
