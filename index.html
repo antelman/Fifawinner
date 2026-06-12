@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FifaWinner — המלצות ווינר למונדיאל 2026</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>⚽ Fifa<span class="gold">Winner</span> — מונדיאל 2026</h1>
+    <div class="sub">ניתוח סטטיסטי והמלצות ערך לווינר ליין · 48 נבחרות · 12 בתים · מודל Elo + פואסון + מונטה-קרלו</div>
+    <div class="disclaimer">
+      ⚠️ הכלי לסיוע אנליטי בלבד — אינו ייעוץ ואינו מבטיח רווח. הימורים כרוכים בסיכון. גילאי 18+. שחקו באחריות.
+      קו תמיכה לנפגעי הימורים: <b dir="ltr">*5777</b>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="recs">🎯 המלצות</button>
+    <button class="tab-btn" data-tab="matches">⚔️ משחקים</button>
+    <button class="tab-btn" data-tab="groups">📊 בתים</button>
+    <button class="tab-btn" data-tab="futures">🏆 עתידיים</button>
+    <button class="tab-btn" data-tab="guide">📖 מדריך ווינר</button>
+  </nav>
+
+  <main id="content">
+    <div class="loading"><div class="spinner"></div><br>מריץ 20,000 סימולציות מונטה-קרלו...</div>
+  </main>
+
+  <footer>
+    FifaWinner · הנתונים נכונים ל-12.6.2026 · דירוגי הכוח הם הערכות מודל ·
+    תוצאות שהסתיימו מקובעות בסימולציה (עדכון ב-<code>js/data.js</code>)<br>
+    מקורות: FIFA, eloratings.net (השראה), winner.co.il, מחקר שוק עולמי — ראו README
+  </footer>
+</div>
+
+<div id="modal-root"></div>
+<script src="js/data.js"></script>
+<script src="js/model.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

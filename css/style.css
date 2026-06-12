@@ -1,0 +1,143 @@
+/* FifaWinner — עיצוב כהה, עברית RTL */
+:root {
+  --bg: #0d1117;
+  --bg2: #161b22;
+  --bg3: #1f2630;
+  --border: #2d333b;
+  --text: #e6edf3;
+  --muted: #9aa7b3;
+  --gold: #f0b429;
+  --green: #3fb950;
+  --red: #f85149;
+  --blue: #58a6ff;
+  --radius: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: "Segoe UI", "Heebo", Arial, sans-serif;
+  direction: rtl; min-height: 100vh;
+}
+.container { max-width: 1100px; margin: 0 auto; padding: 16px; }
+
+header { text-align: center; padding: 24px 12px 8px; }
+header h1 { font-size: 1.9rem; }
+header h1 .gold { color: var(--gold); }
+header .sub { color: var(--muted); margin-top: 6px; font-size: .95rem; }
+.disclaimer {
+  background: #2d1a0e; border: 1px solid #7a4a1d; color: #f3c995;
+  border-radius: var(--radius); padding: 10px 14px; margin: 14px auto;
+  font-size: .85rem; max-width: 860px;
+}
+
+nav.tabs {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+  margin: 18px 0; position: sticky; top: 0; background: var(--bg);
+  padding: 10px 0; z-index: 50;
+}
+.tab-btn {
+  background: var(--bg2); color: var(--text); border: 1px solid var(--border);
+  padding: 9px 18px; border-radius: 999px; cursor: pointer; font-size: 1rem;
+  transition: all .15s;
+}
+.tab-btn:hover { border-color: var(--gold); }
+.tab-btn.active { background: var(--gold); color: #1a1a1a; font-weight: 700; border-color: var(--gold); }
+
+.loading { text-align: center; padding: 60px 0; color: var(--muted); font-size: 1.1rem; }
+.spinner {
+  display: inline-block; width: 42px; height: 42px; margin-bottom: 14px;
+  border: 4px solid var(--border); border-top-color: var(--gold);
+  border-radius: 50%; animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; margin-bottom: 14px;
+}
+.card h3 { margin-bottom: 10px; }
+.grid { display: grid; gap: 14px; }
+.grid.cols2 { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
+
+/* בתים */
+.group-card table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+.group-card th, .group-card td { padding: 6px 4px; text-align: center; border-bottom: 1px solid var(--border); }
+.group-card td.team { text-align: right; cursor: pointer; white-space: nowrap; }
+.group-card td.team:hover { color: var(--gold); }
+.bar { background: var(--bg3); border-radius: 4px; height: 8px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--green); }
+
+/* משחקים */
+.fixture-list { display: grid; gap: 8px; }
+.fixture {
+  display: flex; justify-content: space-between; align-items: center;
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 14px; cursor: pointer; transition: border-color .15s;
+}
+.fixture:hover { border-color: var(--gold); }
+.fixture .vs { color: var(--muted); font-size: .85rem; }
+.fixture .played { color: var(--gold); font-weight: 700; }
+.select-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+select, input[type=number] {
+  background: var(--bg3); color: var(--text); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 10px; font-size: 1rem;
+}
+input[type=number] { width: 84px; text-align: center; }
+
+.market-table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+.market-table th, .market-table td { padding: 8px 6px; text-align: center; border-bottom: 1px solid var(--border); }
+.market-table th { color: var(--muted); font-weight: 600; font-size: .85rem; }
+.market-table td.lbl { text-align: right; }
+.edge-pos { color: var(--green); font-weight: 700; }
+.edge-neg { color: var(--red); }
+.fair { color: var(--blue); }
+
+/* המלצות */
+.rec {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center;
+  background: var(--bg2); border: 1px solid var(--border); border-right: 4px solid var(--gold);
+  border-radius: var(--radius); padding: 14px; margin-bottom: 10px;
+}
+.rec .badge {
+  background: var(--bg3); border-radius: 8px; padding: 8px 12px;
+  font-size: .8rem; color: var(--muted); text-align: center; min-width: 86px;
+}
+.rec .badge b { display: block; color: var(--gold); font-size: 1.15rem; }
+.rec .what b { font-size: 1.05rem; }
+.rec .what .why { color: var(--muted); font-size: .85rem; margin-top: 4px; }
+.rec .nums { text-align: left; font-size: .85rem; color: var(--muted); white-space: nowrap; }
+.rec .nums b { color: var(--text); }
+.stars { color: var(--gold); letter-spacing: 2px; }
+
+.pill { display: inline-block; background: var(--bg3); border-radius: 999px; padding: 2px 10px; font-size: .78rem; color: var(--muted); margin-inline-start: 6px; }
+.value-flag { background: #11331a; color: var(--green); border: 1px solid var(--green); }
+
+/* מודאל נבחרת */
+.modal-bg {
+  position: fixed; inset: 0; background: rgba(0,0,0,.65);
+  display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px;
+}
+.modal {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+  max-width: 640px; width: 100%; max-height: 86vh; overflow-y: auto; padding: 22px;
+}
+.modal h2 { margin-bottom: 4px; }
+.modal .close { float: left; background: none; border: none; color: var(--muted); font-size: 1.5rem; cursor: pointer; }
+.modal dl dt { color: var(--gold); font-weight: 700; margin-top: 12px; font-size: .9rem; }
+.modal dl dd { margin: 4px 0 0; color: var(--text); line-height: 1.5; }
+
+.note { color: var(--muted); font-size: .85rem; margin: 10px 0; line-height: 1.5; }
+.guide h3 { color: var(--gold); margin: 18px 0 8px; }
+.guide p, .guide li { line-height: 1.7; }
+.guide ul, .guide ol { padding-right: 22px; margin: 8px 0; }
+.guide table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: .9rem; }
+.guide th, .guide td { border: 1px solid var(--border); padding: 7px 10px; text-align: right; }
+.guide th { background: var(--bg3); }
+
+footer { text-align: center; color: var(--muted); font-size: .8rem; padding: 28px 0 18px; line-height: 1.7; }
+
+@media (max-width: 600px) {
+  .rec { grid-template-columns: 1fr; }
+  .rec .nums { text-align: right; }
+  header h1 { font-size: 1.4rem; }
+}
