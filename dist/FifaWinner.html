@@ -1919,7 +1919,9 @@ function viewGuide() {
 /* הדבקה מהירה: חילוץ יחסים מטקסט חופשי שהועתק מאתר/אפליקציית ווינר.
    מזהה מספרים עשרוניים בטווח יחסים סביר (1.01–67) ומתעלם משעות/תאריכים/תוצאות */
 function parsePastedOdds(text) {
-  const matches = (text.match(/\d+[.,]\d{1,2}/g) || [])
+  // ניקוי מספרי קו השערים ("מעל 2.5") — הם תיאור השוק, לא יחס
+  const clean = text.replace(/(מעל|מתחת|over|under|קו|line)\s*[0-6][.,]5/gi, "$1");
+  const matches = (clean.match(/\d+[.,]\d{1,2}/g) || [])
     .map(s => parseFloat(s.replace(",", ".")))
     .filter(v => v >= 1.01 && v <= 67);
   return matches;
