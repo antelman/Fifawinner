@@ -27,6 +27,18 @@ check("1X2 מסתכם ל-1", Math.abs(m.p1 + m.px + m.p2 - 1) < 1e-9);
 check("Over/Under 2.5 מסתכם ל-1", Math.abs(m.over25 + m.under25 - 1) < 1e-9);
 console.log(`   ספרד-אורוגוואי: 1=${(m.p1 * 100).toFixed(1)}% X=${(m.px * 100).toFixed(1)}% 2=${(m.p2 * 100).toFixed(1)}%`);
 
+// 2ב. שווקים מורחבים
+const ex = MODEL.extendedMarkets(DATA.teams.ESP, DATA.teams.URU);
+check("יתרון 0:1 מסתכם ל-1", Math.abs(ex.hcapA_minus1.p1 + ex.hcapA_minus1.px + ex.hcapA_minus1.p2 - 1) < 1e-9);
+check("טווחי שערים מסתכמים ל-1", Math.abs(ex.range01 + ex.range23 + ex.range4plus - 1) < 1e-9);
+check("זוגי/אי-זוגי מסתכם ל-1", Math.abs(ex.odd + ex.even - 1) < 1e-9);
+check("מבקיעה ראשונה מסתכם ל-1", Math.abs(ex.firstGoalA + ex.firstGoalB + ex.firstGoalNone - 1) < 1e-9);
+const htftSum = Object.values(ex.htft).reduce((s, p) => s + p, 0);
+check("מחצית/סיום (9 צירופים) ~1", Math.abs(htftSum - 1) < 0.01, htftSum.toFixed(4));
+check("מחצית ראשונה 1X2 ~1", Math.abs(ex.ht1 + ex.htx + ex.ht2 - 1) < 0.01);
+check("יתרון 0:1 מקטין את סיכויי הפייבוריט", ex.hcapA_minus1.p1 < m.p1);
+check("תיקו במחצית שכיח מתיקו במשחק", ex.htx > m.px);
+
 // 3. כיול: פער 300 Elo → פייבוריט ~70-78%
 const big = MODEL.markets(DATA.teams.BRA, DATA.teams.SCO); // ~290 פער
 check("פייבוריט בפער ~300 בטווח 65-80%", big.p1 > 0.65 && big.p1 < 0.80, (big.p1 * 100).toFixed(1) + "%");

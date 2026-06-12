@@ -284,6 +284,35 @@ function matchDetail(a, b, ko = false) {
     [`🥊 ${T(a).nameHe} מעפילה (כולל הארכה/פנדלים)`, advA, k("ADV1")],
     [`🥊 ${T(b).nameHe} מעפילה (כולל הארכה/פנדלים)`, 1 - advA, k("ADV2")]
   );
+
+  // שווקים מורחבים של ווינר
+  const ex = MODEL.extendedMarkets(T(a), T(b));
+  const htftOrder = Object.entries(ex.htft).sort((x, y) => y[1] - x[1]).slice(0, 5);
+  const exRows = [
+    [`יתרון 0:1 — ${T(a).nameHe} (1)`, ex.hcapA_minus1.p1, k("H-1:1")],
+    [`יתרון 0:1 — תיקו (X)`, ex.hcapA_minus1.px, k("H-1:X")],
+    [`יתרון 0:1 — ${T(b).nameHe} (2)`, ex.hcapA_minus1.p2, k("H-1:2")],
+    [`יתרון 1:0 — ${T(a).nameHe} (1)`, ex.hcapA_plus1.p1, k("H+1:1")],
+    [`יתרון 1:0 — תיקו (X)`, ex.hcapA_plus1.px, k("H+1:X")],
+    [`יתרון 1:0 — ${T(b).nameHe} (2)`, ex.hcapA_plus1.p2, k("H+1:2")],
+    ["סה\"כ שערים: 0–1", ex.range01, k("R01")],
+    ["סה\"כ שערים: 2–3", ex.range23, k("R23")],
+    ["סה\"כ שערים: 4+", ex.range4plus, k("R4P")],
+    ["מספר שערים אי-זוגי", ex.odd, k("ODD")],
+    ["מספר שערים זוגי", ex.even, k("EVEN")],
+    [`${T(a).nameHe} מנצחת ביותר משער`, ex.winBy2A, k("WB2A")],
+    [`${T(b).nameHe} מנצחת ביותר משער`, ex.winBy2B, k("WB2B")],
+    [`מבקיעה ראשונה: ${T(a).nameHe}`, ex.firstGoalA, k("FG1")],
+    [`מבקיעה ראשונה: ${T(b).nameHe}`, ex.firstGoalB, k("FG2")],
+    ["ללא שערים במשחק", ex.firstGoalNone, k("FG0")],
+    [`מחצית ראשונה: ${T(a).nameHe} (1)`, ex.ht1, k("HT1")],
+    ["מחצית ראשונה: תיקו (X)", ex.htx, k("HTX")],
+    [`מחצית ראשונה: ${T(b).nameHe} (2)`, ex.ht2, k("HT2")],
+    ...htftOrder.map(([combo, p]) => [`מחצית/סיום ${combo}`, p, k("HTFT" + combo)]),
+    ["שער בשתי המחציות", ex.goalBothHalves, k("GBH")],
+    // תוצאות מדויקות — 5 הסבירות כשוק
+    ...m.topScores.map(s => [`תוצאה מדויקת ${s.h}–${s.a}`, s.p, k(`CS${s.h}${s.a}`)])
+  ];
   return `<div class="card" style="margin-top:16px">
     <h3>${tn(a)} נגד ${tn(b)} ${res ? `<span class="pill">הסתיים ${res} — לעיון בלבד</span>` : ""}
         ${ko ? `<span class="pill">נוק-אאוט: 1X2 = 90 דקות בלבד!</span>` : ""}</h3>
@@ -298,6 +327,20 @@ function matchDetail(a, b, ko = false) {
         ${oddsInputCell(key)}${edgeCell(p, key)}
       </tr>`).join("")}
     </table>
+    <details style="margin-top:14px">
+      <summary style="cursor:pointer;color:var(--gold);font-weight:700">➕ שווקים מורחבים (יתרון, מחציות, מבקיעה ראשונה, תוצאה מדויקת...)</summary>
+      <table class="market-table" style="margin-top:10px">
+        <tr><th>שוק</th><th>P מודל</th><th>יחס הוגן</th><th>כדאי מ-</th><th>יחס ווינר</th><th>Edge</th></tr>
+        ${exRows.map(([lbl, p, key]) => `<tr>
+          <td class="lbl">${lbl}</td><td>${pct1(p)}</td>
+          <td class="fair">${odds(MODEL.fairOdds(p))}</td>
+          <td>${odds(MODEL.minWorthOdds(p))}</td>
+          ${oddsInputCell(key)}${edgeCell(p, key)}
+        </tr>`).join("")}
+      </table>
+      <p class="note">שווקי המחציות מחושבים בהנחת חלוקת 45%/55% של תוחלת השערים בין המחציות (ממוצע היסטורי).
+      ⚠️ ביחסים גבוהים (תוצאה מדויקת, מחצית/סיום) עמלת הווינר גבוהה במיוחד — דרשו פער גדול מ"כדאי מ-".</p>
+    </details>
     <p class="note">🎯 תוצאות סבירות: ${m.topScores.map(s => `<b>${s.h}–${s.a}</b> (${pct1(s.p)})`).join(" · ")}</p>
   </div>`;
 }

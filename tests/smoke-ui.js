@@ -39,6 +39,8 @@ selFixture = ["ESP", "URU"];
 selGroup = "H";
 const htmlMatches = viewMatches();
 check("טאב משחקים + פירוט משחק", htmlMatches.includes("מעל 2.5") && htmlMatches.includes("תוצאות סבירות"));
+check("שווקים מורחבים בפירוט משחק", htmlMatches.includes("שווקים מורחבים") && htmlMatches.includes("יתרון 0:1")
+  && htmlMatches.includes("מחצית/סיום") && htmlMatches.includes("מבקיעה ראשונה") && htmlMatches.includes("תוצאה מדויקת"));
 const htmlFut = viewFutures();
 check("טאב עתידיים מרונדר", htmlFut.includes("זוכת המונדיאל"));
 const htmlGuide = viewGuide();

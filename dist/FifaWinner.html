@@ -886,6 +886,81 @@ const MODEL = (() => {
   // Edge מול יחס ווינר אמיתי: חיובי = הימור ערך
   const edge = (p, odds) => p * odds - 1;
 
+  /* ============================================================
+     שווקים מורחבים (ווינר): יתרון, טווחי שערים, מחציות, מבקיעה ראשונה
+     ============================================================ */
+
+  // מטריצת פואסון גנרית (ללא תיקון DC — משמשת למחציות)
+  function rawMatrix(lA, lB, max) {
+    const pA = poissonPmf(lA, max), pB = poissonPmf(lB, max);
+    const m = [];
+    for (let i = 0; i <= max; i++) { m[i] = []; for (let j = 0; j <= max; j++) m[i][j] = pA[i] * pB[j]; }
+    return m;
+  }
+
+  // חלוקת שערים בין מחציות: ~45% במחצית הראשונה (ממוצע היסטורי)
+  const H1_SHARE = 0.45;
+
+  function extendedMarkets(teamA, teamB) {
+    const m = scoreMatrix(teamA, teamB);
+    const [lA, lB] = lambdas(teamA, teamB);
+
+    // יתרון תלת-דרכי: התוצאה אחרי הוספת hcp לשערי הקבוצה הראשונה
+    function handicap(hcp) {
+      let p1 = 0, px = 0, p2 = 0;
+      for (let i = 0; i <= MAX_GOALS; i++)
+        for (let j = 0; j <= MAX_GOALS; j++) {
+          const d = i + hcp - j;
+          if (d > 0) p1 += m[i][j]; else if (d === 0) px += m[i][j]; else p2 += m[i][j];
+        }
+      return { p1, px, p2 };
+    }
+
+    // טווחי שערים, זוגי/אי-זוגי, מרווחי ניצחון
+    let r01 = 0, r23 = 0, r4p = 0, odd = 0, winBy2A = 0, winBy2B = 0;
+    for (let i = 0; i <= MAX_GOALS; i++)
+      for (let j = 0; j <= MAX_GOALS; j++) {
+        const p = m[i][j], tot = i + j;
+        if (tot <= 1) r01 += p; else if (tot <= 3) r23 += p; else r4p += p;
+        if (tot % 2 === 1) odd += p;
+        if (i - j >= 2) winBy2A += p;
+        if (j - i >= 2) winBy2B += p;
+      }
+
+    // מבקיעה ראשונה: מרוץ שני תהליכי פואסון
+    const lT = lA + lB, pNoGoal = Math.exp(-lT);
+    const firstA = (lA / lT) * (1 - pNoGoal), firstB = (lB / lT) * (1 - pNoGoal);
+
+    // מחציות: שתי מטריצות בלתי-תלויות (45%/55% מהתוחלת)
+    const HMAX = 6;
+    const m1 = rawMatrix(lA * H1_SHARE, lB * H1_SHARE, HMAX);
+    const m2 = rawMatrix(lA * (1 - H1_SHARE), lB * (1 - H1_SHARE), HMAX);
+    let ht1 = 0, htx = 0, ht2 = 0;
+    const htft = { "1/1": 0, "1/X": 0, "1/2": 0, "X/1": 0, "X/X": 0, "X/2": 0, "2/1": 0, "2/X": 0, "2/2": 0 };
+    for (let i1 = 0; i1 <= HMAX; i1++) for (let j1 = 0; j1 <= HMAX; j1++) {
+      const p1h = m1[i1][j1];
+      const htRes = i1 > j1 ? "1" : i1 < j1 ? "2" : "X";
+      if (htRes === "1") ht1 += p1h; else if (htRes === "2") ht2 += p1h; else htx += p1h;
+      for (let i2 = 0; i2 <= HMAX; i2++) for (let j2 = 0; j2 <= HMAX; j2++) {
+        const ftI = i1 + i2, ftJ = j1 + j2;
+        const ftRes = ftI > ftJ ? "1" : ftI < ftJ ? "2" : "X";
+        htft[htRes + "/" + ftRes] += p1h * m2[i2][j2];
+      }
+    }
+    // שער בשתי המחציות
+    const goalBothHalves = (1 - Math.exp(-lT * H1_SHARE)) * (1 - Math.exp(-lT * (1 - H1_SHARE)));
+
+    return {
+      hcapA_minus1: handicap(-1),  // הקבוצה הראשונה פותחת ב-0:1
+      hcapA_plus1: handicap(1),    // הקבוצה הראשונה פותחת ב-1:0
+      range01: r01, range23: r23, range4plus: r4p,
+      odd, even: 1 - odd,
+      winBy2A, winBy2B,
+      firstGoalA: firstA, firstGoalB: firstB, firstGoalNone: pNoGoal,
+      ht1, htx, ht2, htft, goalBothHalves
+    };
+  }
+
   /* ---------- דגימת תוצאה בודדת ממטריצה (למונטה-קרלו) ---------- */
   function sampleScore(matrix, rnd) {
     let r = rnd(), acc = 0;
@@ -1129,7 +1204,7 @@ const MODEL = (() => {
   }
 
   return {
-    lambdas, scoreMatrix, markets, fairOdds, minWorthOdds, edge,
+    lambdas, scoreMatrix, markets, extendedMarkets, fairOdds, minWorthOdds, edge,
     simulateGroups, simulateChampion, groupFixtures, confidence, effElo,
     koAdvanceProb, koPropagate, koWinProb,
     EDGE_MARGIN
@@ -1425,6 +1500,35 @@ function matchDetail(a, b, ko = false) {
     [`🥊 ${T(a).nameHe} מעפילה (כולל הארכה/פנדלים)`, advA, k("ADV1")],
     [`🥊 ${T(b).nameHe} מעפילה (כולל הארכה/פנדלים)`, 1 - advA, k("ADV2")]
   );
+
+  // שווקים מורחבים של ווינר
+  const ex = MODEL.extendedMarkets(T(a), T(b));
+  const htftOrder = Object.entries(ex.htft).sort((x, y) => y[1] - x[1]).slice(0, 5);
+  const exRows = [
+    [`יתרון 0:1 — ${T(a).nameHe} (1)`, ex.hcapA_minus1.p1, k("H-1:1")],
+    [`יתרון 0:1 — תיקו (X)`, ex.hcapA_minus1.px, k("H-1:X")],
+    [`יתרון 0:1 — ${T(b).nameHe} (2)`, ex.hcapA_minus1.p2, k("H-1:2")],
+    [`יתרון 1:0 — ${T(a).nameHe} (1)`, ex.hcapA_plus1.p1, k("H+1:1")],
+    [`יתרון 1:0 — תיקו (X)`, ex.hcapA_plus1.px, k("H+1:X")],
+    [`יתרון 1:0 — ${T(b).nameHe} (2)`, ex.hcapA_plus1.p2, k("H+1:2")],
+    ["סה\"כ שערים: 0–1", ex.range01, k("R01")],
+    ["סה\"כ שערים: 2–3", ex.range23, k("R23")],
+    ["סה\"כ שערים: 4+", ex.range4plus, k("R4P")],
+    ["מספר שערים אי-זוגי", ex.odd, k("ODD")],
+    ["מספר שערים זוגי", ex.even, k("EVEN")],
+    [`${T(a).nameHe} מנצחת ביותר משער`, ex.winBy2A, k("WB2A")],
+    [`${T(b).nameHe} מנצחת ביותר משער`, ex.winBy2B, k("WB2B")],
+    [`מבקיעה ראשונה: ${T(a).nameHe}`, ex.firstGoalA, k("FG1")],
+    [`מבקיעה ראשונה: ${T(b).nameHe}`, ex.firstGoalB, k("FG2")],
+    ["ללא שערים במשחק", ex.firstGoalNone, k("FG0")],
+    [`מחצית ראשונה: ${T(a).nameHe} (1)`, ex.ht1, k("HT1")],
+    ["מחצית ראשונה: תיקו (X)", ex.htx, k("HTX")],
+    [`מחצית ראשונה: ${T(b).nameHe} (2)`, ex.ht2, k("HT2")],
+    ...htftOrder.map(([combo, p]) => [`מחצית/סיום ${combo}`, p, k("HTFT" + combo)]),
+    ["שער בשתי המחציות", ex.goalBothHalves, k("GBH")],
+    // תוצאות מדויקות — 5 הסבירות כשוק
+    ...m.topScores.map(s => [`תוצאה מדויקת ${s.h}–${s.a}`, s.p, k(`CS${s.h}${s.a}`)])
+  ];
   return `<div class="card" style="margin-top:16px">
     <h3>${tn(a)} נגד ${tn(b)} ${res ? `<span class="pill">הסתיים ${res} — לעיון בלבד</span>` : ""}
         ${ko ? `<span class="pill">נוק-אאוט: 1X2 = 90 דקות בלבד!</span>` : ""}</h3>
@@ -1439,6 +1543,20 @@ function matchDetail(a, b, ko = false) {
         ${oddsInputCell(key)}${edgeCell(p, key)}
       </tr>`).join("")}
     </table>
+    <details style="margin-top:14px">
+      <summary style="cursor:pointer;color:var(--gold);font-weight:700">➕ שווקים מורחבים (יתרון, מחציות, מבקיעה ראשונה, תוצאה מדויקת...)</summary>
+      <table class="market-table" style="margin-top:10px">
+        <tr><th>שוק</th><th>P מודל</th><th>יחס הוגן</th><th>כדאי מ-</th><th>יחס ווינר</th><th>Edge</th></tr>
+        ${exRows.map(([lbl, p, key]) => `<tr>
+          <td class="lbl">${lbl}</td><td>${pct1(p)}</td>
+          <td class="fair">${odds(MODEL.fairOdds(p))}</td>
+          <td>${odds(MODEL.minWorthOdds(p))}</td>
+          ${oddsInputCell(key)}${edgeCell(p, key)}
+        </tr>`).join("")}
+      </table>
+      <p class="note">שווקי המחציות מחושבים בהנחת חלוקת 45%/55% של תוחלת השערים בין המחציות (ממוצע היסטורי).
+      ⚠️ ביחסים גבוהים (תוצאה מדויקת, מחצית/סיום) עמלת הווינר גבוהה במיוחד — דרשו פער גדול מ"כדאי מ-".</p>
+    </details>
     <p class="note">🎯 תוצאות סבירות: ${m.topScores.map(s => `<b>${s.h}–${s.a}</b> (${pct1(s.p)})`).join(" · ")}</p>
   </div>`;
 }

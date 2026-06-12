@@ -89,6 +89,81 @@ const MODEL = (() => {
   // Edge מול יחס ווינר אמיתי: חיובי = הימור ערך
   const edge = (p, odds) => p * odds - 1;
 
+  /* ============================================================
+     שווקים מורחבים (ווינר): יתרון, טווחי שערים, מחציות, מבקיעה ראשונה
+     ============================================================ */
+
+  // מטריצת פואסון גנרית (ללא תיקון DC — משמשת למחציות)
+  function rawMatrix(lA, lB, max) {
+    const pA = poissonPmf(lA, max), pB = poissonPmf(lB, max);
+    const m = [];
+    for (let i = 0; i <= max; i++) { m[i] = []; for (let j = 0; j <= max; j++) m[i][j] = pA[i] * pB[j]; }
+    return m;
+  }
+
+  // חלוקת שערים בין מחציות: ~45% במחצית הראשונה (ממוצע היסטורי)
+  const H1_SHARE = 0.45;
+
+  function extendedMarkets(teamA, teamB) {
+    const m = scoreMatrix(teamA, teamB);
+    const [lA, lB] = lambdas(teamA, teamB);
+
+    // יתרון תלת-דרכי: התוצאה אחרי הוספת hcp לשערי הקבוצה הראשונה
+    function handicap(hcp) {
+      let p1 = 0, px = 0, p2 = 0;
+      for (let i = 0; i <= MAX_GOALS; i++)
+        for (let j = 0; j <= MAX_GOALS; j++) {
+          const d = i + hcp - j;
+          if (d > 0) p1 += m[i][j]; else if (d === 0) px += m[i][j]; else p2 += m[i][j];
+        }
+      return { p1, px, p2 };
+    }
+
+    // טווחי שערים, זוגי/אי-זוגי, מרווחי ניצחון
+    let r01 = 0, r23 = 0, r4p = 0, odd = 0, winBy2A = 0, winBy2B = 0;
+    for (let i = 0; i <= MAX_GOALS; i++)
+      for (let j = 0; j <= MAX_GOALS; j++) {
+        const p = m[i][j], tot = i + j;
+        if (tot <= 1) r01 += p; else if (tot <= 3) r23 += p; else r4p += p;
+        if (tot % 2 === 1) odd += p;
+        if (i - j >= 2) winBy2A += p;
+        if (j - i >= 2) winBy2B += p;
+      }
+
+    // מבקיעה ראשונה: מרוץ שני תהליכי פואסון
+    const lT = lA + lB, pNoGoal = Math.exp(-lT);
+    const firstA = (lA / lT) * (1 - pNoGoal), firstB = (lB / lT) * (1 - pNoGoal);
+
+    // מחציות: שתי מטריצות בלתי-תלויות (45%/55% מהתוחלת)
+    const HMAX = 6;
+    const m1 = rawMatrix(lA * H1_SHARE, lB * H1_SHARE, HMAX);
+    const m2 = rawMatrix(lA * (1 - H1_SHARE), lB * (1 - H1_SHARE), HMAX);
+    let ht1 = 0, htx = 0, ht2 = 0;
+    const htft = { "1/1": 0, "1/X": 0, "1/2": 0, "X/1": 0, "X/X": 0, "X/2": 0, "2/1": 0, "2/X": 0, "2/2": 0 };
+    for (let i1 = 0; i1 <= HMAX; i1++) for (let j1 = 0; j1 <= HMAX; j1++) {
+      const p1h = m1[i1][j1];
+      const htRes = i1 > j1 ? "1" : i1 < j1 ? "2" : "X";
+      if (htRes === "1") ht1 += p1h; else if (htRes === "2") ht2 += p1h; else htx += p1h;
+      for (let i2 = 0; i2 <= HMAX; i2++) for (let j2 = 0; j2 <= HMAX; j2++) {
+        const ftI = i1 + i2, ftJ = j1 + j2;
+        const ftRes = ftI > ftJ ? "1" : ftI < ftJ ? "2" : "X";
+        htft[htRes + "/" + ftRes] += p1h * m2[i2][j2];
+      }
+    }
+    // שער בשתי המחציות
+    const goalBothHalves = (1 - Math.exp(-lT * H1_SHARE)) * (1 - Math.exp(-lT * (1 - H1_SHARE)));
+
+    return {
+      hcapA_minus1: handicap(-1),  // הקבוצה הראשונה פותחת ב-0:1
+      hcapA_plus1: handicap(1),    // הקבוצה הראשונה פותחת ב-1:0
+      range01: r01, range23: r23, range4plus: r4p,
+      odd, even: 1 - odd,
+      winBy2A, winBy2B,
+      firstGoalA: firstA, firstGoalB: firstB, firstGoalNone: pNoGoal,
+      ht1, htx, ht2, htft, goalBothHalves
+    };
+  }
+
   /* ---------- דגימת תוצאה בודדת ממטריצה (למונטה-קרלו) ---------- */
   function sampleScore(matrix, rnd) {
     let r = rnd(), acc = 0;
@@ -332,7 +407,7 @@ const MODEL = (() => {
   }
 
   return {
-    lambdas, scoreMatrix, markets, fairOdds, minWorthOdds, edge,
+    lambdas, scoreMatrix, markets, extendedMarkets, fairOdds, minWorthOdds, edge,
     simulateGroups, simulateChampion, groupFixtures, confidence, effElo,
     koAdvanceProb, koPropagate, koWinProb,
     EDGE_MARGIN
