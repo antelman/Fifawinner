@@ -15,7 +15,8 @@ const fs = require("fs"), path = require("path");
 const src = fs.readFileSync(path.join(__dirname, "../js/app.js"), "utf8");
 eval(src.replace(/let SIM = null;/, "SIM = null;").replace(/let KO = null;/, "KO = null;")
         .replace(/let selGroup = "A";/, 'selGroup = "A";').replace(/let selFixture = null;/, "selFixture = null;")
-        .replace(/let BRACKET =/, "BRACKET =").replace(/let selKoMatch = null;/, "selKoMatch = null;"));
+        .replace(/let BRACKET =/, "BRACKET =").replace(/let selKoMatch = null;/, "selKoMatch = null;")
+        .replace(/let ODDS =/, "ODDS ="));
 
 SIM = MODEL.simulateGroups(5000);
 KO = MODEL.simulateChampion(2000);
@@ -47,6 +48,14 @@ const picks = matchTopPicks("ESP", "URU", false);
 check("3 המלצות ממשפחות שונות", picks.length === 3 && new Set(picks.map(p => p.family)).size === 3,
   picks.map(p => p.family).join(","));
 check("המלצות בטווח שימושי", picks.every(p => p.p >= 0.33 && p.p <= 0.88));
+
+// הדבקה מהירה של יחסים
+const r1 = applyPastedOdds("ESP", "URU", "ספרד - אורוגוואי  18:00  1.45  4.10  6.50");
+check("הדבקת 1X2 מטקסט חופשי", r1.ok && ODDS["ESP-URU:1"] === 1.45 && ODDS["ESP-URU:X"] === 4.1 && ODDS["ESP-URU:2"] === 6.5);
+const r2 = applyPastedOdds("NED", "JPN", "מעל 2.5: 1,90 מתחת 2.5: 1,85");
+check("הדבקת מעל/מתחת עם פסיק עשרוני", r2.ok && ODDS["NED-JPN:O25"] === 1.9 && ODDS["NED-JPN:U25"] === 1.85);
+const r3 = applyPastedOdds("ESP", "URU", "אין כאן כלום 100 200");
+check("טקסט בלי יחסים נדחה", !r3.ok);
 const htmlFut = viewFutures();
 check("טאב עתידיים מרונדר", htmlFut.includes("זוכת המונדיאל"));
 const htmlGuide = viewGuide();

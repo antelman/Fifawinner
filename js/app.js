@@ -411,6 +411,12 @@ function matchDetail(a, b, ko = false) {
     <p class="note">Elo: ${T(a).nameHe} ${MODEL.effElo(T(a))}${T(a).host ? " (כולל ביתיות)" : ""} מול ${T(b).nameHe} ${MODEL.effElo(T(b))}${T(b).host ? " (כולל ביתיות)" : ""}
        · תוחלת שערים: ${lA.toFixed(2)} — ${lB.toFixed(2)}</p>
     <div class="narrative">🧠 <b>ניתוח:</b> ${matchNarrative(a, b, m, lA, lB)}</div>
+    <div class="paste-box">
+      📋 <b>הדבקה מהירה מהווינר:</b> העתיקו את שורת המשחק מאתר/אפליקציית ווינר והדביקו כאן —
+      המערכת תזהה את היחסים לבד (3 מספרים = 1/X/2 · 2 מספרים = מעל/מתחת 2.5).
+      <input type="text" id="paste-odds" data-a="${a}" data-b="${b}" placeholder='לדוגמה: "1.85 3.40 4.20" או טקסט שלם מהאתר' inputmode="text" style="width:100%;margin-top:8px">
+      <span id="paste-msg" class="pill"></span>
+    </div>
     <h3 style="margin:16px 0 8px">🔥 3 ההמלצות החזקות למשחק</h3>
     ${matchTopPicks(a, b, ko).map(pickCard).join("")}
     <h3 style="margin:18px 0 8px">כל השווקים</h3>
@@ -663,6 +669,34 @@ function viewGuide() {
   </div>`;
 }
 
+/* הדבקה מהירה: חילוץ יחסים מטקסט חופשי שהועתק מאתר/אפליקציית ווינר.
+   מזהה מספרים עשרוניים בטווח יחסים סביר (1.01–67) ומתעלם משעות/תאריכים/תוצאות */
+function parsePastedOdds(text) {
+  const matches = (text.match(/\d+[.,]\d{1,2}/g) || [])
+    .map(s => parseFloat(s.replace(",", ".")))
+    .filter(v => v >= 1.01 && v <= 67);
+  return matches;
+}
+
+function applyPastedOdds(a, b, text) {
+  const vals = parsePastedOdds(text);
+  const k = (s) => `${a}-${b}:${s}`;
+  if (vals.length >= 3) {
+    // שלושת הראשונים = 1 X 2 (סדר ההצגה בווינר)
+    ODDS[k("1")] = vals[0]; ODDS[k("X")] = vals[1]; ODDS[k("2")] = vals[2];
+    // אם יש עוד זוג — כנראה מעל/מתחת 2.5
+    if (vals.length >= 5) { ODDS[k("O25")] = vals[3]; ODDS[k("U25")] = vals[4]; }
+    saveOdds();
+    return { ok: true, msg: `✅ נקלטו: 1=${vals[0]} X=${vals[1]} 2=${vals[2]}` + (vals.length >= 5 ? ` · מעל=${vals[3]} מתחת=${vals[4]}` : "") };
+  }
+  if (vals.length === 2) {
+    ODDS[k("O25")] = vals[0]; ODDS[k("U25")] = vals[1];
+    saveOdds();
+    return { ok: true, msg: `✅ נקלטו: מעל 2.5=${vals[0]} · מתחת 2.5=${vals[1]}` };
+  }
+  return { ok: false, msg: "⚠️ לא זוהו יחסים — ודאו שהטקסט כולל מספרים כמו 1.85" };
+}
+
 /* ---------- אירועים ---------- */
 function bindEvents() {
   const gs = $("#group-sel");
@@ -699,6 +733,18 @@ function bindEvents() {
       const d = document.querySelector(".card[style]");
       if (d) d.scrollIntoView({ behavior: "smooth" });
     }));
+
+  const paste = $("#paste-odds");
+  if (paste) {
+    const handle = () => {
+      if (!paste.value.trim()) return;
+      const res = applyPastedOdds(paste.dataset.a, paste.dataset.b, paste.value);
+      if (res.ok) { render(); }
+      else { const msg = $("#paste-msg"); if (msg) msg.textContent = res.msg; }
+    };
+    paste.addEventListener("change", handle);
+    paste.addEventListener("paste", () => setTimeout(handle, 50));
+  }
 
   document.querySelectorAll("input[data-oddskey]").forEach(inp =>
     inp.addEventListener("change", () => {
