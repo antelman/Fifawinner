@@ -274,9 +274,67 @@ const MODEL = (() => {
     return Math.min(c, 5);
   }
 
+  /* ============================================================
+     נוק-אאוט אמיתי — מופעל כשממלאים את הסוגריים בסוף שלב הבתים
+     ============================================================ */
+
+  // P(הקבוצה הראשונה מעפילה) במשחק נוק-אאוט בודד:
+  // ניצחון ב-90' + תיקו שמוכרע בהארכה/פנדלים בהסתברות מוטת-Elo
+  function koAdvanceProb(idA, idB) {
+    const m = markets(DATA.teams[idA], DATA.teams[idB]);
+    return m.p1 + m.px * koWinProb(idA, idB);
+  }
+
+  /* חישוב מדויק (לא סימולציה) של הסתברויות התקדמות לאורך סוגריים נתונים.
+     r32Pairs: מערך של 16 זוגות [idA, idB] לפי סדר הסוגריים —
+       מנצחות משחקים 0,1 נפגשות בשמינית הגמר הראשונה וכן הלאה.
+     winners: { "R32-3": "ESP", "R16-1": ... } — תוצאות אמת שמקבעות מנצחת.
+     מחזיר: { perTeam: {id: {pR16,pQF,pSF,pF,pChampion}}, rounds } */
+  function koPropagate(r32Pairs, winners = {}) {
+    const ROUND_IDS = ["R32", "R16", "QF", "SF", "F"];
+    const perTeam = {};
+    const touch = (id) => perTeam[id] || (perTeam[id] = { pR16: 0, pQF: 0, pSF: 0, pF: 0, pChampion: 0 });
+    const REACH_KEY = { R32: "pR16", R16: "pQF", QF: "pSF", SF: "pF", F: "pChampion" };
+
+    // התפלגות "מי נמצאת במשחק" → התפלגות "מי מנצחת את המשחק"
+    function winnerDist(matchId, distA, distB) {
+      if (winners[matchId]) return { [winners[matchId]]: 1 };
+      const out = {};
+      for (const a in distA) {
+        let pWin = 0;
+        for (const b in distB) pWin += distB[b] * koAdvanceProb(a, b);
+        out[a] = (out[a] || 0) + distA[a] * pWin;
+      }
+      for (const b in distB) {
+        let pWin = 0;
+        for (const a in distA) pWin += distA[a] * koAdvanceProb(b, a);
+        out[b] = (out[b] || 0) + distB[b] * pWin;
+      }
+      return out;
+    }
+
+    // סיבוב ראשון: כל קבוצה נוכחת בהסתברות 1
+    let dists = r32Pairs.map(([a, b], i) =>
+      winnerDist("R32-" + (i + 1), { [a]: 1 }, { [b]: 1 }));
+    for (const [a, b] of r32Pairs) { touch(a); touch(b); }
+    for (const d of dists) for (const id in d) touch(id).pR16 += d[id];
+
+    for (let r = 1; r < ROUND_IDS.length; r++) {
+      const next = [];
+      for (let i = 0; i < dists.length; i += 2) {
+        const d = winnerDist(ROUND_IDS[r] + "-" + (i / 2 + 1), dists[i], dists[i + 1]);
+        next.push(d);
+        for (const id in d) touch(id)[REACH_KEY[ROUND_IDS[r]]] += d[id];
+      }
+      dists = next;
+    }
+    return { perTeam, championDist: dists[0] };
+  }
+
   return {
     lambdas, scoreMatrix, markets, fairOdds, minWorthOdds, edge,
     simulateGroups, simulateChampion, groupFixtures, confidence, effElo,
+    koAdvanceProb, koPropagate, koWinProb,
     EDGE_MARGIN
   };
 })();

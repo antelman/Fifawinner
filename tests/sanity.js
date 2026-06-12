@@ -61,5 +61,33 @@ check("הפייבוריטית מהשוק (ספרד) ב-Top3 של המודל", to
 const sumCh = teamIds.reduce((s, id) => s + ko[id].pChampion, 0);
 check("סכום P(אלופה)=1", Math.abs(sumCh - 1) < 1e-9, sumCh.toFixed(4));
 
+// 7. חישוב מסלול נוק-אאוט מדויק (koPropagate)
+console.log("\nבודק koPropagate עם סוגריים לדוגמה (32 המובילות לפי Elo)...");
+const top32 = teamIds.map(id => [id, DATA.teams[id].elo]).sort((a, b) => b[1] - a[1])
+  .slice(0, 32).map(([id]) => id);
+// זריעה 1-32, 2-31... כדי שחזקות לא ייפגשו מוקדם
+const pairs = [];
+for (let i = 0; i < 16; i++) pairs.push([top32[i], top32[31 - i]]);
+const prop = MODEL.koPropagate(pairs);
+const sumChamp = Object.values(prop.perTeam).reduce((s, t) => s + t.pChampion, 0);
+check("סכום P(אלופה) במסלול = 1", Math.abs(sumChamp - 1) < 1e-9, sumChamp.toFixed(6));
+const sumR16 = Object.values(prop.perTeam).reduce((s, t) => s + t.pR16, 0);
+check("16 עולות לשמינית", Math.abs(sumR16 - 16) < 1e-9, sumR16.toFixed(4));
+for (const id in prop.perTeam) {
+  const t = prop.perTeam[id];
+  if (!(t.pR16 >= t.pQF && t.pQF >= t.pSF && t.pSF >= t.pF && t.pF >= t.pChampion)) {
+    check("מונוטוניות מסלול: " + id, false); break;
+  }
+}
+console.log("✅ מונוטוניות: P(שמינית) ≥ P(רבע) ≥ ... ≥ P(אלופה)");
+const champTop = Object.entries(prop.perTeam).sort((a, b) => b[1].pChampion - a[1].pChampion)[0];
+check("המובילה במסלול הגיונית (ספרד)", champTop[0] === "ESP",
+  `${DATA.teams[champTop[0]].nameHe} ${(champTop[1].pChampion * 100).toFixed(1)}%`);
+
+// 8. קיבוע מנצחת בפועל
+const prop2 = MODEL.koPropagate(pairs, { "R32-1": pairs[0][1] });
+check("קיבוע מנצחת: האנדרדוג שסומן עובר ב-100%",
+  Math.abs(prop2.perTeam[pairs[0][1]].pR16 - 1) < 1e-9 && prop2.perTeam[pairs[0][0]].pR16 === 0);
+
 console.log(failures === 0 ? "\n🎉 כל הבדיקות עברו" : `\n💥 ${failures} בדיקות נכשלו`);
 process.exit(failures === 0 ? 0 : 1);

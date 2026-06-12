@@ -5,6 +5,10 @@
 let SIM = null;   // תוצאות סימולציית בתים
 let KO = null;    // תוצאות סימולציית אלוף
 let ODDS = JSON.parse(localStorage.getItem("fw_odds") || "{}");
+// סוגריים הנוק-אאוט — ממולאים בממשק בסוף שלב הבתים (27.6)
+let BRACKET = JSON.parse(localStorage.getItem("fw_bracket") || "null")
+  || { r32: Array.from({ length: 16 }, () => [null, null]), winners: {} };
+let selKoMatch = null;
 let activeTab = "recs";
 let selGroup = "A";
 let selFixture = null;
@@ -18,6 +22,7 @@ const tn = (id) => `${T(id).flag} ${T(id).nameHe}`;
 const stars = (n) => "★".repeat(n) + "☆".repeat(5 - n);
 
 function saveOdds() { localStorage.setItem("fw_odds", JSON.stringify(ODDS)); }
+function saveBracket() { localStorage.setItem("fw_bracket", JSON.stringify(BRACKET)); }
 
 function playedSet() {
   const s = new Set();
@@ -55,6 +60,7 @@ function render() {
   else if (activeTab === "matches") el.innerHTML = viewMatches();
   else if (activeTab === "groups") el.innerHTML = viewGroups();
   else if (activeTab === "futures") el.innerHTML = viewFutures();
+  else if (activeTab === "ko") el.innerHTML = viewKO();
   else el.innerHTML = viewGuide();
   bindEvents();
 }
@@ -118,6 +124,22 @@ function generateRecs() {
         recs.push({ group: g, match: `בית ${g}`, market: "העפלה משלב הבתים", pick: tn(id), p,
           conf: MODEL.confidence(p, 100), key: `ADV:${id}`,
           why: `כולל מסלול מקום-3 (8 שלישיות עולות) — בטוח מכפי שהשוק נוטה לתמחר` });
+    }
+  }
+
+  // נוק-אאוט: "מי יעפיל" לכל משחק שמולא בסוגריים וטרם הוכרע
+  for (const [name, matches] of koRounds()) {
+    for (const mt of matches) {
+      if (!mt.a || !mt.b || BRACKET.winners[mt.id]) continue;
+      const adv = MODEL.koAdvanceProb(mt.a, mt.b);
+      const pick = adv >= 0.5 ? { id: mt.a, p: adv } : { id: mt.b, p: 1 - adv };
+      const gap = MODEL.effElo(T(mt.a)) - MODEL.effElo(T(mt.b));
+      if (pick.p >= 0.58 && pick.p <= 0.85)
+        recs.push({ group: "🥊", match: `${KO_ROUND_NAMES[name]}: ${tn(mt.a)} — ${tn(mt.b)}`,
+          market: "מי יעפיל", pick: tn(pick.id), p: pick.p,
+          conf: MODEL.confidence(pick.p, gap),
+          key: `${mt.a}-${mt.b}:${pick.id === mt.a ? "ADV1" : "ADV2"}`,
+          why: "כולל הארכה ופנדלים — שוק נפרד מ-1X2 (שנסגר ב-90 דקות)" });
     }
   }
 
@@ -217,11 +239,12 @@ function edgeCell(p, key) {
   return `<td class="${e > 0 ? "edge-pos" : "edge-neg"}">${e > 0 ? "+" : ""}${(e * 100).toFixed(1)}%</td>`;
 }
 
-function matchDetail(a, b) {
+function matchDetail(a, b, ko = false) {
   const res = resultOf(a, b);
   const m = MODEL.markets(T(a), T(b));
   const [lA, lB] = MODEL.lambdas(T(a), T(b));
   const k = (suffix) => `${a}-${b}:${suffix}`;
+  const advA = ko ? MODEL.koAdvanceProb(a, b) : 0;
   const rows = [
     [`ניצחון ${T(a).nameHe} (1)`, m.p1, k("1")],
     ["תיקו (X)", m.px, k("X")],
@@ -236,8 +259,13 @@ function matchDetail(a, b) {
     ["שתי הקבוצות מבקיעות", m.btts, k("BTTS")],
     ["לא — שתיהן מבקיעות", m.noBtts, k("NBTTS")]
   ];
+  if (ko) rows.push(
+    [`🥊 ${T(a).nameHe} מעפילה (כולל הארכה/פנדלים)`, advA, k("ADV1")],
+    [`🥊 ${T(b).nameHe} מעפילה (כולל הארכה/פנדלים)`, 1 - advA, k("ADV2")]
+  );
   return `<div class="card" style="margin-top:16px">
-    <h3>${tn(a)} נגד ${tn(b)} ${res ? `<span class="pill">הסתיים ${res} — לעיון בלבד</span>` : ""}</h3>
+    <h3>${tn(a)} נגד ${tn(b)} ${res ? `<span class="pill">הסתיים ${res} — לעיון בלבד</span>` : ""}
+        ${ko ? `<span class="pill">נוק-אאוט: 1X2 = 90 דקות בלבד!</span>` : ""}</h3>
     <p class="note">Elo: ${T(a).nameHe} ${MODEL.effElo(T(a))}${T(a).host ? " (כולל ביתיות)" : ""} מול ${T(b).nameHe} ${MODEL.effElo(T(b))}${T(b).host ? " (כולל ביתיות)" : ""}
        · תוחלת שערים: ${lA.toFixed(2)} — ${lB.toFixed(2)}</p>
     <table class="market-table">
@@ -329,6 +357,118 @@ function groupOfTeam(id) {
 }
 
 /* ============================================================
+   נוק-אאוט
+   ============================================================ */
+const KO_ROUND_NAMES = { R32: "שלב ה-32", R16: "שמינית גמר", QF: "רבע גמר", SF: "חצי גמר", F: "🏆 הגמר" };
+
+// בניית כל הסיבובים: משתתפי סיבוב עוקב = מנצחות מסומנות של הסיבוב הקודם
+function koRounds() {
+  let prev = BRACKET.r32.map((p, i) => ({ id: "R32-" + (i + 1), a: p[0], b: p[1] }));
+  const rounds = [["R32", prev]];
+  for (const name of ["R16", "QF", "SF", "F"]) {
+    const cur = [];
+    for (let i = 0; i < prev.length; i += 2)
+      cur.push({
+        id: name + "-" + (i / 2 + 1),
+        a: BRACKET.winners[prev[i].id] || null,
+        b: BRACKET.winners[prev[i + 1].id] || null,
+        feeders: [prev[i], prev[i + 1]]
+      });
+    rounds.push([name, cur]);
+    prev = cur;
+  }
+  return rounds;
+}
+
+function teamSelect(attrs, selected) {
+  const ids = Object.keys(DATA.teams)
+    .sort((x, y) => SIM[y].pAdvance - SIM[x].pAdvance);
+  return `<select ${attrs}>
+    <option value="">— בחרו נבחרת —</option>
+    ${ids.map(id => `<option value="${id}" ${id === selected ? "selected" : ""}>${T(id).flag} ${T(id).nameHe} (העפלה ${pct(SIM[id].pAdvance)})</option>`).join("")}
+  </select>`;
+}
+
+function koMatchRow(match, roundName, editable) {
+  const { id, a, b } = match;
+  const both = a && b;
+  const winner = BRACKET.winners[id];
+  let body;
+  if (editable) {
+    body = `${teamSelect(`class="ko-team" data-mi="${parseInt(id.split("-")[1]) - 1}" data-side="0"`, a)}
+            <span class="vs">נגד</span>
+            ${teamSelect(`class="ko-team" data-mi="${parseInt(id.split("-")[1]) - 1}" data-side="1"`, b)}`;
+  } else {
+    const lbl = (x, f) => x ? tn(x) : `<span class="vs">מנצחת ${f}</span>`;
+    body = `${lbl(a, match.feeders ? match.feeders[0].id : "")} <span class="vs">נגד</span> ${lbl(b, match.feeders ? match.feeders[1].id : "")}`;
+  }
+  let tools = "";
+  if (both) {
+    const advA = MODEL.koAdvanceProb(a, b);
+    tools = `<span class="pill">${T(a).nameHe} מעפילה: ${pct1(advA)}</span>
+      <button class="tab-btn ko-analyze" data-a="${a}" data-b="${b}" style="padding:4px 12px;font-size:.85rem">ניתוח 📊</button>
+      <select class="ko-winner" data-mid="${id}">
+        <option value="">מנצחת בפועל?</option>
+        <option value="${a}" ${winner === a ? "selected" : ""}>${T(a).nameHe}</option>
+        <option value="${b}" ${winner === b ? "selected" : ""}>${T(b).nameHe}</option>
+      </select>`;
+  }
+  return `<div class="fixture" style="cursor:default;flex-wrap:wrap;gap:8px">
+    <span class="vs">${id}</span><span style="flex:1">${body}</span>${tools}
+  </div>`;
+}
+
+function viewKO() {
+  const rounds = koRounds();
+  const filled = BRACKET.r32.filter(p => p[0] && p[1]).length;
+  const allIds = BRACKET.r32.flat().filter(Boolean);
+  const dupes = allIds.length !== new Set(allIds).size;
+
+  // טבלת התקדמות מדויקת — רק כשכל 16 המשחקים מולאו בלי כפילויות
+  let propagation = "";
+  if (filled === 16 && !dupes) {
+    const { perTeam } = MODEL.koPropagate(BRACKET.r32, BRACKET.winners);
+    const rows = Object.keys(perTeam).map(id => ({ id, ...perTeam[id] }))
+      .sort((x, y) => y.pChampion - x.pChampion).slice(0, 16);
+    propagation = `<div class="card">
+      <h3>📐 חישוב מסלול מדויק (מחליף את הסימולציה המקורבת)</h3>
+      <table class="market-table">
+        <tr><th>נבחרת</th><th>שמינית</th><th>רבע</th><th>חצי</th><th>גמר</th><th>אלופה</th><th>יחס הוגן (אלופה)</th><th>כדאי מ-</th><th>יחס ווינר</th><th>Edge</th></tr>
+        ${rows.map(r => `<tr>
+          <td class="lbl">${tn(r.id)}</td>
+          <td>${pct1(r.pR16)}</td><td>${pct1(r.pQF)}</td><td>${pct1(r.pSF)}</td><td>${pct1(r.pF)}</td>
+          <td><b>${pct1(r.pChampion)}</b></td>
+          <td class="fair">${odds(MODEL.fairOdds(r.pChampion))}</td>
+          <td>${odds(MODEL.minWorthOdds(r.pChampion))}</td>
+          ${oddsInputCell("KOCHAMP:" + r.id)}${edgeCell(r.pChampion, "KOCHAMP:" + r.id)}
+        </tr>`).join("")}
+      </table>
+      <p class="note">מנצחות שסומנו "בפועל" מקובעות (הסתברות 1) והחישוב מתעדכן בהתאם. שוק "מי יעפיל" של כל משחק — בכפתור ניתוח.</p>
+    </div>`;
+  }
+
+  return `
+  <div class="card">
+    <h3>🥊 שלב הנוק-אאוט — עדכון בסוף שלב הבתים</h3>
+    <p class="note">
+      המסלולים הרשמיים ננעלים ב-<b>27.6.2026</b> בסוף שלב הבתים (שיבוץ השלישיות תלוי ב-495 תרחישי FIFA — אי אפשר לדעת מראש).
+      ברגע שהלוח יתפרסם: מלאו כאן את 16 מפגשי שלב ה-32 <b>לפי סדר הסוגריים הרשמי</b>
+      (מנצחות משחקים 1–2 נפגשות בשמינית הגמר הראשונה, 3–4 בשנייה וכן הלאה).
+      הנתונים נשמרים בדפדפן. סטטוס: <b>${filled}/16</b> ${dupes ? '<span class="pill" style="color:var(--red)">⚠️ נבחרת מופיעה פעמיים!</span>' : ""}
+    </p>
+    <p class="note">💡 <b>חשוב לווינר:</b> בנוק-אאוט שוק 1X2 נסגר ב-90 דקות (תיקו = X משלם!), ושוק "מי יעפיל" כולל הארכה ופנדלים — המערכת מציגה את שניהם.</p>
+  </div>
+  ${propagation}
+  ${rounds.map(([name, matches], idx) => `<div class="card">
+    <h3>${KO_ROUND_NAMES[name]}</h3>
+    <div class="fixture-list">
+      ${matches.map(mt => koMatchRow(mt, name, idx === 0)).join("")}
+    </div>
+  </div>`).join("")}
+  ${selKoMatch ? matchDetail(selKoMatch[0], selKoMatch[1], true) : ""}`;
+}
+
+/* ============================================================
    מדריך
    ============================================================ */
 function viewGuide() {
@@ -373,6 +513,32 @@ function bindEvents() {
 
   document.querySelectorAll("td.team").forEach(td =>
     td.addEventListener("click", () => showTeam(td.dataset.team)));
+
+  document.querySelectorAll("select.ko-team").forEach(sel =>
+    sel.addEventListener("change", () => {
+      BRACKET.r32[+sel.dataset.mi][+sel.dataset.side] = sel.value || null;
+      // איפוס מנצחות שכבר לא רלוונטיות
+      const mid = "R32-" + (+sel.dataset.mi + 1);
+      const [a, b] = BRACKET.r32[+sel.dataset.mi];
+      if (BRACKET.winners[mid] && BRACKET.winners[mid] !== a && BRACKET.winners[mid] !== b)
+        delete BRACKET.winners[mid];
+      saveBracket(); render();
+    }));
+
+  document.querySelectorAll("select.ko-winner").forEach(sel =>
+    sel.addEventListener("change", () => {
+      if (sel.value) BRACKET.winners[sel.dataset.mid] = sel.value;
+      else delete BRACKET.winners[sel.dataset.mid];
+      saveBracket(); render();
+    }));
+
+  document.querySelectorAll(".ko-analyze").forEach(btn =>
+    btn.addEventListener("click", () => {
+      selKoMatch = [btn.dataset.a, btn.dataset.b];
+      render();
+      const d = document.querySelector(".card[style]");
+      if (d) d.scrollIntoView({ behavior: "smooth" });
+    }));
 
   document.querySelectorAll("input[data-oddskey]").forEach(inp =>
     inp.addEventListener("change", () => {

@@ -13,7 +13,8 @@ global.document = {
 const fs = require("fs"), path = require("path");
 const src = fs.readFileSync(path.join(__dirname, "../js/app.js"), "utf8");
 eval(src.replace(/let SIM = null;/, "SIM = null;").replace(/let KO = null;/, "KO = null;")
-        .replace(/let selGroup = "A";/, 'selGroup = "A";').replace(/let selFixture = null;/, "selFixture = null;"));
+        .replace(/let selGroup = "A";/, 'selGroup = "A";').replace(/let selFixture = null;/, "selFixture = null;")
+        .replace(/let BRACKET =/, "BRACKET =").replace(/let selKoMatch = null;/, "selKoMatch = null;"));
 
 SIM = MODEL.simulateGroups(5000);
 KO = MODEL.simulateChampion(2000);
@@ -41,6 +42,18 @@ const htmlFut = viewFutures();
 check("טאב עתידיים מרונדר", htmlFut.includes("זוכת המונדיאל"));
 const htmlGuide = viewGuide();
 check("טאב מדריך מרונדר", htmlGuide.includes("חישוב זכייה"));
+
+// טאב נוק-אאוט: ריק → הנחיות; מלא → טבלת מסלול מדויק
+const htmlKoEmpty = viewKO();
+check("נוק-אאוט ריק: הנחיות מילוי", htmlKoEmpty.includes("0/16"));
+const top32 = Object.keys(DATA.teams).map(id => [id, DATA.teams[id].elo])
+  .sort((a, b) => b[1] - a[1]).slice(0, 32).map(([id]) => id);
+for (let i = 0; i < 16; i++) BRACKET.r32[i] = [top32[i], top32[31 - i]];
+BRACKET.winners["R32-1"] = top32[0];
+const htmlKoFull = viewKO();
+check("נוק-אאוט מלא: טבלת מסלול מדויק", htmlKoFull.includes("חישוב מסלול מדויק") && htmlKoFull.includes("16/16"));
+const recsKo = generateRecs();
+check("המלצות 'מי יעפיל' נוצרות", recsKo.some(r => r.market === "מי יעפיל"));
 
 console.log("\nדוגמת 5 המלצות מובילות:");
 for (const r of recs.slice(0, 5))
