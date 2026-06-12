@@ -21,6 +21,24 @@ for (const id of teamIds) {
 }
 console.log("טווח Elo תקין לכל הנבחרות");
 
+// 1ב. שלמות לוח המשחקים
+check("72 משחקים בלוח", DATA.schedule.length === 72, String(DATA.schedule.length));
+for (const g of groupIds) {
+  const fx = DATA.schedule.filter(x => x.g === g);
+  if (fx.length !== 6) check(`6 משחקים בבית ${g}`, false, String(fx.length));
+  for (const x of fx)
+    if (!DATA.groups[g].includes(x.h) || !DATA.groups[g].includes(x.a))
+      check(`שיוך נכון בבית ${g}`, false, `${x.h}-${x.a}`);
+}
+// כל זוג נפגש בדיוק פעם אחת
+for (const g of groupIds) {
+  const pairs = new Set(DATA.schedule.filter(x => x.g === g).map(x => [x.h, x.a].sort().join("-")));
+  if (pairs.size !== 6) check(`כל הזוגות בבית ${g}`, false);
+}
+console.log("✅ לוח משחקים: 72 משחקים, 6 לכל בית, כל זוג פעם אחת");
+check("כל תוצאה רשומה קיימת בלוח", DATA.results.every(r =>
+  DATA.schedule.some(x => (x.h === r.home && x.a === r.away) || (x.h === r.away && x.a === r.home))));
+
 // 2. שווקים מסתכמים ל-1
 const m = MODEL.markets(DATA.teams.ESP, DATA.teams.URU);
 check("1X2 מסתכם ל-1", Math.abs(m.p1 + m.px + m.p2 - 1) < 1e-9);

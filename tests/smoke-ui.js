@@ -34,6 +34,11 @@ check("אין המלצה על משחק שהסתיים", !recs.some(r => r.match.
 
 const htmlRecs = viewRecs();
 check("טאב המלצות מרונדר", htmlRecs.includes("rec") && htmlRecs.length > 2000);
+check("מקטע משחקי היום/מחר", htmlRecs.includes("משחקי היום") || htmlRecs.includes("משחקי מחר") || htmlRecs.includes("אין משחקים"));
+// ב-12.6 (תאריך הסביבה) יש משחקים בלוח — חייבים כרטיסי משחק עם המלצות
+if (new Date().toISOString().startsWith("2026-06")) {
+  check("כרטיסי משחק יומיים עם 3 המלצות", htmlRecs.includes("🥇") && htmlRecs.includes("ניתוח מלא"));
+}
 const htmlGroups = viewGroups();
 check("טאב בתים מרונדר (12 בתים)", (htmlGroups.match(/בית [A-L]</g) || []).length === 12);
 selFixture = ["ESP", "URU"];

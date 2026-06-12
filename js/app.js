@@ -205,32 +205,58 @@ function recHtml(r) {
   </div>`;
 }
 
+/* תאריך מקומי בפורמט YYYY-MM-DD */
+function localISO(offsetDays = 0) {
+  return new Date(Date.now() + offsetDays * 864e5).toLocaleDateString("en-CA");
+}
+function hebDate(iso) {
+  return new Date(iso + "T12:00:00").toLocaleDateString("he-IL", { weekday: "long", day: "numeric", month: "numeric" });
+}
+
+/* כרטיס משחק יומי: כותרת + 3 ההמלצות שלו */
+function dayMatchCard(fx) {
+  const res = resultOf(fx.h, fx.a);
+  const head = `<h3>${tn(fx.h)} <span class="vs">נגד</span> ${tn(fx.a)}
+    <span class="pill">בית ${fx.g}${fx.est ? " · תאריך משוער" : ""}</span></h3>`;
+  if (res) return `<div class="card">${head}<p class="note">הסתיים ${res} ✔️ — התוצאה מקובעת בסימולציה</p></div>`;
+  return `<div class="card">${head}
+    ${matchTopPicks(fx.h, fx.a, false).map(pickCard).join("")}
+    <button class="tab-btn open-match" data-g="${fx.g}" data-h="${fx.h}" data-a="${fx.a}"
+      style="padding:6px 16px;font-size:.9rem">📊 ניתוח מלא + כל השווקים</button>
+  </div>`;
+}
+
 function viewRecs() {
+  const today = localISO(0), tomorrow = localISO(1);
+  const todayFx = DATA.schedule.filter(m => m.d === today);
+  const tomFx = DATA.schedule.filter(m => m.d === tomorrow);
+  const daySection = (title, fxs) => fxs.length
+    ? `<h2 style="margin:18px 0 10px">${title}</h2>${fxs.map(dayMatchCard).join("")}` : "";
+
   const recs = generateRecs();
   const valueRecs = recs.filter(r => r.edge !== undefined && r.edge > 0);
-  // הרשימה הראשית: קצרה ומגוונת — מקסימום המלצה אחת לכל בית/קטגוריה, עד 8
+  // נבחרות כלליות: מגוונות, בלי משחקי היום/מחר (כבר מוצגים למעלה)
+  const shown = new Set([...todayFx, ...tomFx].map(f => `${f.h}-${f.a}`));
   const top = [], seen = new Set();
   for (const r of recs) {
     if (valueRecs.includes(r)) continue;
+    if (r.key && [...shown].some(s => r.key.startsWith(s + ":"))) continue;
     if (seen.has(r.group)) continue;
     seen.add(r.group);
     top.push(r);
-    if (top.length === 8) break;
+    if (top.length === 5) break;
   }
   const rest = recs.filter(r => !valueRecs.includes(r) && !top.includes(r));
   return `
-  <div class="card">
-    <h3>🎯 ההמלצות המובילות עכשיו</h3>
-    <p class="note">
-      8 ההמלצות החזקות לפי המודל — אחת לכל בית, מגוונות ובטווח יחסים שימושי.
-      ליד כל אחת: <b>"כדאי מ-"</b> = היחס המינימלי בווינר שממנו יש ערך. בדקו בווינר — אם היחס גבוה מזה, יש הימור. אם נמוך — מוותרים.
-      הזנת היחס בשדה תחשב Edge מדויק ותסמן <span class="pill value-flag">VALUE</span>.
-    </p>
-  </div>
   ${valueRecs.length ? `<div class="card"><h3>💎 הימורי ערך מאומתים (לפי היחסים שהזנת)</h3>${valueRecs.map(recHtml).join("")}</div>` : ""}
+  ${daySection("⚽ משחקי היום — " + hebDate(today), todayFx)}
+  ${daySection("📅 משחקי מחר — " + hebDate(tomorrow), tomFx)}
+  ${todayFx.length || tomFx.length ? "" : `<div class="card"><p class="note">אין משחקים היום או מחר בלוח.</p></div>`}
+  <h2 style="margin:22px 0 10px">🎯 הזדמנויות נוספות מכל הטורניר</h2>
+  <p class="note">"כדאי מ-" = היחס המינימלי בווינר שממנו יש ערך. גבוה ממנו — מהמרים; נמוך — מוותרים. הזנת יחס מחשבת Edge ומסמנת <span class="pill value-flag">VALUE</span>.</p>
   ${top.map(recHtml).join("")}
   <details style="margin-top:16px">
-    <summary style="cursor:pointer;color:var(--gold);font-weight:700;padding:10px">📋 עוד ${rest.length} המלצות (לפי בתים, שערים, העפלות...)</summary>
+    <summary style="cursor:pointer;color:var(--gold);font-weight:700;padding:10px">📋 עוד ${rest.length} המלצות (כל הבתים, העפלות, אלופה...)</summary>
     ${rest.map(recHtml).join("")}
   </details>`;
 }
@@ -240,7 +266,8 @@ function viewRecs() {
    ============================================================ */
 function viewMatches() {
   const groups = Object.keys(DATA.groups);
-  const fixtures = MODEL.groupFixtures(selGroup);
+  const fixtures = DATA.schedule.filter(x => x.g === selGroup)
+    .sort((x, y) => x.d.localeCompare(y.d)).map(x => [x.h, x.a, x.d]);
   let detail = "";
   if (selFixture) {
     const [a, b] = selFixture;
@@ -253,10 +280,10 @@ function viewMatches() {
     </select></label>
   </div>
   <div class="fixture-list">
-    ${fixtures.map(([a, b]) => {
+    ${fixtures.map(([a, b, d]) => {
       const res = resultOf(a, b);
       return `<div class="fixture" data-fix="${a}|${b}">
-        <span>${tn(a)} <span class="vs">נגד</span> ${tn(b)}</span>
+        <span>${tn(a)} <span class="vs">נגד</span> ${tn(b)} <span class="pill">${hebDate(d)}</span></span>
         <span class="${res ? "played" : "vs"}">${res ? "הסתיים " + res : "לחצו לניתוח ←"}</span>
       </div>`;
     }).join("")}
@@ -722,6 +749,18 @@ function bindEvents() {
 
   document.querySelectorAll(".fixture").forEach(f =>
     f.addEventListener("click", () => { selFixture = f.dataset.fix.split("|"); render(); }));
+
+  // מעבר מהעמוד הראשי לניתוח מלא של משחק
+  document.querySelectorAll(".open-match").forEach(btn =>
+    btn.addEventListener("click", () => {
+      selGroup = btn.dataset.g;
+      selFixture = [btn.dataset.h, btn.dataset.a];
+      activeTab = "matches";
+      document.querySelectorAll(".tab-btn[data-tab]").forEach(b =>
+        b.classList.toggle("active", b.dataset.tab === "matches"));
+      render();
+      window.scrollTo({ top: 0 });
+    }));
 
   document.querySelectorAll("td.team").forEach(td =>
     td.addEventListener("click", () => showTeam(td.dataset.team)));

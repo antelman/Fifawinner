@@ -175,8 +175,12 @@ const MODEL = (() => {
     return [0, 0];
   }
 
-  // משחקי בית: כל זוגות (6 משחקים)
+  // משחקי בית: מהלוח הרשמי (שומר כיוון אחיד למפתחות יחסים), נפילה לצירופים
   function groupFixtures(groupId) {
+    if (DATA.schedule) {
+      const fx = DATA.schedule.filter(x => x.g === groupId).map(x => [x.h, x.a]);
+      if (fx.length === 6) return fx;
+    }
     const ids = DATA.groups[groupId];
     const fx = [];
     for (let i = 0; i < 4; i++)
