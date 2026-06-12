@@ -41,6 +41,12 @@ const htmlMatches = viewMatches();
 check("טאב משחקים + פירוט משחק", htmlMatches.includes("מעל 2.5") && htmlMatches.includes("תוצאות סבירות"));
 check("שווקים מורחבים בפירוט משחק", htmlMatches.includes("שווקים מורחבים") && htmlMatches.includes("יתרון 0:1")
   && htmlMatches.includes("מחצית/סיום") && htmlMatches.includes("מבקיעה ראשונה") && htmlMatches.includes("תוצאה מדויקת"));
+check("המלצות-צמרת במסך משחק", htmlMatches.includes("3 ההמלצות החזקות") && htmlMatches.includes("🥇")
+  && htmlMatches.includes("ניתוח:"));
+const picks = matchTopPicks("ESP", "URU", false);
+check("3 המלצות ממשפחות שונות", picks.length === 3 && new Set(picks.map(p => p.family)).size === 3,
+  picks.map(p => p.family).join(","));
+check("המלצות בטווח שימושי", picks.every(p => p.p >= 0.33 && p.p <= 0.88));
 const htmlFut = viewFutures();
 check("טאב עתידיים מרונדר", htmlFut.includes("זוכת המונדיאל"));
 const htmlGuide = viewGuide();

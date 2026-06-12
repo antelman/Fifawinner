@@ -112,6 +112,32 @@ input[type=number] { width: 84px; text-align: center; }
 .pill { display: inline-block; background: var(--bg3); border-radius: 999px; padding: 2px 10px; font-size: .78rem; color: var(--muted); margin-inline-start: 6px; }
 .value-flag { background: #11331a; color: var(--green); border: 1px solid var(--green); }
 
+/* כרטיסי ההמלצות החזקות במסך משחק */
+.narrative {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+  padding: 12px 14px; margin: 10px 0; line-height: 1.7; font-size: .95rem;
+}
+.pick-card {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;
+  background: linear-gradient(135deg, var(--bg3), var(--bg2));
+  border: 1px solid var(--gold); border-radius: var(--radius);
+  padding: 14px; margin-bottom: 10px;
+}
+.pick-card .odds-box {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px 14px; text-align: center; min-width: 84px;
+}
+.pick-card .odds-box b { display: block; color: var(--gold); font-size: 1.7rem; line-height: 1.1; }
+.pick-card .odds-box span { color: var(--muted); font-size: .72rem; }
+.pick-card .pick-title { font-size: 1.05rem; font-weight: 700; }
+.pick-card .why { color: var(--muted); font-size: .85rem; margin-top: 4px; }
+.pick-card .nums { text-align: left; font-size: .85rem; color: var(--muted); white-space: nowrap; }
+.pick-card .nums b { color: var(--text); }
+@media (max-width: 600px) {
+  .pick-card { grid-template-columns: auto 1fr; }
+  .pick-card .nums { grid-column: 1 / -1; text-align: right; }
+}
+
 /* מודאל נבחרת */
 .modal-bg {
   position: fixed; inset: 0; background: rgba(0,0,0,.65);

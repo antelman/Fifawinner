@@ -119,6 +119,32 @@ input[type=number] { width: 84px; text-align: center; }
 .pill { display: inline-block; background: var(--bg3); border-radius: 999px; padding: 2px 10px; font-size: .78rem; color: var(--muted); margin-inline-start: 6px; }
 .value-flag { background: #11331a; color: var(--green); border: 1px solid var(--green); }
 
+/* כרטיסי ההמלצות החזקות במסך משחק */
+.narrative {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+  padding: 12px 14px; margin: 10px 0; line-height: 1.7; font-size: .95rem;
+}
+.pick-card {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;
+  background: linear-gradient(135deg, var(--bg3), var(--bg2));
+  border: 1px solid var(--gold); border-radius: var(--radius);
+  padding: 14px; margin-bottom: 10px;
+}
+.pick-card .odds-box {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px 14px; text-align: center; min-width: 84px;
+}
+.pick-card .odds-box b { display: block; color: var(--gold); font-size: 1.7rem; line-height: 1.1; }
+.pick-card .odds-box span { color: var(--muted); font-size: .72rem; }
+.pick-card .pick-title { font-size: 1.05rem; font-weight: 700; }
+.pick-card .why { color: var(--muted); font-size: .85rem; margin-top: 4px; }
+.pick-card .nums { text-align: left; font-size: .85rem; color: var(--muted); white-space: nowrap; }
+.pick-card .nums b { color: var(--text); }
+@media (max-width: 600px) {
+  .pick-card { grid-template-columns: auto 1fr; }
+  .pick-card .nums { grid-column: 1 / -1; text-align: right; }
+}
+
 /* מודאל נבחרת */
 .modal-bg {
   position: fixed; inset: 0; background: rgba(0,0,0,.65);
@@ -1476,6 +1502,98 @@ function edgeCell(p, key) {
   return `<td class="${e > 0 ? "edge-pos" : "edge-neg"}">${e > 0 ? "+" : ""}${(e * 100).toFixed(1)}%</td>`;
 }
 
+/* ---------- מועמדים לכל השווקים של משחק (להמלצות-צמרת) ---------- */
+function buildMatchCandidates(a, b, ko) {
+  const m = MODEL.markets(T(a), T(b));
+  const ex = MODEL.extendedMarkets(T(a), T(b));
+  const k = (s) => `${a}-${b}:${s}`;
+  const an = T(a).nameHe, bn = T(b).nameHe;
+  const c = [
+    { label: `ניצחון ${an} (1)`, p: m.p1, key: k("1"), family: "result", why: "תוצאת 90 דקות" },
+    { label: `ניצחון ${bn} (2)`, p: m.p2, key: k("2"), family: "result", why: "תוצאת 90 דקות" },
+    { label: "תיקו (X)", p: m.px, key: k("X"), family: "result", why: "תוצאת 90 דקות" },
+    { label: `${an} או תיקו (1X)`, p: m.dc1x, key: k("1X"), family: "result", why: "צ'אנס כפול — גידור על שתי תוצאות" },
+    { label: `${bn} או תיקו (X2)`, p: m.dcx2, key: k("X2"), family: "result", why: "צ'אנס כפול — גידור על שתי תוצאות" },
+    { label: `יתרון 0:1 ל${bn} — ${an} (1)`, p: ex.hcapA_minus1.p1, key: k("H-1:1"), family: "result", why: "הנדיקאפ: הפייבוריט חייב לנצח בהפרש 2+ — יחס משופר" },
+    { label: `${an} מנצחת ביותר משער`, p: ex.winBy2A, key: k("WB2A"), family: "result", why: "ניצחון בהפרש 2+ שערים" },
+    { label: `${bn} מנצחת ביותר משער`, p: ex.winBy2B, key: k("WB2B"), family: "result", why: "ניצחון בהפרש 2+ שערים" },
+    { label: "מעל 2.5 שערים", p: m.over25, key: k("O25"), family: "goals", why: "תוחלת שערים גבוהה במשחק" },
+    { label: "מתחת 2.5 שערים", p: m.under25, key: k("U25"), family: "goals", why: "פרופיל הגנתי — תוחלת שערים נמוכה" },
+    { label: "מעל 1.5 שערים", p: m.over15, key: k("O15"), family: "goals", why: "לפחות שני שערים במשחק" },
+    { label: "שתי הקבוצות מבקיעות", p: m.btts, key: k("BTTS"), family: "goals", why: "שתי התקפות מתפקדות מול הגנות פגיעות" },
+    { label: "לא — שתיהן מבקיעות", p: m.noBtts, key: k("NBTTS"), family: "goals", why: "לפחות צד אחד צפוי לשמור על רשת נקייה" },
+    { label: "סה\"כ שערים: 2–3", p: ex.range23, key: k("R23"), family: "goals", why: "הטווח השכיח ביותר במונדיאל" },
+    { label: `מבקיעה ראשונה: ${an}`, p: ex.firstGoalA, key: k("FG1"), family: "halves", why: "מרוץ לשער הראשון לפי תוחלות ההבקעה" },
+    { label: `מבקיעה ראשונה: ${bn}`, p: ex.firstGoalB, key: k("FG2"), family: "halves", why: "מרוץ לשער הראשון לפי תוחלות ההבקעה" },
+    { label: `מחצית ראשונה: ${an} (1)`, p: ex.ht1, key: k("HT1"), family: "halves", why: "יתרון כבר במחצית" },
+    { label: "מחצית ראשונה: תיקו (X)", p: ex.htx, key: k("HTX"), family: "halves", why: "מחציות ראשונות נוטות להיפתח בזהירות — תיקו שכיח" },
+    { label: "שער בשתי המחציות", p: ex.goalBothHalves, key: k("GBH"), family: "halves", why: "קצב שערים שמתפרס על כל המשחק" }
+  ];
+  if (ko) {
+    const advA = MODEL.koAdvanceProb(a, b);
+    c.push(
+      { label: `${an} מעפילה`, p: advA, key: k("ADV1"), family: "result", why: "כולל הארכה ופנדלים — שוק נפרד מ-1X2" },
+      { label: `${bn} מעפילה`, p: 1 - advA, key: k("ADV2"), family: "result", why: "כולל הארכה ופנדלים — שוק נפרד מ-1X2" });
+  }
+  return c;
+}
+
+/* 3 ההמלצות החזקות למשחק: עדיפות לטווח ההסתברויות השימושי (יחס 1.25–2.2),
+   מקסימום המלצה אחת לכל משפחת שווקים — כדי לתת 3 כיוונים שונים באמת */
+function matchTopPicks(a, b, ko) {
+  const sweet = (p) => p >= 0.45 && p <= 0.8 ? 2 : p > 0.8 && p <= 0.88 ? 1 : p >= 0.35 && p < 0.45 ? 1 : 0;
+  const gap = Math.abs(MODEL.effElo(T(a)) - MODEL.effElo(T(b)));
+  const scored = buildMatchCandidates(a, b, ko)
+    .filter(x => x.p >= 0.33 && x.p <= 0.88)
+    .map(x => ({ ...x, conf: MODEL.confidence(x.p, gap), score: sweet(x.p) * 10 + x.p * 5 + MODEL.confidence(x.p, gap) }))
+    .sort((x, y) => y.score - x.score);
+  const picks = [], used = new Set();
+  for (const x of scored) {
+    if (used.has(x.family)) continue;
+    used.add(x.family);
+    picks.push(x);
+    if (picks.length === 3) break;
+  }
+  return picks;
+}
+
+/* ניתוח מילולי אוטומטי למשחק */
+function matchNarrative(a, b, m, lA, lB) {
+  const gap = MODEL.effElo(T(a)) - MODEL.effElo(T(b));
+  const fav = gap >= 0 ? a : b, dog = gap >= 0 ? b : a, ag = Math.abs(gap);
+  const s = [];
+  if (ag >= 250) s.push(`פער כוח גדול: ${T(fav).nameHe} חזקה מ${T(dog).nameHe} ב-${ag} נקודות Elo — תרחיש של שליטה חד-צדדית.`);
+  else if (ag >= 120) s.push(`${T(fav).nameHe} פייבוריטית ברורה (פער ${ag} נק' Elo), אבל לא מובטחת — ${T(dog).nameHe} מסוגלת לגנוב נקודות.`);
+  else s.push(`משחק צמוד: ${ag} נק' Elo בלבד בין הקבוצות — התיקו (${pct1(m.px)}) הוא שחקן מרכזי כאן.`);
+  if (T(a).host || T(b).host) s.push(`${T(a).host ? T(a).nameHe : T(b).nameHe} משחקת בבית — בונוס הביתיות כבר מגולם במספרים.`);
+  const lT = lA + lB;
+  if (lT <= 2.3) s.push(`המודל צופה משחק סגור (${lT.toFixed(1)} שערים בממוצע) — שווקי ה"מתחת" והתוצאות הנמוכות מעניינים.`);
+  else if (lT >= 2.9) s.push(`המודל צופה משחק פתוח (${lT.toFixed(1)} שערים בממוצע) — שווקי ה"מעל" וה-BTTS נכנסים למשחק.`);
+  const defStrong = [a, b].filter(id => (T(id).defMod || 1) <= 0.94);
+  if (defStrong.length) s.push(`${defStrong.map(id => T(id).nameHe).join(" ו")} מביאה הגנה מהחזקות בטורניר.`);
+  return s.join(" ");
+}
+
+function pickCard(x, idx) {
+  const medals = ["🥇", "🥈", "🥉"];
+  const userOdds = ODDS[x.key];
+  const edgeHtml = userOdds
+    ? (MODEL.edge(x.p, userOdds) > 0
+      ? `<span class="pill value-flag">VALUE +${(MODEL.edge(x.p, userOdds) * 100).toFixed(1)}%</span>`
+      : `<span class="pill">Edge ${(MODEL.edge(x.p, userOdds) * 100).toFixed(1)}%</span>`)
+    : "";
+  return `<div class="pick-card">
+    <div class="odds-box"><b>${odds(MODEL.fairOdds(x.p))}</b><span>יחס הוגן</span></div>
+    <div class="pick-body">
+      <div class="pick-title">${medals[idx]} ${x.label} ${edgeHtml}</div>
+      <div class="why">${x.why} · הסתברות: <b>${pct1(x.p)}</b> · ביטחון: <span class="stars">${stars(x.conf)}</span></div>
+      <div class="bar" style="margin-top:6px"><i style="width:${(x.p * 100).toFixed(0)}%"></i></div>
+    </div>
+    <div class="nums">כדאי מ-: <b>${odds(MODEL.minWorthOdds(x.p))}</b><br>
+      יחס ווינר: <input type="number" step="0.01" min="1" data-oddskey="${x.key}" value="${userOdds || ""}" placeholder="הזן"></div>
+  </div>`;
+}
+
 function matchDetail(a, b, ko = false) {
   const res = resultOf(a, b);
   const m = MODEL.markets(T(a), T(b));
@@ -1534,6 +1652,10 @@ function matchDetail(a, b, ko = false) {
         ${ko ? `<span class="pill">נוק-אאוט: 1X2 = 90 דקות בלבד!</span>` : ""}</h3>
     <p class="note">Elo: ${T(a).nameHe} ${MODEL.effElo(T(a))}${T(a).host ? " (כולל ביתיות)" : ""} מול ${T(b).nameHe} ${MODEL.effElo(T(b))}${T(b).host ? " (כולל ביתיות)" : ""}
        · תוחלת שערים: ${lA.toFixed(2)} — ${lB.toFixed(2)}</p>
+    <div class="narrative">🧠 <b>ניתוח:</b> ${matchNarrative(a, b, m, lA, lB)}</div>
+    <h3 style="margin:16px 0 8px">🔥 3 ההמלצות החזקות למשחק</h3>
+    ${matchTopPicks(a, b, ko).map(pickCard).join("")}
+    <h3 style="margin:18px 0 8px">כל השווקים</h3>
     <table class="market-table">
       <tr><th>שוק</th><th>P מודל</th><th>יחס הוגן</th><th>כדאי מ-</th><th>יחס ווינר</th><th>Edge</th></tr>
       ${rows.map(([lbl, p, key]) => `<tr>
