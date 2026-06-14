@@ -125,9 +125,32 @@ input[type=number] { width: 84px; text-align: center; }
 .score-item > span:last-child { text-align: right; }
 .score-item b { color: var(--gold); font-size: 1.1rem; white-space: nowrap; }
 
-/* מאזן ההמלצות */
-.track-banner .track-stat { font-size: 1rem; line-height: 1.8; }
-.track-banner .track-stat b { font-size: 1.15rem; }
+/* מאזן ההמלצות — מספר גדול */
+.track-banner { display: flex; align-items: center; gap: 18px; }
+.track-big {
+  font-size: 3.2rem; font-weight: 800; line-height: 1; min-width: 110px; text-align: center;
+  padding: 14px 6px; border-radius: var(--radius);
+}
+.track-big.good { color: var(--green); background: #11331a; border: 2px solid var(--green); }
+.track-big.bad { color: var(--red); background: #3a1416; border: 2px solid var(--red); }
+.track-text h3 { margin: 0 0 4px; }
+.track-text .track-sub { font-size: 1rem; }
+.track-text .track-sub b { color: var(--gold); font-size: 1.1rem; }
+
+/* תקציר פגיעות בדף משחק */
+.match-verdict {
+  border-radius: 8px; padding: 10px 14px; margin: 6px 0 4px; font-size: .98rem;
+}
+.match-verdict.good { background: #11331a; border: 1px solid var(--green); }
+.match-verdict.bad { background: #3a1416; border: 1px solid var(--red); }
+.match-verdict b { color: var(--gold); }
+
+/* סימון ✓/✗ בתאי טבלה וכרטיסי המלצה */
+.vmark { font-weight: 800; }
+.vmark.ok { color: var(--green); }
+.vmark.bad { color: var(--red); }
+.pick-card.ok { border-color: var(--green); }
+.pick-card.bad { border-color: var(--red); opacity: .85; }
 
 /* משחק שהסתיים — שורות פגע/החטיא */
 .card.finished { opacity: .96; }

@@ -315,11 +315,15 @@ function viewRecs() {
   }
   const rest = recs.filter(r => !valueRecs.includes(r) && !top.includes(r));
   const tr = trackRecord();
+  const successPct = tr.total ? Math.round(tr.hit / tr.total * 100) : 0;
   const trBanner = tr.total
-    ? `<div class="card track-banner"><h3>🎯 מאזן ההמלצות עד כה</h3>
-        <div class="track-stat"><b>${tr.hit}</b> פגעו · <b>${tr.miss}</b> החטיאו · אחוז הצלחה
-        <b class="${tr.hit / tr.total >= 0.5 ? "edge-pos" : "edge-neg"}">${pct1(tr.hit / tr.total)}</b>
-        <span class="note"> (מתוך ${tr.total} ההמלצות החזקות במשחקים שהסתיימו)</span></div></div>`
+    ? `<div class="card track-banner">
+        <div class="track-big ${successPct >= 50 ? "good" : "bad"}">${successPct}%</div>
+        <div class="track-text">
+          <h3>אחוז הצלחת ההמלצות</h3>
+          <div class="track-sub"><b>${tr.hit}</b> מתוך <b>${tr.total}</b> ההמלצות החזקות פגעו${tr.miss ? ` · ${tr.miss} החטיאו` : ""}</div>
+          <div class="note">מתעדכן אוטומטית לפי תוצאות המשחקים שהסתיימו</div>
+        </div></div>`
     : "";
   return `
   ${trBanner}
@@ -375,6 +379,13 @@ function edgeCell(p, key) {
   if (!o) return "<td>—</td>";
   const e = MODEL.edge(p, o);
   return `<td class="${e > 0 ? "edge-pos" : "edge-neg"}">${e > 0 ? "+" : ""}${(e * 100).toFixed(1)}%</td>`;
+}
+// סימון ✓/✗ קטן לתא שם-שוק בטבלה (אם המשחק הסתיים והשוק ניתן לשיפוט)
+function verdictMark(key) {
+  const g = gradeKey(key);
+  if (g === true) return `<span class="vmark ok">✓</span> `;
+  if (g === false) return `<span class="vmark bad">✗</span> `;
+  return "";
 }
 
 /* ---------- מועמדים לכל השווקים של משחק (להמלצות-צמרת) ---------- */
@@ -457,10 +468,12 @@ function pickCard(x, idx) {
       ? `<span class="pill value-flag">VALUE +${(MODEL.edge(x.p, userOdds) * 100).toFixed(1)}%</span>`
       : `<span class="pill">Edge ${(MODEL.edge(x.p, userOdds) * 100).toFixed(1)}%</span>`)
     : "";
-  return `<div class="pick-card">
+  const verdict = gradeKey(x.key);            // ✓/✗ אם המשחק הסתיים והשוק ניתן לשיפוט
+  const cls = verdict === true ? " ok" : verdict === false ? " bad" : "";
+  return `<div class="pick-card${cls}">
     <div class="odds-box"><b>${odds(MODEL.fairOdds(x.p))}</b><span>יחס הוגן</span></div>
     <div class="pick-body">
-      <div class="pick-title">${medals[idx]} ${x.label} ${edgeHtml}</div>
+      <div class="pick-title">${medals[idx]} ${x.label} ${verdictBadge(verdict)} ${edgeHtml}</div>
       <div class="why">${x.why} · הסתברות: <b>${pct1(x.p)}</b> · ביטחון: <span class="stars">${stars(x.conf)}</span></div>
       <div class="bar" style="margin-top:6px"><i style="width:${(x.p * 100).toFixed(0)}%"></i></div>
     </div>
@@ -522,9 +535,19 @@ function matchDetail(a, b, ko = false) {
     // תוצאות מדויקות — 5 הסבירות כשוק
     ...m.topScores.map(s => [`תוצאה מדויקת ${s.h}–${s.a}`, s.p, k(`CS${s.h}${s.a}`)])
   ];
+  // תקציר פגיעות 3 ההמלצות אם המשחק הסתיים
+  let matchVerdict = "";
+  if (res) {
+    const picks = matchTopPicks(a, b, ko);
+    let h = 0, mm = 0;
+    for (const p of picks) { const g = gradeKey(p.key); if (g === true) h++; else if (g === false) mm++; }
+    matchVerdict = `<div class="match-verdict ${h >= mm ? "good" : "bad"}">
+      🎯 מתוך ${h + mm} ההמלצות שנשפטו במשחק זה: <b>${h} פגעו</b>${mm ? ` · ${mm} החטיאו` : ""}</div>`;
+  }
   return `<div class="card" style="margin-top:16px">
-    <h3>${tn(a)} נגד ${tn(b)} ${res ? `<span class="pill">הסתיים ${res} — לעיון בלבד</span>` : ""}
+    <h3>${tn(a)} נגד ${tn(b)} ${res ? `<span class="pill score-pill">הסתיים <span dir="ltr">${res}</span></span>` : ""}
         ${ko ? `<span class="pill">נוק-אאוט: 1X2 = 90 דקות בלבד!</span>` : ""}</h3>
+    ${matchVerdict}
     <p class="note">Elo: ${T(a).nameHe} ${MODEL.effElo(T(a))}${T(a).host ? " (כולל ביתיות)" : ""} מול ${T(b).nameHe} ${MODEL.effElo(T(b))}${T(b).host ? " (כולל ביתיות)" : ""}
        · תוחלת שערים: ${lA.toFixed(2)} — ${lB.toFixed(2)}</p>
     <div class="narrative">🧠 <b>ניתוח:</b> ${matchNarrative(a, b, m, lA, lB)}</div>
@@ -541,7 +564,7 @@ function matchDetail(a, b, ko = false) {
     <table class="market-table">
       <tr><th>שוק</th><th>P מודל</th><th>יחס הוגן</th><th>כדאי מ-</th><th>יחס ווינר</th><th>Edge</th></tr>
       ${rows.map(([lbl, p, key]) => `<tr>
-        <td class="lbl">${lbl}</td><td>${pct1(p)}</td>
+        <td class="lbl">${verdictMark(key)}${lbl}</td><td>${pct1(p)}</td>
         <td class="fair">${odds(MODEL.fairOdds(p))}</td>
         <td>${odds(MODEL.minWorthOdds(p))}</td>
         ${oddsInputCell(key)}${edgeCell(p, key)}
@@ -552,7 +575,7 @@ function matchDetail(a, b, ko = false) {
       <table class="market-table" style="margin-top:10px">
         <tr><th>שוק</th><th>P מודל</th><th>יחס הוגן</th><th>כדאי מ-</th><th>יחס ווינר</th><th>Edge</th></tr>
         ${exRows.map(([lbl, p, key]) => `<tr>
-          <td class="lbl">${lbl}</td><td>${pct1(p)}</td>
+          <td class="lbl">${verdictMark(key)}${lbl}</td><td>${pct1(p)}</td>
           <td class="fair">${odds(MODEL.fairOdds(p))}</td>
           <td>${odds(MODEL.minWorthOdds(p))}</td>
           ${oddsInputCell(key)}${edgeCell(p, key)}

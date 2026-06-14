@@ -45,11 +45,19 @@ if (_hasDayMatches) {
 }
 // מאזן + לוח תוצאות (יש 8 תוצאות במאגר)
 check("לוח תוצאות אחרונות מוצג", htmlRecs.includes("תוצאות אחרונות"));
-check("מאזן ההמלצות מוצג", htmlRecs.includes("מאזן ההמלצות") && (htmlRecs.includes("פגעו") || htmlRecs.includes("החטיאו")));
+check("מאזן ההמלצות מוצג", htmlRecs.includes("אחוז הצלחת ההמלצות") && htmlRecs.includes("פגעו"));
 const tr = trackRecord();
 check("מאזן: סך פגיעות+החטאות > 0", tr.total > 0, `${tr.hit}/${tr.total}`);
 check("gradeKey עובד על תוצאה אמיתית", gradeKey("USA-PAR:1") === true && gradeKey("USA-PAR:U25") === false);
 check("gradeKey מחזיר null למשחק עתידי", gradeKey("ESP-CPV:1") === null);
+check("באנר אחוז הצלחה עם %", htmlRecs.includes("אחוז הצלחת ההמלצות") && /\d+%/.test(htmlRecs));
+// דף משחק שהסתיים מציג פסיקה
+const finishedDetail = matchDetail("USA", "PAR", false);
+check("דף משחק שהסתיים: תקציר פגיעות", finishedDetail.includes("ההמלצות שנשפטו במשחק זה"));
+check("דף משחק שהסתיים: ✓/✗ בכרטיסים/טבלה", finishedDetail.includes("פגעה") || finishedDetail.includes("vmark"));
+// דף משחק עתידי לא מציג פסיקה
+const futureDetail = matchDetail("ESP", "CPV", false);
+check("דף משחק עתידי: ללא פסיקה", !futureDetail.includes("ההמלצות שנשפטו"));
 const htmlGroups = viewGroups();
 check("טאב בתים מרונדר (12 בתים)", (htmlGroups.match(/בית [A-L]</g) || []).length === 12);
 selFixture = ["ESP", "URU"];
