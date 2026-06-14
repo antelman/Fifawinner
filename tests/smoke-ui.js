@@ -36,9 +36,20 @@ const htmlRecs = viewRecs();
 check("טאב המלצות מרונדר", htmlRecs.includes("rec") && htmlRecs.length > 2000);
 check("מקטע משחקי היום/מחר", htmlRecs.includes("משחקי היום") || htmlRecs.includes("משחקי מחר") || htmlRecs.includes("אין משחקים"));
 // ב-12.6 (תאריך הסביבה) יש משחקים בלוח — חייבים כרטיסי משחק עם המלצות
-if (new Date().toISOString().startsWith("2026-06")) {
+// יש משחקים היום/מחר בלוח? רק אז דורשים כרטיסי משחק יומיים
+const _today = new Date().toLocaleDateString("en-CA");
+const _tom = new Date(Date.now() + 864e5).toLocaleDateString("en-CA");
+const _hasDayMatches = DATA.schedule.some(m => (m.d === _today || m.d === _tom) && !resultOf(m.h, m.a));
+if (_hasDayMatches) {
   check("כרטיסי משחק יומיים עם 3 המלצות", htmlRecs.includes("🥇") && htmlRecs.includes("ניתוח מלא"));
 }
+// מאזן + לוח תוצאות (יש 8 תוצאות במאגר)
+check("לוח תוצאות אחרונות מוצג", htmlRecs.includes("תוצאות אחרונות"));
+check("מאזן ההמלצות מוצג", htmlRecs.includes("מאזן ההמלצות") && (htmlRecs.includes("פגעו") || htmlRecs.includes("החטיאו")));
+const tr = trackRecord();
+check("מאזן: סך פגיעות+החטאות > 0", tr.total > 0, `${tr.hit}/${tr.total}`);
+check("gradeKey עובד על תוצאה אמיתית", gradeKey("USA-PAR:1") === true && gradeKey("USA-PAR:U25") === false);
+check("gradeKey מחזיר null למשחק עתידי", gradeKey("ESP-CPV:1") === null);
 const htmlGroups = viewGroups();
 check("טאב בתים מרונדר (12 בתים)", (htmlGroups.match(/בית [A-L]</g) || []).length === 12);
 selFixture = ["ESP", "URU"];

@@ -1,0 +1,51 @@
+name: עדכון תוצאות מונדיאל (פעמיים ביום)
+
+on:
+  schedule:
+    # 07:00 ו-19:00 UTC — אחרי גלי המשחקים של ערב/לילה בארה"ב
+    - cron: "0 7 * * *"
+    - cron: "0 19 * * *"
+  workflow_dispatch: {}   # אפשר גם להריץ ידנית מלשונית Actions
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-results
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: משיכת תוצאות ועדכון המאגר
+        env:
+          SPORTSDB_KEY: ${{ secrets.SPORTSDB_KEY }}   # אופציונלי; ברירת מחדל מפתח חינמי "3"
+        run: node scripts/update-results.js
+
+      - name: בדיקות שפיות
+        run: node tests/sanity.js && node tests/smoke-ui.js
+
+      - name: בניית גרסה עצמאית
+        run: node scripts/build-standalone.js
+
+      - name: Commit & Push אם יש שינוי
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git config user.name "fifawinner-bot"
+            git config user.email "actions@github.com"
+            git add -A
+            git commit -m "עדכון תוצאות אוטומטי ($(date -u +%Y-%m-%d\ %H:%M) UTC)"
+            git push
+            echo "נדחפו עדכונים."
+          else
+            echo "אין שינוי — לא נדחף דבר."
+          fi

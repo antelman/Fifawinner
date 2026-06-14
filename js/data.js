@@ -16,7 +16,7 @@
 
 const DATA = {
   meta: {
-    updated: "2026-06-12",
+    updated: "2026-06-14",
     tournament: "מונדיאל 2026 — ארה\"ב, מקסיקו, קנדה",
     eloNote: "דירוגי הכוח הם הערכות מודל נכון ליוני 2026",
     hostBonus: 50,
@@ -61,10 +61,19 @@ const DATA = {
     { d: "2026-06-27", g: "J", h: "ALG", a: "AUT" }, { d: "2026-06-27", g: "J", h: "JOR", a: "ARG" }, { d: "2026-06-27", g: "K", h: "COL", a: "POR" }, { d: "2026-06-27", g: "K", h: "COD", a: "UZB" }, { d: "2026-06-27", g: "L", h: "PAN", a: "ENG" }, { d: "2026-06-27", g: "L", h: "CRO", a: "GHA" }
   ],
 
-  // תוצאות אמת — מתעדכן ידנית במהלך הטורניר
+  // תוצאות אמת — מתעדכן אוטומטית ע"י .github/workflows/update-results.yml (פעמיים ביום)
+  // וניתן גם ידנית. כיוון home/away חייב להתאים ל-schedule.  עדכון אחרון: 14.6.2026
   results: [
-    { g: "A", home: "MEX", away: "RSA", hg: 2, ag: 0 }, // 11.6 אצטקה
-    { g: "A", home: "KOR", away: "CZE", hg: 2, ag: 1 }  // 11.6 גוודלחרה
+    /* RESULTS:START — נערך אוטומטית; אל תוסיפו טקסט בתוך הבלוק הזה */
+    { g: "A", home: "MEX", away: "RSA", hg: 2, ag: 0 },
+    { g: "A", home: "KOR", away: "CZE", hg: 2, ag: 1 },
+    { g: "B", home: "CAN", away: "BIH", hg: 1, ag: 1 },
+    { g: "D", home: "USA", away: "PAR", hg: 4, ag: 1 },
+    { g: "B", home: "QAT", away: "SUI", hg: 1, ag: 1 },
+    { g: "C", home: "BRA", away: "MAR", hg: 1, ag: 1 },
+    { g: "C", home: "HAI", away: "SCO", hg: 0, ag: 1 },
+    { g: "D", home: "AUS", away: "TUR", hg: 1, ag: 0 }
+    /* RESULTS:END */
   ],
 
   teams: {

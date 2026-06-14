@@ -57,6 +57,20 @@ check("מחצית ראשונה 1X2 ~1", Math.abs(ex.ht1 + ex.htx + ex.ht2 - 1) <
 check("יתרון 0:1 מקטין את סיכויי הפייבוריט", ex.hcapA_minus1.p1 < m.p1);
 check("תיקו במחצית שכיח מתיקו במשחק", ex.htx > m.px);
 
+// 2ג. שיפוט פגע/החטיא (gradeMarket)
+const G = MODEL.gradeMarket;
+check("שיפוט 1 בניצחון בית", G("1", 2, 0) === true && G("1", 0, 1) === false);
+check("שיפוט X בתיקו", G("X", 1, 1) === true && G("X", 2, 1) === false);
+check("שיפוט מתחת 2.5", G("U25", 1, 1) === true && G("U25", 2, 1) === false);
+check("שיפוט מעל 2.5", G("O25", 4, 1) === true && G("O25", 1, 1) === false);
+check("שיפוט BTTS", G("BTTS", 1, 1) === true && G("BTTS", 1, 0) === false);
+check("שיפוט הנדיקאפ 0:1", G("H-1:1", 2, 0) === true && G("H-1:1", 1, 0) === false && G("H-1:X", 1, 0) === true);
+check("שיפוט תוצאה מדויקת", G("CS21", 2, 1) === true && G("CS21", 1, 1) === false);
+check("שיפוט צ'אנס כפול X2", G("X2", 0, 1) === true && G("X2", 2, 0) === false);
+check("שווקי מחצית לא נשפטים", G("HT1", 2, 0) === null && G("FG1", 1, 0) === null);
+// אימות מול תוצאה אמיתית: ארה\"ב 4-1 פרגוואי
+check("USA 4-1: ניצחון בית פגע, מתחת 2.5 החטיא", G("1", 4, 1) === true && G("U25", 4, 1) === false);
+
 // 3. כיול: פער 300 Elo → פייבוריט ~70-78%
 const big = MODEL.markets(DATA.teams.BRA, DATA.teams.SCO); // ~290 פער
 check("פייבוריט בפער ~300 בטווח 65-80%", big.p1 > 0.65 && big.p1 < 0.80, (big.p1 * 100).toFixed(1) + "%");

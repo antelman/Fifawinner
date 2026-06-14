@@ -343,6 +343,43 @@ const MODEL = (() => {
     return out;
   }
 
+  /* ---------- שיפוט שוק מול תוצאת 90 דקות (hg=קבוצה ראשונה, ag=שנייה) ----------
+     מחזיר true=פגע, false=החטיא, null=לא ניתן לשיפוט מהתוצאה הסופית (מחציות וכו') */
+  function gradeMarket(suffix, hg, ag) {
+    const tot = hg + ag;
+    // הנדיקאפ
+    if (suffix.startsWith("H-1:") || suffix.startsWith("H+1:")) {
+      const adj = suffix[1] === "-" ? hg - 1 : hg + 1, out = suffix.slice(4);
+      if (out === "1") return adj > ag;
+      if (out === "X") return adj === ag;
+      if (out === "2") return adj < ag;
+      return null;
+    }
+    // תוצאה מדויקת CSxy
+    if (suffix.startsWith("CS")) {
+      const x = +suffix[2], y = +suffix[3];
+      return hg === x && ag === y;
+    }
+    switch (suffix) {
+      case "1": return hg > ag;
+      case "X": return hg === ag;
+      case "2": return hg < ag;
+      case "1X": return hg >= ag;
+      case "X2": return hg <= ag;
+      case "12": return hg !== ag;
+      case "O15": return tot > 1.5;  case "U15": return tot < 1.5;
+      case "O25": return tot > 2.5;  case "U25": return tot < 2.5;
+      case "O35": return tot > 3.5;  case "U35": return tot < 3.5;
+      case "BTTS": return hg > 0 && ag > 0;
+      case "NBTTS": return !(hg > 0 && ag > 0);
+      case "ODD": return tot % 2 === 1;  case "EVEN": return tot % 2 === 0;
+      case "R01": return tot <= 1;  case "R23": return tot === 2 || tot === 3;  case "R4P": return tot >= 4;
+      case "WB2A": return hg - ag >= 2;  case "WB2B": return ag - hg >= 2;
+      // שווקי מחצית/מבקיעה-ראשונה/העפלה — לא נגזרים מהתוצאה הסופית
+      default: return null;
+    }
+  }
+
   /* ---------- דירוג ביטחון להמלצה (1–5) ---------- */
   function confidence(p, eloGap) {
     let c = 1;
@@ -413,7 +450,7 @@ const MODEL = (() => {
   return {
     lambdas, scoreMatrix, markets, extendedMarkets, fairOdds, minWorthOdds, edge,
     simulateGroups, simulateChampion, groupFixtures, confidence, effElo,
-    koAdvanceProb, koPropagate, koWinProb,
+    koAdvanceProb, koPropagate, koWinProb, gradeMarket,
     EDGE_MARGIN
   };
 })();

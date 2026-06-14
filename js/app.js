@@ -49,6 +49,41 @@ function resultOf(a, b) {
   }
   return null;
 }
+// תוצאה מכוונת לפי סדר הפיקסצ'ר (a=בית, b=חוץ) — לשיפוט שווקים
+function orientedResult(a, b) {
+  for (const r of DATA.results) {
+    if (r.home === a && r.away === b) return { hg: r.hg, ag: r.ag };
+    if (r.home === b && r.away === a) return { hg: r.ag, ag: r.hg };
+  }
+  return null;
+}
+// שיפוט מפתח-יחס (key = "ABC-DEF:suffix") מול התוצאה. null אם אין/לא ניתן.
+function gradeKey(key) {
+  const idx = key.indexOf(":");
+  if (idx < 0) return null;
+  const fix = key.slice(0, idx).split("-"), suffix = key.slice(idx + 1);
+  if (fix.length !== 2) return null;
+  const res = orientedResult(fix[0], fix[1]);
+  if (!res) return null;
+  return MODEL.gradeMarket(suffix, res.hg, res.ag);
+}
+function verdictBadge(hit) {
+  if (hit === true) return `<span class="pill verdict-hit">✓ פגעה</span>`;
+  if (hit === false) return `<span class="pill verdict-miss">✗ החטיאה</span>`;
+  return "";
+}
+// מאזן ההמלצות: כל ה-top-picks של משחקים שהסתיימו
+function trackRecord() {
+  let hit = 0, miss = 0;
+  for (const fx of DATA.schedule) {
+    if (!orientedResult(fx.h, fx.a)) continue;
+    for (const p of matchTopPicks(fx.h, fx.a, false)) {
+      const g = gradeKey(p.key);
+      if (g === true) hit++; else if (g === false) miss++;
+    }
+  }
+  return { hit, miss, total: hit + miss };
+}
 
 /* ---------- אתחול ---------- */
 // כל שגיאה — על המסך במקום תקיעה שקטה על מסך הטעינה
@@ -213,16 +248,48 @@ function hebDate(iso) {
   return new Date(iso + "T12:00:00").toLocaleDateString("he-IL", { weekday: "long", day: "numeric", month: "numeric" });
 }
 
-/* כרטיס משחק יומי: כותרת + 3 ההמלצות שלו */
+/* כרטיס משחק יומי: כותרת + 3 ההמלצות שלו (פגע/החטיא אם הסתיים) */
 function dayMatchCard(fx) {
   const res = resultOf(fx.h, fx.a);
   const head = `<h3>${tn(fx.h)} <span class="vs">נגד</span> ${tn(fx.a)}
-    <span class="pill">בית ${fx.g}${fx.est ? " · תאריך משוער" : ""}</span></h3>`;
-  if (res) return `<div class="card">${head}<p class="note">הסתיים ${res} ✔️ — התוצאה מקובעת בסימולציה</p></div>`;
+    <span class="pill">בית ${fx.g}${fx.est ? " · תאריך משוער" : ""}</span>
+    ${res ? `<span class="pill score-pill">הסתיים ${res}</span>` : ""}</h3>`;
+  const picks = matchTopPicks(fx.h, fx.a, false);
+  if (res) {
+    // משחק שהסתיים: מציג את ההמלצות שניתנו עם פסיקת פגע/החטיא
+    const rows = picks.map(p => {
+      const g = gradeKey(p.key);
+      return `<div class="settled-row ${g === true ? "ok" : g === false ? "bad" : ""}">
+        <span>${p.label}</span> ${verdictBadge(g)}</div>`;
+    }).join("");
+    return `<div class="card finished">${head}
+      <div class="settled-list">${rows}</div>
+      <button class="tab-btn open-match" data-g="${fx.g}" data-h="${fx.h}" data-a="${fx.a}"
+        style="padding:5px 14px;font-size:.85rem;margin-top:8px">📊 פירוט</button></div>`;
+  }
   return `<div class="card">${head}
-    ${matchTopPicks(fx.h, fx.a, false).map(pickCard).join("")}
+    ${picks.map(pickCard).join("")}
     <button class="tab-btn open-match" data-g="${fx.g}" data-h="${fx.h}" data-a="${fx.a}"
       style="padding:6px 16px;font-size:.9rem">📊 ניתוח מלא + כל השווקים</button>
+  </div>`;
+}
+
+// לוח תוצאות אחרונות (עד 6 משחקים אחרונים שהסתיימו, לפי סדר הלוח)
+function scoreboardHtml() {
+  const finished = DATA.schedule.filter(fx => orientedResult(fx.h, fx.a));
+  if (!finished.length) return "";
+  const recent = finished.slice(-6).reverse();
+  return `<div class="card scoreboard">
+    <h3>📋 תוצאות אחרונות <span class="pill">${DATA.meta.updated}</span></h3>
+    <div class="score-grid">
+      ${recent.map(fx => {
+        const r = orientedResult(fx.h, fx.a);
+        return `<div class="score-item">
+          <span>${T(fx.h).flag} ${T(fx.h).nameHe}</span>
+          <b>${r.hg} – ${r.ag}</b>
+          <span>${T(fx.a).nameHe} ${T(fx.a).flag}</span></div>`;
+      }).join("")}
+    </div>
   </div>`;
 }
 
@@ -247,7 +314,16 @@ function viewRecs() {
     if (top.length === 5) break;
   }
   const rest = recs.filter(r => !valueRecs.includes(r) && !top.includes(r));
+  const tr = trackRecord();
+  const trBanner = tr.total
+    ? `<div class="card track-banner"><h3>🎯 מאזן ההמלצות עד כה</h3>
+        <div class="track-stat"><b>${tr.hit}</b> פגעו · <b>${tr.miss}</b> החטיאו · אחוז הצלחה
+        <b class="${tr.hit / tr.total >= 0.5 ? "edge-pos" : "edge-neg"}">${pct1(tr.hit / tr.total)}</b>
+        <span class="note"> (מתוך ${tr.total} ההמלצות החזקות במשחקים שהסתיימו)</span></div></div>`
+    : "";
   return `
+  ${trBanner}
+  ${scoreboardHtml()}
   ${valueRecs.length ? `<div class="card"><h3>💎 הימורי ערך מאומתים (לפי היחסים שהזנת)</h3>${valueRecs.map(recHtml).join("")}</div>` : ""}
   ${daySection("⚽ משחקי היום — " + hebDate(today), todayFx)}
   ${daySection("📅 משחקי מחר — " + hebDate(tomorrow), tomFx)}
