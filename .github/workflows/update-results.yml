@@ -1,9 +1,10 @@
-name: עדכון תוצאות מונדיאל (פעמיים ביום)
+name: עדכון תוצאות מונדיאל (שלוש פעמים ביום)
 
 on:
   schedule:
-    # 07:00 ו-19:00 UTC — אחרי גלי המשחקים של ערב/לילה בארה"ב
-    - cron: "0 7 * * *"
+    # 03:00, 11:00, 19:00 UTC — אחרי גלי המשחקים השונים (אמריקה/אירופה)
+    - cron: "0 3 * * *"
+    - cron: "0 11 * * *"
     - cron: "0 19 * * *"
   workflow_dispatch: {}   # אפשר גם להריץ ידנית מלשונית Actions
 
@@ -28,7 +29,7 @@ jobs:
 
       - name: משיכת תוצאות ועדכון המאגר
         env:
-          SPORTSDB_KEY: ${{ secrets.SPORTSDB_KEY }}   # אופציונלי; ברירת מחדל מפתח חינמי "3"
+          FOOTBALL_DATA_KEY: ${{ secrets.FOOTBALL_DATA_KEY }}   # מפתח חינמי מ-football-data.org
         run: node scripts/update-results.js
 
       - name: בדיקות שפיות
