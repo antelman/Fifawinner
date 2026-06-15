@@ -95,6 +95,10 @@ window.addEventListener("error", (e) => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
+  // תאריך עדכון הנתונים בפוטר — דינמי מ-DATA.meta.updated (YYYY-MM-DD → D.M.YYYY)
+  const _dd = (DATA.meta.updated || "").split("-");
+  const _ddEl = document.getElementById("dataDate");
+  if (_ddEl && _dd.length === 3) _ddEl.textContent = `${+_dd[2]}.${+_dd[1]}.${_dd[0]}`;
   document.querySelectorAll(".tab-btn").forEach(btn =>
     btn.addEventListener("click", () => {
       document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
