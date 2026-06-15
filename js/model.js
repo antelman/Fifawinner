@@ -156,6 +156,8 @@ const MODEL = (() => {
     return {
       hcapA_minus1: handicap(-1),  // הקבוצה הראשונה פותחת ב-0:1
       hcapA_plus1: handicap(1),    // הקבוצה הראשונה פותחת ב-1:0
+      hcapA_minus2: handicap(-2),  // הקבוצה הראשונה פותחת ב-0:2 (קו ה-+2 של ווינר)
+      hcapA_plus2: handicap(2),    // הקבוצה הראשונה פותחת ב-2:0
       range01: r01, range23: r23, range4plus: r4p,
       odd, even: 1 - odd,
       winBy2A, winBy2B,
@@ -347,13 +349,13 @@ const MODEL = (() => {
      מחזיר true=פגע, false=החטיא, null=לא ניתן לשיפוט מהתוצאה הסופית (מחציות וכו') */
   function gradeMarket(suffix, hg, ag) {
     const tot = hg + ag;
-    // הנדיקאפ
-    if (suffix.startsWith("H-1:") || suffix.startsWith("H+1:")) {
-      const adj = suffix[1] === "-" ? hg - 1 : hg + 1, out = suffix.slice(4);
+    // הנדיקאפ (H±N: שערי הקבוצה הראשונה אחרי הוספת ההנדיקאפ)
+    const hc = suffix.match(/^H([+-]\d+):(1|X|2)$/);
+    if (hc) {
+      const adj = hg + parseInt(hc[1], 10), out = hc[2];
       if (out === "1") return adj > ag;
       if (out === "X") return adj === ag;
-      if (out === "2") return adj < ag;
-      return null;
+      return adj < ag;
     }
     // תוצאה מדויקת CSxy
     if (suffix.startsWith("CS")) {

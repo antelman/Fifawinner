@@ -54,7 +54,9 @@ check("מבקיעה ראשונה מסתכם ל-1", Math.abs(ex.firstGoalA + ex.f
 const htftSum = Object.values(ex.htft).reduce((s, p) => s + p, 0);
 check("מחצית/סיום (9 צירופים) ~1", Math.abs(htftSum - 1) < 0.01, htftSum.toFixed(4));
 check("מחצית ראשונה 1X2 ~1", Math.abs(ex.ht1 + ex.htx + ex.ht2 - 1) < 0.01);
+check("יתרון 0:2 מסתכם ל-1", Math.abs(ex.hcapA_minus2.p1 + ex.hcapA_minus2.px + ex.hcapA_minus2.p2 - 1) < 1e-9);
 check("יתרון 0:1 מקטין את סיכויי הפייבוריט", ex.hcapA_minus1.p1 < m.p1);
+check("יתרון 0:2 קשה יותר מ-0:1 לפייבוריט", ex.hcapA_minus2.p1 < ex.hcapA_minus1.p1);
 check("תיקו במחצית שכיח מתיקו במשחק", ex.htx > m.px);
 
 // 2ג. שיפוט פגע/החטיא (gradeMarket)
@@ -65,6 +67,7 @@ check("שיפוט מתחת 2.5", G("U25", 1, 1) === true && G("U25", 2, 1) === f
 check("שיפוט מעל 2.5", G("O25", 4, 1) === true && G("O25", 1, 1) === false);
 check("שיפוט BTTS", G("BTTS", 1, 1) === true && G("BTTS", 1, 0) === false);
 check("שיפוט הנדיקאפ 0:1", G("H-1:1", 2, 0) === true && G("H-1:1", 1, 0) === false && G("H-1:X", 1, 0) === true);
+check("שיפוט הנדיקאפ 0:2", G("H-2:1", 3, 0) === true && G("H-2:1", 2, 0) === false && G("H-2:X", 2, 0) === true && G("H-2:2", 1, 0) === true);
 check("שיפוט תוצאה מדויקת", G("CS21", 2, 1) === true && G("CS21", 1, 1) === false);
 check("שיפוט צ'אנס כפול X2", G("X2", 0, 1) === true && G("X2", 2, 0) === false);
 check("שווקי מחצית לא נשפטים", G("HT1", 2, 0) === null && G("FG1", 1, 0) === null);
