@@ -16,7 +16,7 @@
 
 const DATA = {
   meta: {
-    updated: "2026-06-14",
+    updated: "2026-06-15",
     tournament: "מונדיאל 2026 — ארה\"ב, מקסיקו, קנדה",
     eloNote: "דירוגי הכוח הם הערכות מודל נכון ליוני 2026",
     hostBonus: 50,
@@ -72,7 +72,13 @@ const DATA = {
     { g: "B", home: "QAT", away: "SUI", hg: 1, ag: 1 },
     { g: "C", home: "BRA", away: "MAR", hg: 1, ag: 1 },
     { g: "C", home: "HAI", away: "SCO", hg: 0, ag: 1 },
-    { g: "D", home: "AUS", away: "TUR", hg: 1, ag: 0 }
+    { g: "D", home: "AUS", away: "TUR", hg: 1, ag: 0 },
+    { g: "E", home: "GER", away: "CUR", hg: 7, ag: 1 },
+    { g: "E", home: "CIV", away: "ECU", hg: 1, ag: 0 },
+    { g: "F", home: "NED", away: "JPN", hg: 2, ag: 2 },
+    { g: "F", home: "SWE", away: "TUN", hg: 5, ag: 1 },
+    { g: "H", home: "ESP", away: "CPV", hg: 0, ag: 0 },
+    { g: "G", home: "BEL", away: "EGY", hg: 1, ag: 1 }
     /* RESULTS:END */
   ],
 
