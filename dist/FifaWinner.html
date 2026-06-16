@@ -116,6 +116,8 @@ input[type=number] { width: 84px; text-align: center; }
 .rec .nums b { color: var(--text); }
 .stars { color: var(--gold); letter-spacing: 2px; }
 
+img.flag { display: inline-block; vertical-align: -3px; width: 27px; height: 20px; object-fit: cover; border-radius: 3px; box-shadow: 0 0 0 1px rgba(0,0,0,.25); }
+
 .pill { display: inline-block; background: var(--bg3); border-radius: 999px; padding: 2px 10px; font-size: .78rem; color: var(--muted); margin-inline-start: 6px; }
 .value-flag { background: #11331a; color: var(--green); border: 1px solid var(--green); }
 .verdict-hit { background: #11331a; color: var(--green); border: 1px solid var(--green); }
@@ -355,7 +357,7 @@ const DATA = {
   teams: {
     /* ===== בית A ===== */
     MEX: {
-      nameHe: "מקסיקו", nameEn: "Mexico", flag: "🇲🇽", confed: "CONCACAF",
+      nameHe: "מקסיקו", nameEn: "Mexico", flag: "🇲🇽", iso: "mx", confed: "CONCACAF",
       elo: 1850, fifa: 14, host: true, tier: 3, attMod: 1.0, defMod: 1.0,
       coach: "חאבייר אגירה",
       stars: ["סנטיאגו חימנס", "אדסון אלברס", "לואיס מאליגון"],
@@ -367,7 +369,7 @@ const DATA = {
       note: "ביתיות + גובה + קהל = פייבוריטית ברורה לזכייה בבית A"
     },
     RSA: {
-      nameHe: "דרום אפריקה", nameEn: "South Africa", flag: "🇿🇦", confed: "CAF",
+      nameHe: "דרום אפריקה", nameEn: "South Africa", flag: "🇿🇦", iso: "za", confed: "CAF",
       elo: 1625, fifa: 55, host: false, tier: 4, attMod: 0.95, defMod: 0.95,
       coach: "הוגו ברוס",
       stars: ["רונוון וויליאמס (שוער)", "תמבה זוואנה", "לייל פוסטר"],
@@ -378,7 +380,7 @@ const DATA = {
       note: "פתחה בהפסד 0-2 למקסיקו. תתקשה מול קוריאה וצ'כיה על מקום 3"
     },
     KOR: {
-      nameHe: "דרום קוריאה", nameEn: "South Korea", flag: "🇰🇷", confed: "AFC",
+      nameHe: "דרום קוריאה", nameEn: "South Korea", flag: "🇰🇷", iso: "kr", confed: "AFC",
       elo: 1785, fifa: 22, host: false, tier: 3, attMod: 1.0, defMod: 1.0,
       coach: "הונג מיונג-בו",
       stars: ["סון הונג-מין", "לי קאנג-אין", "קים מין-ג'ה"],
@@ -390,7 +392,7 @@ const DATA = {
       note: "פתחה ב-2-1 דרמטי על צ'כיה — דריסת רגל חזקה למקום 2 בבית"
     },
     CZE: {
-      nameHe: "צ'כיה", nameEn: "Czechia", flag: "🇨🇿", confed: "UEFA",
+      nameHe: "צ'כיה", nameEn: "Czechia", flag: "🇨🇿", iso: "cz", confed: "UEFA",
       elo: 1715, fifa: 35, host: false, tier: 3, attMod: 1.0, defMod: 0.97,
       coach: "איוון האשק",
       stars: ["פטריק שיק", "אדם הלוז'ק", "לוקאש פרובוד"],
@@ -403,7 +405,7 @@ const DATA = {
 
     /* ===== בית B ===== */
     CAN: {
-      nameHe: "קנדה", nameEn: "Canada", flag: "🇨🇦", confed: "CONCACAF",
+      nameHe: "קנדה", nameEn: "Canada", flag: "🇨🇦", iso: "ca", confed: "CONCACAF",
       elo: 1770, fifa: 30, host: true, tier: 3, attMod: 1.03, defMod: 1.0,
       coach: "ג'סי מארש",
       stars: ["אלפונסו דייוויס", "ג'ונתן דייוויד", "סטיבן אוסטאקיו"],
@@ -414,7 +416,7 @@ const DATA = {
       note: "ביתיות בטורונטו/ונקובר. מועמדת אמיתית לזכייה בבית מול שווייץ"
     },
     SUI: {
-      nameHe: "שווייץ", nameEn: "Switzerland", flag: "🇨🇭", confed: "UEFA",
+      nameHe: "שווייץ", nameEn: "Switzerland", flag: "🇨🇭", iso: "ch", confed: "UEFA",
       elo: 1835, fifa: 16, host: false, tier: 3, attMod: 0.98, defMod: 0.95,
       coach: "מוראט יאקין",
       stars: ["גרניט ג'אקה", "מנואל אקנג'י", "דן נדוי", "ברל אמבולו"],
@@ -425,7 +427,7 @@ const DATA = {
       note: "הנבחרת המדורגת בבית B, אבל קנדה המארחת — קרב צמוד על המקום הראשון"
     },
     QAT: {
-      nameHe: "קטאר", nameEn: "Qatar", flag: "🇶🇦", confed: "AFC",
+      nameHe: "קטאר", nameEn: "Qatar", flag: "🇶🇦", iso: "qa", confed: "AFC",
       elo: 1615, fifa: 52, host: false, tier: 4, attMod: 0.97, defMod: 1.0,
       coach: "ז'ולן לופטגי",
       stars: ["אכרם עפיף", "אלמועז עלי"],
@@ -436,7 +438,7 @@ const DATA = {
       note: "מועמדת טבעית למקום האחרון בבית, אך מסוכנת מקטאר 2022"
     },
     BIH: {
-      nameHe: "בוסניה והרצגובינה", nameEn: "Bosnia & Herzegovina", flag: "🇧🇦", confed: "UEFA",
+      nameHe: "בוסניה והרצגובינה", nameEn: "Bosnia & Herzegovina", flag: "🇧🇦", iso: "ba", confed: "UEFA",
       elo: 1660, fifa: 44, host: false, tier: 4, attMod: 1.0, defMod: 1.02,
       coach: "סרגיי ברברז",
       stars: ["אדין ג'קו (40!)", "אניס חאיירוביץ'", "ניקולא קטיץ'"],
@@ -449,7 +451,7 @@ const DATA = {
 
     /* ===== בית C ===== */
     BRA: {
-      nameHe: "ברזיל", nameEn: "Brazil", flag: "🇧🇷", confed: "CONMEBOL",
+      nameHe: "ברזיל", nameEn: "Brazil", flag: "🇧🇷", iso: "br", confed: "CONMEBOL",
       elo: 2020, fifa: 6, host: false, tier: 1, attMod: 1.05, defMod: 1.0,
       coach: "קרלו אנצ'לוטי (מ-2025)",
       stars: ["ויניסיוס ז'וניור", "רפיניה", "רודריגו", "אליסון"],
@@ -460,7 +462,7 @@ const DATA = {
       note: "מדורגת 6 אך השוק מתמחר אותה גבוה (11%) — זהירות מפרמיית המותג"
     },
     MAR: {
-      nameHe: "מרוקו", nameEn: "Morocco", flag: "🇲🇦", confed: "CAF",
+      nameHe: "מרוקו", nameEn: "Morocco", flag: "🇲🇦", iso: "ma", confed: "CAF",
       elo: 1900, fifa: 11, host: false, tier: 2, attMod: 0.97, defMod: 0.90,
       coach: "וליד רגרגי",
       stars: ["אשרף חכימי", "בראהים דיאז", "אזדין אונאחי", "יאסין בונו"],
@@ -471,7 +473,7 @@ const DATA = {
       note: "המתחרה האמיתית של ברזיל בבית C — ערך אפשרי בשוק 'זוכת הבית'"
     },
     HAI: {
-      nameHe: "האיטי", nameEn: "Haiti", flag: "🇭🇹", confed: "CONCACAF",
+      nameHe: "האיטי", nameEn: "Haiti", flag: "🇭🇹", iso: "ht", confed: "CONCACAF",
       elo: 1490, fifa: 85, host: false, tier: 5, attMod: 1.0, defMod: 1.05,
       coach: "סבסטיאן מיניה",
       stars: ["דאקנס נזון", "פרנצדי פיירו", "דני בלמי"],
@@ -482,7 +484,7 @@ const DATA = {
       note: "האנדרדוג הגדול בטורניר יחד עם קוראסאו. מול ברזיל — פער של ~530 נק' Elo"
     },
     SCO: {
-      nameHe: "סקוטלנד", nameEn: "Scotland", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", confed: "UEFA",
+      nameHe: "סקוטלנד", nameEn: "Scotland", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", iso: "gb-sct", confed: "UEFA",
       elo: 1730, fifa: 38, host: false, tier: 3, attMod: 0.98, defMod: 1.0,
       coach: "סטיב קלארק",
       stars: ["סקוט מקטומיניי", "אנדי רוברטסון", "ג'ון מקגין", "בילי גילמור"],
@@ -495,7 +497,7 @@ const DATA = {
 
     /* ===== בית D ===== */
     USA: {
-      nameHe: "ארה\"ב", nameEn: "United States", flag: "🇺🇸", confed: "CONCACAF",
+      nameHe: "ארה\"ב", nameEn: "United States", flag: "🇺🇸", iso: "us", confed: "CONCACAF",
       elo: 1790, fifa: 17, host: true, tier: 2, attMod: 1.0, defMod: 1.0,
       coach: "מאוריסיו פוצ'טינו (מ-2024)",
       stars: ["כריסטיאן פוליסיץ'", "וסטון מקני", "אנטוני רובינסון", "מאט טרנר"],
@@ -506,7 +508,7 @@ const DATA = {
       note: "ביתיות אמיתית אך בית D הוא אולי הצמוד בטורניר — טורקיה מסוכנת מאוד"
     },
     PAR: {
-      nameHe: "פרגוואי", nameEn: "Paraguay", flag: "🇵🇾", confed: "CONMEBOL",
+      nameHe: "פרגוואי", nameEn: "Paraguay", flag: "🇵🇾", iso: "py", confed: "CONMEBOL",
       elo: 1780, fifa: 25, host: false, tier: 3, attMod: 0.95, defMod: 0.93,
       coach: "גוסטבו אלפארו",
       stars: ["מיגל אלמירון", "חוליו אנסיסו", "אנטוניו סנאברה"],
@@ -517,7 +519,7 @@ const DATA = {
       note: "טיפוסית ל-0-0 ו-1-0. שוק 'מתחת 2.5' במשחקיה — כיוון קבוע"
     },
     AUS: {
-      nameHe: "אוסטרליה", nameEn: "Australia", flag: "🇦🇺", confed: "AFC",
+      nameHe: "אוסטרליה", nameEn: "Australia", flag: "🇦🇺", iso: "au", confed: "AFC",
       elo: 1725, fifa: 26, host: false, tier: 4, attMod: 0.96, defMod: 0.97,
       coach: "טוני פופוביץ'",
       stars: ["ג'קסון אירווין", "ריילי מקגרי", "מתיו ראיין"],
@@ -528,7 +530,7 @@ const DATA = {
       note: "בבית D היא האנדרדוג — אך גם היריבה הנוחה ביותר לנקודות עבור כולן"
     },
     TUR: {
-      nameHe: "טורקיה", nameEn: "Türkiye", flag: "🇹🇷", confed: "UEFA",
+      nameHe: "טורקיה", nameEn: "Türkiye", flag: "🇹🇷", iso: "tr", confed: "UEFA",
       elo: 1845, fifa: 23, host: false, tier: 2, attMod: 1.06, defMod: 1.06,
       coach: "וינצ'נצו מונטלה",
       stars: ["ארדה גולר", "קנן יילדיז", "האקאן צ'להאנולו", "פרדי קדיאולו"],
@@ -541,7 +543,7 @@ const DATA = {
 
     /* ===== בית E ===== */
     GER: {
-      nameHe: "גרמניה", nameEn: "Germany", flag: "🇩🇪", confed: "UEFA",
+      nameHe: "גרמניה", nameEn: "Germany", flag: "🇩🇪", iso: "de", confed: "UEFA",
       elo: 1955, fifa: 9, host: false, tier: 1, attMod: 1.04, defMod: 1.02,
       coach: "יוליאן נאגלסמן",
       stars: ["ג'מאל מוסיאלה", "פלוריאן וירץ", "יושוע קימיך", "קאי האברץ"],
@@ -552,7 +554,7 @@ const DATA = {
       note: "בית E נוח מאוד — הדרך לזכייה בבית סלולה. השאלה היא הנוק-אאוט"
     },
     CUR: {
-      nameHe: "קוראסאו", nameEn: "Curaçao", flag: "🇨🇼", confed: "CONCACAF",
+      nameHe: "קוראסאו", nameEn: "Curaçao", flag: "🇨🇼", iso: "cw", confed: "CONCACAF",
       elo: 1500, fifa: 82, host: false, tier: 5, attMod: 0.95, defMod: 1.05,
       coach: "דיק אדבוקאט (78!)",
       stars: ["לאנדרו בקונה", "ג'ורדן פאיו", "טאהית' צ'ונג"],
@@ -563,7 +565,7 @@ const DATA = {
       note: "מול גרמניה והולנד-לשעבר שלה — סיפור אגדה. ריאלית: מקום אחרון, אך תמכור את עורה ביוקר"
     },
     CIV: {
-      nameHe: "חוף השנהב", nameEn: "Côte d'Ivoire", flag: "🇨🇮", confed: "CAF",
+      nameHe: "חוף השנהב", nameEn: "Côte d'Ivoire", flag: "🇨🇮", iso: "ci", confed: "CAF",
       elo: 1750, fifa: 41, host: false, tier: 3, attMod: 1.0, defMod: 0.98,
       coach: "אמרס פאה",
       stars: ["סבסטיאן האלר", "פרנק קסיה", "אמאד דיאלו", "סימון אדינגרה"],
@@ -574,7 +576,7 @@ const DATA = {
       note: "המועמדת הטבעית למקום 2 בבית E מול אקוודור — מאבק חזק"
     },
     ECU: {
-      nameHe: "אקוודור", nameEn: "Ecuador", flag: "🇪🇨", confed: "CONMEBOL",
+      nameHe: "אקוודור", nameEn: "Ecuador", flag: "🇪🇨", iso: "ec", confed: "CONMEBOL",
       elo: 1875, fifa: 12, host: false, tier: 2, attMod: 0.96, defMod: 0.90,
       coach: "סבסטיאן בקאסה",
       stars: ["מויסס קאיסדו", "פיירו הינקפיה", "קנדי פאז'ו", "ויליאן פאצ'ו"],
@@ -587,7 +589,7 @@ const DATA = {
 
     /* ===== בית F ===== */
     NED: {
-      nameHe: "הולנד", nameEn: "Netherlands", flag: "🇳🇱", confed: "UEFA",
+      nameHe: "הולנד", nameEn: "Netherlands", flag: "🇳🇱", iso: "nl", confed: "UEFA",
       elo: 1985, fifa: 7, host: false, tier: 1, attMod: 1.02, defMod: 0.98,
       coach: "רונלד קומאן",
       stars: ["וירג'יל ון דייק", "פרנקי דה יונג", "קודי חאקפו", "מיקי ון דה ון"],
@@ -598,7 +600,7 @@ const DATA = {
       note: "פייבוריטית ענקית בבית F. הסכנה היחידה: יפן במשחק ישיר"
     },
     JPN: {
-      nameHe: "יפן", nameEn: "Japan", flag: "🇯🇵", confed: "AFC",
+      nameHe: "יפן", nameEn: "Japan", flag: "🇯🇵", iso: "jp", confed: "AFC",
       elo: 1880, fifa: 18, host: false, tier: 2, attMod: 1.02, defMod: 0.96,
       coach: "האג'ימה מוריאסו",
       stars: ["קאורו מיטומה", "טאקפוסה קובו", "וואטארו אנדו", "טאקהירו טומיאסו"],
@@ -609,7 +611,7 @@ const DATA = {
       note: "הדארק-הורס המוצהר של 2026. מול הולנד — משחק צמרת אמיתי, לא לפי השם"
     },
     SWE: {
-      nameHe: "שוודיה", nameEn: "Sweden", flag: "🇸🇪", confed: "UEFA",
+      nameHe: "שוודיה", nameEn: "Sweden", flag: "🇸🇪", iso: "se", confed: "UEFA",
       elo: 1700, fifa: 37, host: false, tier: 3, attMod: 1.08, defMod: 1.05,
       coach: "גרהאם פוטר (מאוקטובר 2025)",
       stars: ["ויקטור יוקרש", "אלכסנדר איסאק", "דייאן קולושבסקי", "אנתוני אלאנגה"],
@@ -620,7 +622,7 @@ const DATA = {
       note: "הנבחרת הכי לא-יציבה בטורניר: יכולה להפסיד לתוניסיה ולנצח את הולנד. Over במשחקיה"
     },
     TUN: {
-      nameHe: "תוניסיה", nameEn: "Tunisia", flag: "🇹🇳", confed: "CAF",
+      nameHe: "תוניסיה", nameEn: "Tunisia", flag: "🇹🇳", iso: "tn", confed: "CAF",
       elo: 1695, fifa: 43, host: false, tier: 4, attMod: 0.93, defMod: 0.92,
       coach: "סמי טראבלסי",
       stars: ["חניבעל מג'ברי", "איסם ג'באלי", "עאיסה לאידוני"],
@@ -633,7 +635,7 @@ const DATA = {
 
     /* ===== בית G ===== */
     BEL: {
-      nameHe: "בלגיה", nameEn: "Belgium", flag: "🇧🇪", confed: "UEFA",
+      nameHe: "בלגיה", nameEn: "Belgium", flag: "🇧🇪", iso: "be", confed: "UEFA",
       elo: 1865, fifa: 8, host: false, tier: 2, attMod: 1.03, defMod: 1.04,
       coach: "רודי גארסיה",
       stars: ["קווין דה בריינה (35)", "ז'רמי דוקו", "לואיס אופנדה", "אמדו אונאנה"],
@@ -644,7 +646,7 @@ const DATA = {
       note: "פייבוריטית בבית G אך הכי-פחות-יציבה מבין המדורגות. מצרים ואיראן ינסו לחנוק אותה"
     },
     EGY: {
-      nameHe: "מצרים", nameEn: "Egypt", flag: "🇪🇬", confed: "CAF",
+      nameHe: "מצרים", nameEn: "Egypt", flag: "🇪🇬", iso: "eg", confed: "CAF",
       elo: 1745, fifa: 32, host: false, tier: 3, attMod: 0.96, defMod: 0.94,
       coach: "חוסאם חסן",
       stars: ["מוחמד סלאח (34)", "עומר מרמוש", "מוחמד עבד אל-מונעם"],
@@ -655,7 +657,7 @@ const DATA = {
       note: "מול בלגיה הפגיעה — סלאח ומרמוש במעברים זה תרחיש אמיתי. X2 שווה בדיקה"
     },
     IRN: {
-      nameHe: "איראן", nameEn: "Iran", flag: "🇮🇷", confed: "AFC",
+      nameHe: "איראן", nameEn: "Iran", flag: "🇮🇷", iso: "ir", confed: "AFC",
       elo: 1755, fifa: 21, host: false, tier: 4, attMod: 0.95, defMod: 0.95,
       coach: "אמיר קלענואי",
       stars: ["מהדי טארמי", "סרדאר אזמון", "אליראזה ג'הנבחש"],
@@ -666,7 +668,7 @@ const DATA = {
       note: "הבית הנוח ביותר שהיה לה אי-פעם — הסיכוי הטוב בהיסטוריה לשמינית ראשונה"
     },
     NZL: {
-      nameHe: "ניו זילנד", nameEn: "New Zealand", flag: "🇳🇿", confed: "OFC",
+      nameHe: "ניו זילנד", nameEn: "New Zealand", flag: "🇳🇿", iso: "nz", confed: "OFC",
       elo: 1560, fifa: 80, host: false, tier: 5, attMod: 0.95, defMod: 1.0,
       coach: "דארן בייזלי",
       stars: ["כריס ווד", "ליברטו קקאצ'ה", "מרקו סטמניץ'"],
@@ -679,7 +681,7 @@ const DATA = {
 
     /* ===== בית H ===== */
     ESP: {
-      nameHe: "ספרד", nameEn: "Spain", flag: "🇪🇸", confed: "UEFA",
+      nameHe: "ספרד", nameEn: "Spain", flag: "🇪🇸", iso: "es", confed: "UEFA",
       elo: 2165, fifa: 2, host: false, tier: 1, attMod: 1.05, defMod: 0.95,
       coach: "לואיס דה לה פואנטה",
       stars: ["לאמין יאמאל", "פדרי", "ניקו וויליאמס", "רודרי", "אונאי סימון"],
@@ -690,7 +692,7 @@ const DATA = {
       note: "הפייבוריטית המוצדקת של הטורניר. בית H הוא מסדרון: אורוגוואי = המבחן היחיד"
     },
     CPV: {
-      nameHe: "קייפ ורדה", nameEn: "Cape Verde", flag: "🇨🇻", confed: "CAF",
+      nameHe: "קייפ ורדה", nameEn: "Cape Verde", flag: "🇨🇻", iso: "cv", confed: "CAF",
       elo: 1575, fifa: 70, host: false, tier: 5, attMod: 0.95, defMod: 1.0,
       coach: "בובישטה",
       stars: ["ריאן מנדס", "דיילון ליבראמנטו", "לוגאן קוסטה"],
@@ -701,7 +703,7 @@ const DATA = {
       note: "תפגוש את רונאלדו... רגע, לא — את ספרד. המטרה: לא 0-7. כל נקודה = נס"
     },
     KSA: {
-      nameHe: "ערב הסעודית", nameEn: "Saudi Arabia", flag: "🇸🇦", confed: "AFC",
+      nameHe: "ערב הסעודית", nameEn: "Saudi Arabia", flag: "🇸🇦", iso: "sa", confed: "AFC",
       elo: 1635, fifa: 58, host: false, tier: 4, attMod: 0.97, defMod: 1.02,
       coach: "הרווה רנאר (חזר ב-2024)",
       stars: ["סאלם אל-דוסארי", "פיראס אל-בריקאן", "מוחמד קאנו"],
@@ -712,7 +714,7 @@ const DATA = {
       note: "הוכיחה ב-2022 שהיא מסוגלת לכל דבר ליום אחד. מול אורוגוואי — פחות סביר"
     },
     URU: {
-      nameHe: "אורוגוואי", nameEn: "Uruguay", flag: "🇺🇾", confed: "CONMEBOL",
+      nameHe: "אורוגוואי", nameEn: "Uruguay", flag: "🇺🇾", iso: "uy", confed: "CONMEBOL",
       elo: 1900, fifa: 15, host: false, tier: 2, attMod: 1.0, defMod: 0.93,
       coach: "מרסלו ביילסה",
       stars: ["פדריקו ולוורדה", "דארווין נונייס", "רונאלד אראוחו", "מנואל אוגרטה"],
@@ -725,7 +727,7 @@ const DATA = {
 
     /* ===== בית I ===== */
     FRA: {
-      nameHe: "צרפת", nameEn: "France", flag: "🇫🇷", confed: "UEFA",
+      nameHe: "צרפת", nameEn: "France", flag: "🇫🇷", iso: "fr", confed: "UEFA",
       elo: 2080, fifa: 3, host: false, tier: 1, attMod: 1.04, defMod: 0.96,
       coach: "דידייה דשאן (הטורניר האחרון שלו)",
       stars: ["קיליאן אמבפה", "אוסמן דמבלה (כדור הזהב 2025)", "מייקל אוליסה", "אורליאן צ'ואמני"],
@@ -736,7 +738,7 @@ const DATA = {
       note: "צמרת השוק (16-17%) יחד עם ספרד. בית I נוח; הסכנה היחידה: נורווגיה של הולאנד במחזור 3"
     },
     IRQ: {
-      nameHe: "עיראק", nameEn: "Iraq", flag: "🇮🇶", confed: "AFC",
+      nameHe: "עיראק", nameEn: "Iraq", flag: "🇮🇶", iso: "iq", confed: "AFC",
       elo: 1590, fifa: 60, host: false, tier: 5, attMod: 0.95, defMod: 1.0,
       coach: "גרהאם ארנולד (האוסטרלי)",
       stars: ["איימן חוסיין", "עלי אל-חמאדי", "זידאן אקבל"],
@@ -747,7 +749,7 @@ const DATA = {
       note: "40 שנה של ציפייה. מול צרפת ונורווגיה — רק שלא יכאב. מול סנגל אולי תילחם על כבוד"
     },
     NOR: {
-      nameHe: "נורווגיה", nameEn: "Norway", flag: "🇳🇴", confed: "UEFA",
+      nameHe: "נורווגיה", nameEn: "Norway", flag: "🇳🇴", iso: "no", confed: "UEFA",
       elo: 1860, fifa: 19, host: false, tier: 2, attMod: 1.12, defMod: 1.04,
       coach: "סטולה סולבאקן",
       stars: ["ארלינג הולאנד", "מרטין אודגור", "אלכסנדר סורלות'", "אנטוניו נוסה"],
@@ -758,7 +760,7 @@ const DATA = {
       note: "אף אחד לא רוצה לפגוש אותה. מול צרפת במחזור 3 — קרב על ראשות הבית. Over 2.5 בכל משחקיה"
     },
     SEN: {
-      nameHe: "סנגל", nameEn: "Senegal", flag: "🇸🇳", confed: "CAF",
+      nameHe: "סנגל", nameEn: "Senegal", flag: "🇸🇳", iso: "sn", confed: "CAF",
       elo: 1840, fifa: 13, host: false, tier: 2, attMod: 1.0, defMod: 0.94,
       coach: "פאפ תיאו",
       stars: ["סאדיו מאנה (34)", "ניקולא ג'קסון", "פאפ מטר סאר", "אדואר מנדי"],
@@ -771,7 +773,7 @@ const DATA = {
 
     /* ===== בית J ===== */
     ARG: {
-      nameHe: "ארגנטינה", nameEn: "Argentina", flag: "🇦🇷", confed: "CONMEBOL",
+      nameHe: "ארגנטינה", nameEn: "Argentina", flag: "🇦🇷", iso: "ar", confed: "CONMEBOL",
       elo: 2120, fifa: 1, host: false, tier: 1, attMod: 1.0, defMod: 0.92,
       coach: "ליונל סקאלוני",
       stars: ["ליאו מסי (39 — המונדיאל האחרון)", "חוליאן אלברס", "לאוטרו מרטינס", "אנסו פרננדס", "אמיליאנו מרטינס"],
@@ -782,7 +784,7 @@ const DATA = {
       note: "דירוג FIFA #1. מחזיקת התואר. השוק מתמחר אותה רק ב-9-10% (גיל מסי?) — פער מעניין מול ה-Elo שלה. בית J נוח"
     },
     ALG: {
-      nameHe: "אלג'יריה", nameEn: "Algeria", flag: "🇩🇿", confed: "CAF",
+      nameHe: "אלג'יריה", nameEn: "Algeria", flag: "🇩🇿", iso: "dz", confed: "CAF",
       elo: 1755, fifa: 34, host: false, tier: 3, attMod: 1.0, defMod: 0.98,
       coach: "ולדימיר פטקוביץ'",
       stars: ["ריאד מחרז (35)", "אמין גווירי", "מוחמד עמורה", "איסמעיל בנאסר"],
@@ -793,7 +795,7 @@ const DATA = {
       note: "מונדיאל ראשון מאז 2014. מול אוסטריה — קרב אמיתי על מקום 2 בבית J"
     },
     AUT: {
-      nameHe: "אוסטריה", nameEn: "Austria", flag: "🇦🇹", confed: "UEFA",
+      nameHe: "אוסטריה", nameEn: "Austria", flag: "🇦🇹", iso: "at", confed: "UEFA",
       elo: 1810, fifa: 24, host: false, tier: 3, attMod: 1.03, defMod: 1.0,
       coach: "ראלף רנגניק",
       stars: ["דויד אלאבה (33)", "מרסל זאביצר", "כריסטוף באומגרטנר", "קונרד ליימר"],
@@ -804,7 +806,7 @@ const DATA = {
       note: "28 שנה בלי מונדיאל ופתאום נבחרת שכולם מפחדים ממנה. X מול ארגנטינה? לא דמיוני"
     },
     JOR: {
-      nameHe: "ירדן", nameEn: "Jordan", flag: "🇯🇴", confed: "AFC",
+      nameHe: "ירדן", nameEn: "Jordan", flag: "🇯🇴", iso: "jo", confed: "AFC",
       elo: 1605, fifa: 64, host: false, tier: 5, attMod: 0.95, defMod: 1.0,
       coach: "ג'מאל סלאמי",
       stars: ["מוסא אל-תעמרי", "יזן אל-נעימאת", "יזיד אבו ליילה"],
@@ -817,7 +819,7 @@ const DATA = {
 
     /* ===== בית K ===== */
     POR: {
-      nameHe: "פורטוגל", nameEn: "Portugal", flag: "🇵🇹", confed: "UEFA",
+      nameHe: "פורטוגל", nameEn: "Portugal", flag: "🇵🇹", iso: "pt", confed: "UEFA",
       elo: 2075, fifa: 5, host: false, tier: 1, attMod: 1.04, defMod: 0.97,
       coach: "רוברטו מרטינס",
       stars: ["כריסטיאנו רונאלדו (41 — האחרון)", "ברונו פרננדס", "רפאל לאון", "ז'ואאו נבס", "ויטיניה", "נונו מנדס"],
@@ -828,7 +830,7 @@ const DATA = {
       note: "פייבוריטית כבדה בבית K אך קולומביה היא יריבה אמיתית. השוק נותן 9-10% לזכייה — בקצה ההוגן"
     },
     COL: {
-      nameHe: "קולומביה", nameEn: "Colombia", flag: "🇨🇴", confed: "CONMEBOL",
+      nameHe: "קולומביה", nameEn: "Colombia", flag: "🇨🇴", iso: "co", confed: "CONMEBOL",
       elo: 1925, fifa: 10, host: false, tier: 2, attMod: 1.02, defMod: 0.95,
       coach: "נסטור לורנסו",
       stars: ["לואיס דיאס", "חאמס רודריגס (34)", "ג'פרסון לרמה", "דניאל מוניוס"],
@@ -839,7 +841,7 @@ const DATA = {
       note: "Top-10 עולמי אמיתי שנקלע לבית של פורטוגל. 'מי תעפיל' בטוח כמעט; מפגש פסגה במחזור 3"
     },
     COD: {
-      nameHe: "קונגו הדמוקרטית", nameEn: "DR Congo", flag: "🇨🇩", confed: "CAF",
+      nameHe: "קונגו הדמוקרטית", nameEn: "DR Congo", flag: "🇨🇩", iso: "cd", confed: "CAF",
       elo: 1610, fifa: 56, host: false, tier: 4, attMod: 0.97, defMod: 1.0,
       coach: "סבסטיאן דסאברה",
       stars: ["יואן ויסה", "סדריק באקאמבו", "שאנסל מבמבה"],
@@ -850,7 +852,7 @@ const DATA = {
       note: "מומנטום רגשי אדיר, פער איכות מול פורטוגל וקולומביה. היעד: המשחק מול אוזבקיסטן"
     },
     UZB: {
-      nameHe: "אוזבקיסטן", nameEn: "Uzbekistan", flag: "🇺🇿", confed: "AFC",
+      nameHe: "אוזבקיסטן", nameEn: "Uzbekistan", flag: "🇺🇿", iso: "uz", confed: "AFC",
       elo: 1640, fifa: 50, host: false, tier: 4, attMod: 0.96, defMod: 0.98,
       coach: "פאביו קנאווארו (מ-2025)",
       stars: ["אבדוקודיר חוסאנוב (מנצ'סטר סיטי)", "אלדור שומורודוב", "אבוסחיד שוקורוב"],
@@ -863,7 +865,7 @@ const DATA = {
 
     /* ===== בית L ===== */
     ENG: {
-      nameHe: "אנגליה", nameEn: "England", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", confed: "UEFA",
+      nameHe: "אנגליה", nameEn: "England", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", iso: "gb-eng", confed: "UEFA",
       elo: 2060, fifa: 4, host: false, tier: 1, attMod: 1.02, defMod: 0.92,
       coach: "תומאס טוכל (מ-2025)",
       stars: ["הארי קיין", "ג'וד בלינגהאם", "בוקאיו סאקה", "דקלן רייס", "קול פאלמר"],
@@ -874,7 +876,7 @@ const DATA = {
       note: "השוק: 12% (שלישית). בית L חזק יחסית (קרואטיה!) אבל אנגליה של טוכל לא מאבדת נקודות לקטנות"
     },
     CRO: {
-      nameHe: "קרואטיה", nameEn: "Croatia", flag: "🇭🇷", confed: "UEFA",
+      nameHe: "קרואטיה", nameEn: "Croatia", flag: "🇭🇷", iso: "hr", confed: "UEFA",
       elo: 1870, fifa: 20, host: false, tier: 2, attMod: 1.0, defMod: 0.96,
       coach: "זלאטקו דאליץ'",
       stars: ["לוקה מודריץ' (40!)", "יושקו גבארדיול", "מטאו קובאצ'יץ'", "מרצלו ברוזוביץ'"],
@@ -885,7 +887,7 @@ const DATA = {
       note: "הניסיון הטורנירי הגדול בעולם. מול אנגליה במחזור הפותח (כנראה) — המשחק הכבד של שלב הבתים"
     },
     GHA: {
-      nameHe: "גאנה", nameEn: "Ghana", flag: "🇬🇭", confed: "CAF",
+      nameHe: "גאנה", nameEn: "Ghana", flag: "🇬🇭", iso: "gh", confed: "CAF",
       elo: 1650, fifa: 48, host: false, tier: 4, attMod: 1.0, defMod: 1.03,
       coach: "אוטו אדו",
       stars: ["מוחמד קודוס", "תומאס פארטיי", "אנטואן סמניו", "אינאקי וויליאמס"],
@@ -896,7 +898,7 @@ const DATA = {
       note: "יכולה להפתיע את קרואטיה ויכולה להפסיד לפנמה — באותו שבוע. תמחור עצמי קשה"
     },
     PAN: {
-      nameHe: "פנמה", nameEn: "Panama", flag: "🇵🇦", confed: "CONCACAF",
+      nameHe: "פנמה", nameEn: "Panama", flag: "🇵🇦", iso: "pa", confed: "CONCACAF",
       elo: 1670, fifa: 33, host: false, tier: 4, attMod: 0.96, defMod: 0.97,
       coach: "תומאס כריסטיאנסן",
       stars: ["אדלברטו קראסקייה", "חוסה פאחארדו", "סזר בלקבורן"],
@@ -1408,7 +1410,15 @@ const pct = (p) => (p * 100).toFixed(p >= 0.1 ? 0 : 1) + "%";
 const pct1 = (p) => (p * 100).toFixed(1) + "%";
 const odds = (x) => x === Infinity ? "—" : x.toFixed(2);
 const T = (id) => DATA.teams[id];
-const tn = (id) => `${T(id).flag} ${T(id).nameHe}`;
+// דגל נבחרת כתמונה מ-flagcdn (לפי קוד ISO); fallback לאימוג'י אם אין iso.
+// alt = אימוג'י הדגל, כך שגם אם התמונה לא נטענת מוצג סימן סביר.
+const flag = (id) => {
+  const t = T(id);
+  return t.iso
+    ? `<img class="flag" src="https://flagcdn.com/h20/${t.iso}.png" srcset="https://flagcdn.com/h40/${t.iso}.png 2x" width="27" height="20" alt="${t.flag}" loading="lazy">`
+    : t.flag;
+};
+const tn = (id) => `${flag(id)} ${T(id).nameHe}`;
 const stars = (n) => "★".repeat(n) + "☆".repeat(5 - n);
 // תאריך YYYY-MM-DD → D.M.YYYY (ללא אפסים מובילים); מחזיר "" אם אין/לא תקין
 const fmtDate = (iso) => {
@@ -1671,9 +1681,9 @@ function scoreboardHtml() {
       ${recent.map(fx => {
         const r = orientedResult(fx.h, fx.a);
         return `<div class="score-item">
-          <span>${T(fx.h).flag} ${T(fx.h).nameHe}</span>
+          <span>${flag(fx.h)} ${T(fx.h).nameHe}</span>
           <b>${r.hg} – ${r.ag}</b>
-          <span>${T(fx.a).nameHe} ${T(fx.a).flag}</span></div>`;
+          <span>${T(fx.a).nameHe} ${flag(fx.a)}</span></div>`;
       }).join("")}
     </div>
   </div>`;
@@ -2308,7 +2318,7 @@ function showTeam(id) {
   $("#modal-root").innerHTML = `<div class="modal-bg" id="modal-bg">
     <div class="modal">
       <button class="close" id="modal-close">✕</button>
-      <h2>${t.flag} ${t.nameHe} <span class="pill">${t.nameEn}</span></h2>
+      <h2>${flag(id)} ${t.nameHe} <span class="pill">${t.nameEn}</span></h2>
       <p class="note">בית ${groupOfTeam(id)} · ${t.confed} · דירוג FIFA: ${t.fifa} · Elo מודל: ${t.elo}${t.host ? " (+50 ביתיות)" : ""} · מאמן: ${t.coach}</p>
       <dl>
         <dt>סימולציה</dt><dd>זוכת בית: ${pct1(SIM[id].pWinGroup)} · העפלה: ${pct1(SIM[id].pAdvance)} · אלופה: ${pct1(KO[id].pChampion)}</dd>

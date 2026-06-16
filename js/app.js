@@ -31,7 +31,15 @@ const pct = (p) => (p * 100).toFixed(p >= 0.1 ? 0 : 1) + "%";
 const pct1 = (p) => (p * 100).toFixed(1) + "%";
 const odds = (x) => x === Infinity ? "—" : x.toFixed(2);
 const T = (id) => DATA.teams[id];
-const tn = (id) => `${T(id).flag} ${T(id).nameHe}`;
+// דגל נבחרת כתמונה מ-flagcdn (לפי קוד ISO); fallback לאימוג'י אם אין iso.
+// alt = אימוג'י הדגל, כך שגם אם התמונה לא נטענת מוצג סימן סביר.
+const flag = (id) => {
+  const t = T(id);
+  return t.iso
+    ? `<img class="flag" src="https://flagcdn.com/h20/${t.iso}.png" srcset="https://flagcdn.com/h40/${t.iso}.png 2x" width="27" height="20" alt="${t.flag}" loading="lazy">`
+    : t.flag;
+};
+const tn = (id) => `${flag(id)} ${T(id).nameHe}`;
 const stars = (n) => "★".repeat(n) + "☆".repeat(5 - n);
 // תאריך YYYY-MM-DD → D.M.YYYY (ללא אפסים מובילים); מחזיר "" אם אין/לא תקין
 const fmtDate = (iso) => {
@@ -294,9 +302,9 @@ function scoreboardHtml() {
       ${recent.map(fx => {
         const r = orientedResult(fx.h, fx.a);
         return `<div class="score-item">
-          <span>${T(fx.h).flag} ${T(fx.h).nameHe}</span>
+          <span>${flag(fx.h)} ${T(fx.h).nameHe}</span>
           <b>${r.hg} – ${r.ag}</b>
-          <span>${T(fx.a).nameHe} ${T(fx.a).flag}</span></div>`;
+          <span>${T(fx.a).nameHe} ${flag(fx.a)}</span></div>`;
       }).join("")}
     </div>
   </div>`;
@@ -931,7 +939,7 @@ function showTeam(id) {
   $("#modal-root").innerHTML = `<div class="modal-bg" id="modal-bg">
     <div class="modal">
       <button class="close" id="modal-close">✕</button>
-      <h2>${t.flag} ${t.nameHe} <span class="pill">${t.nameEn}</span></h2>
+      <h2>${flag(id)} ${t.nameHe} <span class="pill">${t.nameEn}</span></h2>
       <p class="note">בית ${groupOfTeam(id)} · ${t.confed} · דירוג FIFA: ${t.fifa} · Elo מודל: ${t.elo}${t.host ? " (+50 ביתיות)" : ""} · מאמן: ${t.coach}</p>
       <dl>
         <dt>סימולציה</dt><dd>זוכת בית: ${pct1(SIM[id].pWinGroup)} · העפלה: ${pct1(SIM[id].pAdvance)} · אלופה: ${pct1(KO[id].pChampion)}</dd>
