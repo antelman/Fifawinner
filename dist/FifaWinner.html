@@ -3,275 +3,422 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>קלאוד ממליץ - מונדיאל 2026</title>
+<title>FifaWinner · מנוע ערך — מונדיאל 2026</title>
 <style>
-/* FifaWinner — עיצוב כהה, עברית RTL */
+/* ============================================================
+   FifaWinner — "Edge Terminal" design system (RTL, dark)
+   ------------------------------------------------------------
+   מערכת עיצוב פרימיום: רקע דיו עמוק, ירוק-ערך (=EV חיובי),
+   זהב לביטחון/גביע, Heebo לעברית + JetBrains Mono למספרים.
+   הותאם לעיצוב Claude Design "Fifawinner full redesign".
+   ============================================================ */
+@import url("https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap");
+
 :root {
-  --bg: #0d1117;
-  --bg2: #161b22;
-  --bg3: #1f2630;
-  --border: #2d333b;
-  --text: #e6edf3;
-  --muted: #9aa7b3;
-  --gold: #f0b429;
-  --green: #3fb950;
-  --red: #f85149;
-  --blue: #58a6ff;
-  --radius: 12px;
+  --bg: #080B0F;
+  --bg2: #10151C;          /* משטח כרטיס ראשי */
+  --bg3: #0c1117;          /* משטח שקוע (תאי קלט, פסים) */
+  --bg-soft: #0e131a;      /* משטח רך (details, narrative) */
+  --bg-input: #0B0F14;
+  --panel-grad: linear-gradient(110deg, #0e1620, #10151c);
+  --border: rgba(255, 255, 255, .07);
+  --border-soft: rgba(255, 255, 255, .05);
+  --border-strong: rgba(255, 255, 255, .12);
+
+  --text: #EAF0F6;
+  --text-bright: #C5CFDA;
+  --text-dim: #B3BECC;
+  --muted: #8593A3;
+  --muted2: #7E8C9B;
+  --faint: #6B7888;
+  --faint2: #5A6675;
+
+  --value: #29E59A;        /* ירוק-ערך — accent */
+  --value-ink: #07130d;    /* טקסט כהה על ירוק */
+  --gold: #F4C95B;
+  --red: #FF647C;
+  --blue: #3C6EFF;
+
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --radius: 16px;
+  --radius-lg: 18px;
+  --radius-sm: 12px;
 }
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
+
 body {
   background: var(--bg); color: var(--text);
-  font-family: "Segoe UI", "Heebo", Arial, sans-serif;
-  direction: rtl; min-height: 100vh;
-  overflow-x: hidden; /* מונע גלילה אופקית של כל הדף */
+  font-family: "Heebo", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  direction: rtl; min-height: 100vh; overflow-x: hidden;
+  position: relative;
+  -webkit-font-smoothing: antialiased;
 }
-.container { max-width: 1100px; margin: 0 auto; padding: 16px; }
+/* זוהר רקע רדיאלי — ירוק בפינה אחת, כחול בשנייה */
+body::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(1100px 520px at 78% -8%, rgba(41, 229, 154, .10), transparent 60%),
+    radial-gradient(900px 480px at 8% 4%, rgba(60, 110, 255, .06), transparent 55%);
+}
+.container { position: relative; z-index: 1; max-width: 1000px; margin: 0 auto; padding: 0 16px 90px; }
 
-header { text-align: center; padding: 24px 12px 8px; }
-header h1 { font-size: 1.9rem; }
-header h1 .gold { color: var(--gold); }
-header .sub { color: var(--muted); margin-top: 6px; font-size: .95rem; }
+::selection { background: rgba(41, 229, 154, .28); }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: #1d2630; border-radius: 99px; border: 2px solid var(--bg); }
+input::placeholder { color: #4A5563; }
+
+/* ---------- כותרת ---------- */
+header { padding: 22px 4px 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-mark {
+  width: 42px; height: 42px; border-radius: 11px; flex-shrink: 0;
+  background: linear-gradient(150deg, var(--value), #0f9d68);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-weight: 800; font-size: 20px; color: var(--value-ink);
+  box-shadow: 0 6px 20px rgba(41, 229, 154, .28);
+}
+.brand-text { line-height: 1.1; }
+header h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -.4px; }
+header h1 .gold { color: var(--value); }   /* "Winner" בירוק-הערך */
+header .sub { color: var(--muted); margin-top: 2px; font-size: .85rem; font-weight: 500; }
+.pipeline {
+  margin-inline-start: auto; font-family: var(--mono); font-size: .7rem; color: var(--faint);
+  letter-spacing: .5px; display: flex; align-items: center; gap: 6px;
+}
+.pipeline span { color: var(--value); }
+.disclaimer { width: 100%; }
+@media (max-width: 600px) { .pipeline { margin-inline-start: 0; font-size: .62rem; } }
 .disclaimer {
-  background: #2d1a0e; border: 1px solid #7a4a1d; color: #f3c995;
-  border-radius: var(--radius); padding: 10px 14px; margin: 14px auto;
-  font-size: .85rem; max-width: 860px;
+  background: linear-gradient(120deg, rgba(244, 201, 91, .07), transparent);
+  border: 1px solid rgba(244, 201, 91, .25); color: #f3dba8;
+  border-radius: var(--radius-sm); padding: 11px 15px; margin: 16px auto;
+  font-size: .85rem; line-height: 1.6; max-width: 860px;
 }
+.disclaimer b { color: var(--gold); font-family: var(--mono); }
 
+/* ---------- ניווט ---------- */
 nav.tabs {
-  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
-  margin: 18px 0; position: sticky; top: 0; background: var(--bg);
-  padding: 10px 0; z-index: 50;
+  display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+  margin: 18px 0; position: sticky; top: 0; z-index: 50;
+  padding: 10px 0;
+  background: rgba(8, 11, 15, .82);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
 }
 .tab-btn {
-  background: var(--bg2); color: var(--text); border: 1px solid var(--border);
-  padding: 9px 18px; border-radius: 999px; cursor: pointer; font-size: 1rem;
+  background: rgba(255, 255, 255, .03); color: var(--text-bright);
+  border: 1px solid var(--border-strong);
+  padding: 9px 18px; border-radius: 10px; cursor: pointer;
+  font-family: inherit; font-weight: 700; font-size: .95rem;
   transition: all .15s;
 }
-.tab-btn:hover { border-color: var(--gold); }
-.tab-btn.active { background: var(--gold); color: #1a1a1a; font-weight: 700; border-color: var(--gold); }
+.tab-btn:hover { border-color: var(--value); color: var(--text); }
+.tab-btn.active {
+  background: var(--value); color: var(--value-ink);
+  border-color: var(--value); font-weight: 800;
+  box-shadow: 0 6px 20px rgba(41, 229, 154, .28);
+}
 
-.loading { text-align: center; padding: 60px 0; color: var(--muted); font-size: 1.1rem; }
+/* ---------- טעינה ---------- */
+.loading { text-align: center; padding: 80px 0; color: var(--muted); font-size: 1.05rem; font-weight: 600; }
+.loading .note { font-family: var(--mono); font-size: .8rem; }
 .spinner {
-  display: inline-block; width: 42px; height: 42px; margin-bottom: 14px;
-  border: 4px solid var(--border); border-top-color: var(--gold);
+  display: inline-block; width: 46px; height: 46px; margin-bottom: 16px;
+  border: 3px solid rgba(255, 255, 255, .08); border-top-color: var(--value);
   border-radius: 50%; animation: spin .8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fw-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes fw-pulse { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
+#content { animation: fw-up .4s ease both; }
 
+/* ---------- כרטיסים ---------- */
 .card {
   background: var(--bg2); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 16px; margin-bottom: 14px;
-  overflow-wrap: break-word; /* מונע גלישת מילים ארוכות */
+  border-radius: var(--radius); padding: 18px 20px; margin-bottom: 16px;
+  overflow-wrap: break-word;
 }
-.card h3 { margin-bottom: 10px; }
-.grid { display: grid; gap: 14px; }
+.card h3 { margin-bottom: 12px; font-weight: 800; font-size: 1.1rem; }
+h2 { font-weight: 800; font-size: 1.15rem; letter-spacing: -.3px; }
+.grid { display: grid; gap: 16px; }
 .grid.cols2 { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
 
-/* טבלאות רחבות (שוק/עתידיים/נוק-אאוט) — גלילה אופקית במקום גלישה */
-.market-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; }
-.guide table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+/* ---------- טבלאות ---------- */
+.market-table {
+  display: block; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  white-space: nowrap; width: 100%; border-collapse: collapse; font-size: .92rem;
+}
+.market-table th, .market-table td {
+  padding: 9px 8px; text-align: center; border-bottom: 1px solid var(--border-soft);
+}
+.market-table th {
+  color: var(--faint); font-weight: 600; font-size: .72rem;
+  text-transform: uppercase; letter-spacing: .3px; background: var(--bg3);
+}
+.market-table td { font-family: var(--mono); font-size: .85rem; color: var(--text-dim); }
+.market-table td.lbl { text-align: right; font-family: "Heebo", sans-serif; color: var(--text-bright); white-space: normal; }
+.edge-pos { color: var(--value); font-weight: 700; }
+.edge-neg { color: var(--red); }
+.fair { color: var(--gold) !important; }
 
 /* בתים */
-.group-card table { width: 100%; border-collapse: collapse; font-size: .9rem; table-layout: fixed; }
-.group-card th, .group-card td { padding: 6px 3px; text-align: center; border-bottom: 1px solid var(--border); }
-.group-card th { font-size: .72rem; color: var(--muted); font-weight: 600; line-height: 1.2; }
-.group-card td.team { text-align: right; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.group-card td.team:hover { color: var(--gold); }
-.bar { background: var(--bg3); border-radius: 4px; height: 8px; overflow: hidden; }
-.bar > i { display: block; height: 100%; background: var(--green); }
+.group-card table { width: 100%; border-collapse: collapse; font-size: .88rem; table-layout: fixed; }
+.group-card th, .group-card td { padding: 7px 3px; text-align: center; border-bottom: 1px solid var(--border-soft); }
+.group-card th { font-size: .68rem; color: var(--faint); font-weight: 600; line-height: 1.2; text-transform: uppercase; }
+.group-card td { font-family: var(--mono); }
+.group-card td.team { text-align: right; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: "Heebo", sans-serif; }
+.group-card td.team:hover { color: var(--value); }
+.group-card td b { color: #fff; }
+.bar { background: rgba(255, 255, 255, .06); border-radius: 99px; height: 6px; overflow: hidden; }
+.bar > i { display: block; height: 100%; border-radius: 99px; background: var(--value); }
 
-/* משחקים */
-.fixture-list { display: grid; gap: 8px; }
+/* ---------- משחקים ---------- */
+.fixture-list { display: grid; gap: 9px; }
 .fixture {
-  display: flex; justify-content: space-between; align-items: center;
-  background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
-  padding: 10px 14px; cursor: pointer; transition: border-color .15s;
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 14px 18px; cursor: pointer; transition: border-color .15s;
 }
-.fixture:hover { border-color: var(--gold); }
-.fixture .vs { color: var(--muted); font-size: .85rem; }
-.fixture .played { color: var(--gold); font-weight: 700; }
-.select-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
-select, input[type=number] {
-  background: var(--bg3); color: var(--text); border: 1px solid var(--border);
-  border-radius: 8px; padding: 8px 10px; font-size: 1rem;
+.fixture:hover { border-color: var(--value); }
+.fixture .vs { color: var(--faint2); font-size: .8rem; font-weight: 600; }
+.fixture .played { color: var(--muted); font-weight: 700; font-family: var(--mono); font-size: .85rem; }
+.fixture > span:last-child:not(.vs) { color: var(--value); font-family: var(--mono); font-size: .85rem; font-weight: 700; }
+.select-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.select-row label { color: var(--text-bright); font-weight: 600; display: flex; align-items: center; }
+
+select, input[type=number], input[type=text] {
+  background: var(--bg-input); color: #fff; border: 1px solid var(--border-strong);
+  border-radius: 9px; padding: 8px 11px; font-family: var(--mono); font-size: .95rem;
 }
+select { font-family: "Heebo", sans-serif; }
 input[type=number] { width: 84px; text-align: center; }
+input:focus, select:focus { outline: none; border-color: var(--value); }
 
-.market-table { width: 100%; border-collapse: collapse; font-size: .95rem; }
-.market-table th, .market-table td { padding: 8px 6px; text-align: center; border-bottom: 1px solid var(--border); }
-.market-table th { color: var(--muted); font-weight: 600; font-size: .85rem; }
-.market-table td.lbl { text-align: right; }
-.edge-pos { color: var(--green); font-weight: 700; }
-.edge-neg { color: var(--red); }
-.fair { color: var(--blue); }
-
-/* המלצות */
+/* ---------- המלצות ---------- */
 .rec {
-  display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center;
-  background: var(--bg2); border: 1px solid var(--border); border-right: 4px solid var(--gold);
-  border-radius: var(--radius); padding: 14px; margin-bottom: 10px;
+  display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 13px; padding: 14px 16px; margin-bottom: 10px;
 }
 .rec .badge {
-  background: var(--bg3); border-radius: 8px; padding: 8px 12px;
-  font-size: .8rem; color: var(--muted); text-align: center; min-width: 86px;
+  border-radius: 10px; padding: 4px 6px; text-align: center; min-width: 76px;
 }
-.rec .badge b { display: block; color: var(--gold); font-size: 1.15rem; }
-.rec .what b { font-size: 1.05rem; }
-.rec .what .why { color: var(--muted); font-size: .85rem; margin-top: 4px; }
-.rec .nums { text-align: left; font-size: .85rem; color: var(--muted); white-space: nowrap; }
-.rec .nums b { color: var(--text); }
-.stars { color: var(--gold); letter-spacing: 2px; }
+.rec .badge b { display: block; font-family: var(--mono); color: var(--text); font-size: 1.35rem; font-weight: 700; line-height: 1; }
+.rec .badge { font-size: .66rem; color: var(--faint); }
+.rec .what b { font-size: 1rem; }
+.rec .what .why { color: var(--muted2); font-size: .82rem; margin-top: 5px; line-height: 1.5; }
+.rec .nums { text-align: left; font-size: .78rem; color: var(--muted); white-space: nowrap; }
+.rec .nums b { font-family: var(--mono); }
+.rec .nums b.fair { color: var(--gold); }
+.rec .nums b:not(.fair) { color: var(--text-bright); }
+.stars { color: var(--gold); letter-spacing: 1px; }
+.rec.is-value { background: var(--bg3); border-color: rgba(41, 229, 154, .18); }
+.rec.is-value .badge b { color: var(--value); }
 
-img.flag { display: inline-block; vertical-align: -3px; width: 27px; height: 20px; object-fit: cover; border-radius: 3px; box-shadow: 0 0 0 1px rgba(0,0,0,.25); }
+/* באנד הימורי ערך — מסגרת זוהר ירוקה */
+.value-band {
+  background: linear-gradient(135deg, rgba(41, 229, 154, .07), rgba(41, 229, 154, .02));
+  border-color: rgba(41, 229, 154, .28);
+}
+.value-band h3 { display: flex; align-items: center; gap: 9px; }
+.pulse-dot {
+  width: 9px; height: 9px; border-radius: 50%; background: var(--value);
+  box-shadow: 0 0 10px var(--value); animation: fw-pulse 1.6s ease infinite; flex-shrink: 0;
+}
 
-.pill { display: inline-block; background: var(--bg3); border-radius: 999px; padding: 2px 10px; font-size: .78rem; color: var(--muted); margin-inline-start: 6px; }
-.value-flag { background: #11331a; color: var(--green); border: 1px solid var(--green); }
-.verdict-hit { background: #11331a; color: var(--green); border: 1px solid var(--green); }
-.verdict-miss { background: #3a1416; color: var(--red); border: 1px solid var(--red); }
-.score-pill { background: #2d2410; color: var(--gold); border: 1px solid var(--gold); }
+img.flag {
+  display: inline-block; vertical-align: -3px; width: 25px; height: 18px;
+  object-fit: cover; border-radius: 3px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .14);
+}
 
-/* לוח תוצאות */
-.scoreboard .score-grid { display: grid; gap: 8px; }
+/* ---------- pills / badges ---------- */
+.pill {
+  display: inline-block; background: rgba(255, 255, 255, .04); border-radius: 99px;
+  padding: 2px 9px; font-size: .74rem; color: var(--muted); margin-inline-start: 6px;
+  font-weight: 500;
+}
+.value-flag {
+  background: var(--value); color: var(--value-ink); border: none;
+  font-family: var(--mono); font-weight: 700;
+}
+.verdict-hit { background: rgba(41, 229, 154, .14); color: var(--value); font-weight: 700; }
+.verdict-miss { background: rgba(255, 100, 124, .14); color: var(--red); font-weight: 700; }
+.score-pill { background: rgba(255, 255, 255, .06); color: var(--text-bright); font-family: var(--mono); font-weight: 700; }
+
+/* ---------- לוח תוצאות ---------- */
+.scoreboard .score-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
 .score-item {
-  display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center;
-  background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px;
+  display: flex; flex-direction: column; gap: 8px;
+  background: var(--bg3); border-radius: 10px; padding: 9px 12px;
+  border: 1px solid transparent; cursor: pointer; transition: border-color .15s;
 }
-.score-item > span {
-  display: flex; align-items: center; gap: 8px; min-width: 0;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+.score-item:hover { border-color: var(--value); }
+.score-line { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.score-line > span {
+  display: flex; align-items: center; gap: 7px; min-width: 0; font-size: .85rem; color: var(--text-bright);
+  white-space: nowrap;
 }
-/* קבוצת בית (ימין ב-RTL): צמודה לתוצאה במרכז */
-.score-item > span:first-child { justify-content: flex-end; }
-/* קבוצת חוץ (שמאל ב-RTL): צמודה לתוצאה במרכז */
-.score-item > span:last-child { justify-content: flex-start; }
-.score-item b {
-  color: var(--gold); font-size: 1.1rem; white-space: nowrap;
-  min-width: 56px; text-align: center;
+/* שם הנבחרת נחתך אם צריך — אבל הדגל לעולם לא */
+.score-line > span > .team-name { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.score-line .flag { flex-shrink: 0; }
+.score-line > span:first-child { justify-content: flex-end; }
+.score-line > span:last-child { justify-content: flex-start; }
+.score-line b { color: #fff; font-family: var(--mono); font-size: .95rem; white-space: nowrap; min-width: 48px; text-align: center; flex-shrink: 0; }
+/* פוטר פגיעות בכל תוצאה */
+.score-verdict {
+  font-size: .74rem; font-weight: 600; text-align: center;
+  padding: 5px 8px; border-radius: 8px; border-top: 1px solid var(--border-soft);
+  margin: 0 -4px -2px; border-radius: 0; padding-top: 8px;
 }
+.score-verdict.good { color: var(--value); }
+.score-verdict.bad { color: var(--red); }
+.score-verdict.pending { color: var(--muted); }
 
-/* מאזן ההמלצות — מספר גדול */
-.track-banner { display: flex; align-items: center; gap: 18px; }
+/* ---------- מאזן ההמלצות (track) ---------- */
+.track-banner {
+  display: flex; align-items: center; gap: 20px;
+  background: var(--panel-grad); border: 1px solid var(--border);
+}
 .track-big {
-  font-size: 3.2rem; font-weight: 800; line-height: 1; min-width: 110px; text-align: center;
-  padding: 14px 6px; border-radius: var(--radius);
+  font-family: var(--mono); font-size: 3.25rem; font-weight: 700; line-height: 1;
+  letter-spacing: -2px; min-width: 100px; text-align: center;
 }
-.track-big.good { color: var(--green); background: #11331a; border: 2px solid var(--green); }
-.track-big.bad { color: var(--red); background: #3a1416; border: 2px solid var(--red); }
-.track-text h3 { margin: 0 0 4px; }
-.track-text .track-sub { font-size: 1rem; }
-.track-text .track-sub b { color: var(--gold); font-size: 1.1rem; }
+.track-big.good { color: var(--value); }
+.track-big.bad { color: var(--red); }
+.track-text h3 { margin: 0 0 3px; }
+.track-text .track-sub { font-size: .95rem; color: var(--text-dim); }
+.track-text .track-sub b { color: #fff; font-family: var(--mono); }
+.track-text .note { margin-top: 4px; }
 
-/* פילוח הצלחה לפי סוג הימור */
-.track-breakdown { margin-top: 12px; }
+/* פילוח לפי סוג הימור */
 .track-breakdown h3 { margin: 0 0 4px; }
 .bd-row { margin-top: 14px; }
 .bd-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
-.bd-label { font-weight: 600; font-size: .98rem; }
-.bd-pct { font-weight: 800; font-size: 1.25rem; }
-.bd-pct.good { color: var(--green); }
+.bd-label { font-weight: 600; font-size: .95rem; color: var(--text-bright); }
+.bd-pct { font-weight: 700; font-size: 1.25rem; font-family: var(--mono); }
+.bd-pct.good { color: var(--value); }
 .bd-pct.bad { color: var(--red); }
-.bd-bar {
-  height: 10px; border-radius: 999px; background: #1c2530;
-  overflow: hidden; margin: 6px 0 4px;
-}
-.bd-bar > i { display: block; height: 100%; border-radius: 999px; transition: width .4s ease; }
-.bd-bar > i.good { background: var(--green); }
+.bd-bar { height: 8px; border-radius: 99px; background: rgba(255, 255, 255, .06); overflow: hidden; margin: 7px 0 4px; }
+.bd-bar > i { display: block; height: 100%; border-radius: 99px; transition: width .4s ease; }
+.bd-bar > i.good { background: var(--value); }
 .bd-bar > i.bad { background: var(--red); }
-.bd-count { margin: 0; font-size: .82rem; }
+.bd-count { margin: 0; font-size: .8rem; }
 
-/* תקציר פגיעות בדף משחק */
-.match-verdict {
-  border-radius: 8px; padding: 10px 14px; margin: 6px 0 4px; font-size: .98rem;
-}
-.match-verdict.good { background: #11331a; border: 1px solid var(--green); }
-.match-verdict.bad { background: #3a1416; border: 1px solid var(--red); }
-.match-verdict b { color: var(--gold); }
+/* תקציר פגיעות במסך משחק */
+.match-verdict { border-radius: var(--radius-sm); padding: 12px 16px; margin: 14px 0 4px; font-size: .95rem; font-weight: 600; }
+.match-verdict.good { color: var(--value); background: rgba(41, 229, 154, .08); border: 1px solid rgba(41, 229, 154, .25); }
+.match-verdict.bad { color: var(--red); background: rgba(255, 100, 124, .08); border: 1px solid rgba(255, 100, 124, .25); }
+.match-verdict b { color: inherit; }
+/* גרסת פוטר בתחתית כרטיס משחק שהסתיים */
+.match-verdict.card-footer { margin: 14px -20px -18px; border-radius: 0 0 var(--radius) var(--radius); border-inline: 0; border-bottom: 0; font-size: .9rem; }
+@media (max-width: 600px) { .match-verdict.card-footer { margin: 14px -16px -14px; } }
 
-/* סימון ✓/✗ בתאי טבלה וכרטיסי המלצה */
-.vmark { font-weight: 800; }
-.vmark.ok { color: var(--green); }
+/* ✓/✗ */
+.vmark { font-weight: 700; font-family: var(--mono); }
+.vmark.ok { color: var(--value); }
 .vmark.bad { color: var(--red); }
-.pick-card.ok { border-color: var(--green); }
-.pick-card.bad { border-color: var(--red); opacity: .85; }
+.pick-card.ok { border-color: rgba(41, 229, 154, .35); }
+.pick-card.bad { border-color: rgba(255, 100, 124, .3); }
 
-/* משחק שהסתיים — שורות פגע/החטיא */
-.card.finished { opacity: .96; }
-.settled-list { display: grid; gap: 6px; }
+/* משחק שהסתיים */
+.settled-list { display: grid; gap: 7px; }
 .settled-row {
   display: flex; justify-content: space-between; align-items: center; gap: 10px;
-  background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px;
+  background: var(--bg3); border-radius: 10px; padding: 9px 13px; font-size: .9rem; color: var(--text-bright);
 }
-.settled-row.ok { border-right: 4px solid var(--green); }
-.settled-row.bad { border-right: 4px solid var(--red); }
+.settled-row.ok { background: rgba(41, 229, 154, .05); }
+.settled-row.bad { background: rgba(255, 100, 124, .05); }
 
-/* כרטיסי ההמלצות החזקות במסך משחק */
+/* ---------- ניתוח משחק ---------- */
 .narrative {
-  background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
-  padding: 12px 14px; margin: 10px 0; line-height: 1.7; font-size: .95rem;
+  background: var(--panel-grad); border: 1px solid var(--border); border-radius: 14px;
+  padding: 16px 18px; margin: 16px 0; line-height: 1.7; font-size: .95rem; color: var(--text-bright);
 }
+.narrative b { color: var(--value); }
 .paste-box {
-  background: #0e2233; border: 1px dashed var(--blue); border-radius: 8px;
-  padding: 12px 14px; margin: 10px 0; font-size: .88rem; line-height: 1.6;
+  background: var(--bg-soft); border: 1px dashed var(--border-strong); border-radius: 14px;
+  padding: 15px 18px; margin: 14px 0; font-size: .88rem; line-height: 1.6; color: var(--text-dim);
 }
-.paste-box input { direction: ltr; text-align: left; }
+.paste-box b { color: #fff; }
+.paste-box input { direction: ltr; text-align: left; width: 100%; margin-top: 10px; }
+#paste-msg { color: var(--value); background: none; padding: 0; display: inline-block; margin-top: 8px; }
+
 .pick-card {
-  display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;
-  background: linear-gradient(135deg, var(--bg3), var(--bg2));
-  border: 1px solid var(--gold); border-radius: var(--radius);
-  padding: 14px; margin-bottom: 10px;
+  display: grid; grid-template-columns: auto 1fr auto; gap: 14px 16px; align-items: center;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 14px;
+  padding: 16px 18px; margin-bottom: 11px;
 }
-.pick-card .odds-box {
-  background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
-  padding: 10px 14px; text-align: center; min-width: 84px;
-}
-.pick-card .odds-box b { display: block; color: var(--gold); font-size: 1.7rem; line-height: 1.1; }
-.pick-card .odds-box span { color: var(--muted); font-size: .72rem; }
-.pick-card .pick-title { font-size: 1.05rem; font-weight: 700; }
-.pick-card .why { color: var(--muted); font-size: .85rem; margin-top: 4px; }
-.pick-card .nums { text-align: left; font-size: .85rem; color: var(--muted); white-space: nowrap; }
-.pick-card .nums b { color: var(--text); }
+.pick-card .odds-box { text-align: center; min-width: 72px; }
+.pick-card .odds-box b { display: block; color: var(--gold); font-family: var(--mono); font-size: 1.65rem; font-weight: 700; line-height: 1; }
+.pick-card .odds-box span { color: var(--faint); font-size: .66rem; }
+.pick-card .pick-title { font-size: 1rem; font-weight: 700; display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+.pick-card .why { color: var(--muted2); font-size: .85rem; margin-top: 5px; line-height: 1.5; }
+.pick-card .why b { color: var(--text-bright); font-family: var(--mono); }
+.pick-card .nums { text-align: left; font-size: .78rem; color: var(--muted); white-space: nowrap; }
+.pick-card .nums b { color: var(--text-bright); font-family: var(--mono); }
 @media (max-width: 600px) {
   .pick-card { grid-template-columns: auto 1fr; }
   .pick-card .nums { grid-column: 1 / -1; text-align: right; }
 }
 
-/* מודאל נבחרת */
+/* גרסת ירוק לכרטיס המלצה עם ערך */
+details > summary { cursor: pointer; }
+details > summary.gold-sum,
+details > summary {
+  list-style: none;
+}
+details > summary::-webkit-details-marker { display: none; }
+
+/* ---------- מודאל נבחרת ---------- */
 .modal-bg {
-  position: fixed; inset: 0; background: rgba(0,0,0,.65);
-  display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px;
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(4, 6, 9, .74); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow-y: auto;
 }
 .modal {
-  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
-  max-width: 640px; width: 100%; max-height: 86vh; overflow-y: auto; padding: 22px;
+  background: var(--bg2); border: 1px solid var(--border-strong); border-radius: 20px;
+  max-width: 560px; width: 100%; padding: 24px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .6); animation: fw-up .3s ease both;
 }
-.modal h2 { margin-bottom: 4px; }
-.modal .close { float: left; background: none; border: none; color: var(--muted); font-size: 1.5rem; cursor: pointer; }
-.modal dl dt { color: var(--gold); font-weight: 700; margin-top: 12px; font-size: .9rem; }
-.modal dl dd { margin: 4px 0 0; color: var(--text); line-height: 1.5; }
+.modal h2 { margin-bottom: 6px; font-size: 1.4rem; font-weight: 800; display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.modal .pill { background: rgba(255, 255, 255, .05); }
+.modal .close {
+  float: left; width: 34px; height: 34px; border-radius: 9px;
+  border: 1px solid var(--border-strong); background: rgba(255, 255, 255, .04);
+  color: var(--text-bright); font-size: 1rem; cursor: pointer;
+}
+.modal dl dt { color: var(--value); font-weight: 700; margin-top: 13px; font-size: .76rem; text-transform: uppercase; letter-spacing: .3px; }
+.modal dl dd { margin: 3px 0 0; color: var(--text-bright); line-height: 1.6; font-size: .92rem; }
 
-.note { color: var(--muted); font-size: .85rem; margin: 10px 0; line-height: 1.5; }
-.guide h3 { color: var(--gold); margin: 18px 0 8px; }
+/* ---------- כללי ---------- */
+.note { color: var(--muted2); font-size: .82rem; margin: 10px 0; line-height: 1.6; }
+.note b, .note .pill { color: var(--text-bright); }
+.vs { color: var(--faint2); font-size: .8rem; font-weight: 600; }
+
+.guide h3 { color: var(--value); margin: 18px 0 8px; }
 .guide p, .guide li { line-height: 1.7; }
 .guide ul, .guide ol { padding-right: 22px; margin: 8px 0; }
-.guide table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: .9rem; }
+.guide table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: .9rem; display: block; overflow-x: auto; }
 .guide th, .guide td { border: 1px solid var(--border); padding: 7px 10px; text-align: right; }
 .guide th { background: var(--bg3); }
 
-footer { text-align: center; color: var(--muted); font-size: .8rem; padding: 28px 0 18px; line-height: 1.7; }
+footer {
+  position: relative; z-index: 1; text-align: center; color: var(--faint2);
+  font-size: .78rem; padding: 24px 0 40px; line-height: 1.7; border-top: 1px solid var(--border-soft); margin-top: 8px;
+}
+footer code { font-family: var(--mono); color: var(--muted); }
 
 @media (max-width: 600px) {
   .rec { grid-template-columns: 1fr; }
   .rec .nums { text-align: right; white-space: normal; }
   header h1 { font-size: 1.4rem; }
-  .container { padding: 12px; }
-  .card { padding: 12px; }
-  .tab-btn { padding: 8px 13px; font-size: .9rem; }
-  /* מאזן ההמלצות — לא לגלוש על מסך צר */
-  .track-banner { flex-wrap: wrap; gap: 12px; }
-  .track-big { font-size: 2.4rem; min-width: 84px; }
+  .container { padding: 0 12px 80px; }
+  .card { padding: 14px 16px; }
+  .tab-btn { padding: 8px 13px; font-size: .85rem; }
+  .track-banner { flex-wrap: wrap; gap: 14px; }
+  .track-big { font-size: 2.5rem; min-width: 84px; }
   .select-row select, .select-row input { flex: 1 1 auto; min-width: 0; }
-  .score-item b { font-size: 1rem; }
 }
 
 </style>
@@ -279,8 +426,14 @@ footer { text-align: center; color: var(--muted); font-size: .8rem; padding: 28p
 <body>
 <div class="container">
   <header>
-    <h1>⚽ Fifa<span class="gold">Winner</span> — מונדיאל 2026</h1>
-    <div class="sub">ניתוח סטטיסטי והמלצות ערך לווינר ליין · 48 נבחרות · 12 בתים · מודל Elo + פואסון + מונטה-קרלו</div>
+    <div class="brand">
+      <div class="brand-mark">+</div>
+      <div class="brand-text">
+        <h1>Fifa<span class="gold">Winner</span></h1>
+        <div class="sub">מנוע ערך · מונדיאל 2026</div>
+      </div>
+    </div>
+    <div class="pipeline">ELO <span>→</span> POISSON <span>→</span> MONTE&nbsp;CARLO</div>
     <div class="disclaimer">
       ⚠️ הכלי לסיוע אנליטי בלבד — אינו ייעוץ ואינו מבטיח רווח. הימורים כרוכים בסיכון. גילאי 18+. שחקו באחריות.
       קו תמיכה לנפגעי הימורים: <b dir="ltr">*5777</b>
@@ -303,9 +456,9 @@ footer { text-align: center; color: var(--muted); font-size: .8rem; padding: 28p
   </main>
 
   <footer>
-    קלאוד ממליץ · הנתונים נכונים ל-<span id="dataDate">15.6.2026</span> · דירוגי הכוח הם הערכות מודל ·
-    תוצאות שהסתיימו מקובעות בסימולציה (עדכון ב-<code>js/data.js</code>)<br>
-    מקורות: FIFA, eloratings.net (השראה), winner.co.il, מחקר שוק עולמי — ראו README
+    נתונים עודכנו <span id="dataDate">15.6.2026</span> ·
+    כלי ניתוח בלבד — לא מכונת כסף. גם הימור־ערך מפסיד לעיתים קרובות; היתרון סטטיסטי וארוך־טווח.<br>
+    הימור אחראי · קו תמיכה <b dir="ltr">*5777</b> · מקורות: FIFA, eloratings.net (השראה), winner.co.il — ראו <code>README</code>
   </footer>
 </div>
 
@@ -319,6 +472,12 @@ footer { text-align: center; color: var(--muted); font-size: .8rem; padding: 28p
    DATA.groups     — 12 הבתים (סדר עמדות לפי ההגרלה)
    DATA.results    — תוצאות אמת שכבר נרשמו (הסימולציה מקבעת אותן!)
                      ↳ לעדכון במהלך הטורניר: הוסיפו שורה לכל משחק שהסתיים.
+                     שדות שורה: { g, home, away, hg, ag }  (חובה — תוצאת 90 דקות)
+                     שדות-על אופציונליים (מלאו רק כשהמלצנו על השוק הרלוונטי):
+                       htHg, htAg  — תוצאת מחצית ראשונה (לשיפוט שווקי מחצית/HTFT/GBH)
+                                     נמשך אוטומטית מ-football-data.org אם זמין
+                       firstScorer — מי הבקיע ראשון: "H"=בית · "A"=חוץ · "none"=0-0
+                                     (ידני בלבד — חסר ב-API החינמי; לשיפוט "מבקיעה ראשונה")
    שדות נבחרת:
      elo        — דירוג כוח (הערכת מודל בהשראת eloratings.net, יוני 2026)
      fifa       — דירוג FIFA 11.6.2026 (מאומת לצמרת; השאר הערכה)
@@ -1392,8 +1551,19 @@ const MODEL = (() => {
 
   /* ---------- שיפוט שוק מול תוצאת 90 דקות (hg=קבוצה ראשונה, ag=שנייה) ----------
      מחזיר true=פגע, false=החטיא, null=לא ניתן לשיפוט מהתוצאה הסופית (מחציות וכו') */
-  function gradeMarket(suffix, hg, ag) {
+  /* שיפוט שוק מול תוצאה. extra = נתוני-על אופציונליים על המשחק שהסתיים:
+       { htHg, htAg } — תוצאת מחצית ראשונה (שערי קבוצה ראשונה/שנייה)
+       { firstScorer } — מי הבקיע ראשון: "H" (ראשונה) | "A" (שנייה) | "none"
+     שווקי מחצית/מבקיעה-ראשונה ניתנים לשיפוט רק כשהנתון הרלוונטי קיים ב-extra;
+     אחרת מוחזר null (לא נשפט) — כדי שאחוז ההצלחה לעולם לא יספור ניחוש. */
+  function gradeMarket(suffix, hg, ag, extra) {
+    extra = extra || {};
     const tot = hg + ag;
+    const hasHT = extra.htHg != null && extra.htAg != null;
+    const htH = +extra.htHg, htA = +extra.htAg;
+    const htRes = hasHT ? (htH > htA ? "1" : htH < htA ? "2" : "X") : null;
+    const ftRes = hg > ag ? "1" : hg < ag ? "2" : "X";
+
     // הנדיקאפ (H±N: שערי הקבוצה הראשונה אחרי הוספת ההנדיקאפ)
     const hc = suffix.match(/^H([+-]\d+):(1|X|2)$/);
     if (hc) {
@@ -1406,6 +1576,11 @@ const MODEL = (() => {
     if (suffix.startsWith("CS")) {
       const x = +suffix[2], y = +suffix[3];
       return hg === x && ag === y;
+    }
+    // מחצית/סיום HTFT<ht>/<ft> — דורש תוצאת מחצית
+    if (suffix.startsWith("HTFT")) {
+      if (!hasHT) return null;
+      return suffix.slice(4) === htRes + "/" + ftRes;
     }
     switch (suffix) {
       case "1": return hg > ag;
@@ -1422,7 +1597,17 @@ const MODEL = (() => {
       case "ODD": return tot % 2 === 1;  case "EVEN": return tot % 2 === 0;
       case "R01": return tot <= 1;  case "R23": return tot === 2 || tot === 3;  case "R4P": return tot >= 4;
       case "WB2A": return hg - ag >= 2;  case "WB2B": return ag - hg >= 2;
-      // שווקי מחצית/מבקיעה-ראשונה/העפלה — לא נגזרים מהתוצאה הסופית
+      // ---- שווקי מחצית ראשונה (דורשים htHg/htAg) ----
+      case "HT1": return hasHT ? htRes === "1" : null;
+      case "HTX": return hasHT ? htRes === "X" : null;
+      case "HT2": return hasHT ? htRes === "2" : null;
+      // שער בשתי המחציות: שער במחצית הראשונה (htTot>0) וגם במחצית השנייה (ft>ht)
+      case "GBH": return hasHT ? (htH + htA > 0 && (hg - htH) + (ag - htA) > 0) : null;
+      // ---- מבקיעה ראשונה (דורש firstScorer) ----
+      case "FG1": return extra.firstScorer ? extra.firstScorer === "H" : null;
+      case "FG2": return extra.firstScorer ? extra.firstScorer === "A" : null;
+      case "FG0": return extra.firstScorer ? extra.firstScorer === "none" : null;
+      // שווקי העפלה (נוק-אאוט, הארכה/פנדלים) — לא נגזרים מתוצאת 90 דקות
       default: return null;
     }
   }
@@ -1592,11 +1777,18 @@ function groupStandings(groupId) {
     y.pts - x.pts || y.gd - x.gd || y.gf - x.gf || (x.id < y.id ? -1 : 1));
 }
 
-// תוצאה מכוונת לפי סדר הפיקסצ'ר (a=בית, b=חוץ) — לשיפוט שווקים
+// תוצאה מכוונת לפי סדר הפיקסצ'ר (a=בית, b=חוץ) — לשיפוט שווקים.
+// כולל נתוני-על מכוונים: תוצאת מחצית (htHg/htAg) ומבקיע ראשון (firstScorer).
+// אם השורה ב-DATA.results בכיוון ההפוך — מחליפים בית↔חוץ בכל הנתונים.
 function orientedResult(a, b) {
   for (const r of DATA.results) {
-    if (r.home === a && r.away === b) return { hg: r.hg, ag: r.ag };
-    if (r.home === b && r.away === a) return { hg: r.ag, ag: r.hg };
+    if (r.home === a && r.away === b)
+      return { hg: r.hg, ag: r.ag, htHg: r.htHg, htAg: r.htAg, firstScorer: r.firstScorer };
+    if (r.home === b && r.away === a)
+      return {
+        hg: r.ag, ag: r.hg, htHg: r.htAg, htAg: r.htHg,
+        firstScorer: r.firstScorer === "H" ? "A" : r.firstScorer === "A" ? "H" : r.firstScorer
+      };
   }
   return null;
 }
@@ -1608,7 +1800,7 @@ function gradeKey(key) {
   if (fix.length !== 2) return null;
   const res = orientedResult(fix[0], fix[1]);
   if (!res) return null;
-  return MODEL.gradeMarket(suffix, res.hg, res.ag);
+  return MODEL.gradeMarket(suffix, res.hg, res.ag, res);
 }
 function verdictBadge(hit) {
   if (hit === true) return `<span class="pill verdict-hit">✓ פגעה</span>`;
@@ -1843,12 +2035,13 @@ function generateRecs() {
 }
 
 function recHtml(r) {
+  const isVal = r.edge !== undefined && r.edge > 0;
   const edgeHtml = r.edge !== undefined
-    ? (r.edge > 0
+    ? (isVal
       ? `<span class="pill value-flag">VALUE +${(r.edge * 100).toFixed(1)}%</span>`
       : `<span class="pill">Edge ${(r.edge * 100).toFixed(1)}%</span>`)
     : "";
-  return `<div class="rec">
+  return `<div class="rec${isVal ? " is-value" : ""}">
     <div class="badge"><b>${pct(r.p)}</b>${r.market}</div>
     <div class="what">
       <b>${r.pick}</b> <span class="pill">${r.match}</span> ${edgeHtml}
@@ -1907,10 +2100,23 @@ function scoreboardHtml() {
     <div class="score-grid">
       ${recent.map(fx => {
         const r = orientedResult(fx.h, fx.a);
-        return `<div class="score-item">
-          <span>${flag(fx.h)} ${T(fx.h).nameHe}</span>
-          <b>${r.hg} – ${r.ag}</b>
-          <span>${T(fx.a).nameHe} ${flag(fx.a)}</span></div>`;
+        let h = 0, mm = 0, pending = 0;
+        for (const p of matchTopPicks(fx.h, fx.a, false)) {
+          const g = gradeKey(p.key);
+          if (g === true) h++; else if (g === false) mm++; else pending++;
+        }
+        // "לא נשפט" = המלצה על שוק מחצית/מבקיע-ראשון שחסר לה נתון משלים
+        const pendTxt = pending ? ` · ${pending} ממתינות לנתון` : "";
+        const footer = (h + mm)
+          ? `<div class="score-verdict ${h >= mm ? "good" : "bad"}">🎯 ${h} מתוך ${h + mm} המלצות פגעו${pendTxt}</div>`
+          : (pending ? `<div class="score-verdict pending">🎯 ${pending} המלצות ממתינות לנתון משלים</div>` : "");
+        return `<div class="score-item open-match" data-g="${fx.g}" data-h="${fx.h}" data-a="${fx.a}">
+          <div class="score-line">
+            <span>${flag(fx.h)} <span class="team-name">${T(fx.h).nameHe}</span></span>
+            <b>${r.hg} – ${r.ag}</b>
+            <span><span class="team-name">${T(fx.a).nameHe}</span> ${flag(fx.a)}</span>
+          </div>
+          ${footer}</div>`;
       }).join("")}
     </div>
   </div>`;
@@ -1952,7 +2158,7 @@ function viewRecs() {
   return `
   ${trBanner}
   ${scoreboardHtml()}
-  ${valueRecs.length ? `<div class="card"><h3>💎 הימורי ערך מאומתים (לפי היחסים שהזנת)</h3>${valueRecs.map(recHtml).join("")}</div>` : ""}
+  ${valueRecs.length ? `<div class="card value-band"><h3><span class="pulse-dot"></span>הימורי ערך מאומתים <span class="note" style="display:inline;font-weight:400">לפי היחסים שהזנת</span></h3>${valueRecs.map(recHtml).join("")}</div>` : ""}
   ${daySection("⚽ משחקי היום — " + hebDate(today), todayFx)}
   ${daySection("📅 משחקי מחר — " + hebDate(tomorrow), tomFx)}
   ${todayFx.length || tomFx.length ? "" : `<div class="card"><p class="note">אין משחקים היום או מחר בלוח.</p></div>`}

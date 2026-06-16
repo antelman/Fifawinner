@@ -84,11 +84,18 @@ function groupStandings(groupId) {
     y.pts - x.pts || y.gd - x.gd || y.gf - x.gf || (x.id < y.id ? -1 : 1));
 }
 
-// תוצאה מכוונת לפי סדר הפיקסצ'ר (a=בית, b=חוץ) — לשיפוט שווקים
+// תוצאה מכוונת לפי סדר הפיקסצ'ר (a=בית, b=חוץ) — לשיפוט שווקים.
+// כולל נתוני-על מכוונים: תוצאת מחצית (htHg/htAg) ומבקיע ראשון (firstScorer).
+// אם השורה ב-DATA.results בכיוון ההפוך — מחליפים בית↔חוץ בכל הנתונים.
 function orientedResult(a, b) {
   for (const r of DATA.results) {
-    if (r.home === a && r.away === b) return { hg: r.hg, ag: r.ag };
-    if (r.home === b && r.away === a) return { hg: r.ag, ag: r.hg };
+    if (r.home === a && r.away === b)
+      return { hg: r.hg, ag: r.ag, htHg: r.htHg, htAg: r.htAg, firstScorer: r.firstScorer };
+    if (r.home === b && r.away === a)
+      return {
+        hg: r.ag, ag: r.hg, htHg: r.htAg, htAg: r.htHg,
+        firstScorer: r.firstScorer === "H" ? "A" : r.firstScorer === "A" ? "H" : r.firstScorer
+      };
   }
   return null;
 }
@@ -100,7 +107,7 @@ function gradeKey(key) {
   if (fix.length !== 2) return null;
   const res = orientedResult(fix[0], fix[1]);
   if (!res) return null;
-  return MODEL.gradeMarket(suffix, res.hg, res.ag);
+  return MODEL.gradeMarket(suffix, res.hg, res.ag, res);
 }
 function verdictBadge(hit) {
   if (hit === true) return `<span class="pill verdict-hit">✓ פגעה</span>`;
@@ -335,12 +342,13 @@ function generateRecs() {
 }
 
 function recHtml(r) {
+  const isVal = r.edge !== undefined && r.edge > 0;
   const edgeHtml = r.edge !== undefined
-    ? (r.edge > 0
+    ? (isVal
       ? `<span class="pill value-flag">VALUE +${(r.edge * 100).toFixed(1)}%</span>`
       : `<span class="pill">Edge ${(r.edge * 100).toFixed(1)}%</span>`)
     : "";
-  return `<div class="rec">
+  return `<div class="rec${isVal ? " is-value" : ""}">
     <div class="badge"><b>${pct(r.p)}</b>${r.market}</div>
     <div class="what">
       <b>${r.pick}</b> <span class="pill">${r.match}</span> ${edgeHtml}
@@ -399,10 +407,23 @@ function scoreboardHtml() {
     <div class="score-grid">
       ${recent.map(fx => {
         const r = orientedResult(fx.h, fx.a);
-        return `<div class="score-item">
-          <span>${flag(fx.h)} ${T(fx.h).nameHe}</span>
-          <b>${r.hg} – ${r.ag}</b>
-          <span>${T(fx.a).nameHe} ${flag(fx.a)}</span></div>`;
+        let h = 0, mm = 0, pending = 0;
+        for (const p of matchTopPicks(fx.h, fx.a, false)) {
+          const g = gradeKey(p.key);
+          if (g === true) h++; else if (g === false) mm++; else pending++;
+        }
+        // "לא נשפט" = המלצה על שוק מחצית/מבקיע-ראשון שחסר לה נתון משלים
+        const pendTxt = pending ? ` · ${pending} ממתינות לנתון` : "";
+        const footer = (h + mm)
+          ? `<div class="score-verdict ${h >= mm ? "good" : "bad"}">🎯 ${h} מתוך ${h + mm} המלצות פגעו${pendTxt}</div>`
+          : (pending ? `<div class="score-verdict pending">🎯 ${pending} המלצות ממתינות לנתון משלים</div>` : "");
+        return `<div class="score-item open-match" data-g="${fx.g}" data-h="${fx.h}" data-a="${fx.a}">
+          <div class="score-line">
+            <span>${flag(fx.h)} <span class="team-name">${T(fx.h).nameHe}</span></span>
+            <b>${r.hg} – ${r.ag}</b>
+            <span><span class="team-name">${T(fx.a).nameHe}</span> ${flag(fx.a)}</span>
+          </div>
+          ${footer}</div>`;
       }).join("")}
     </div>
   </div>`;
@@ -444,7 +465,7 @@ function viewRecs() {
   return `
   ${trBanner}
   ${scoreboardHtml()}
-  ${valueRecs.length ? `<div class="card"><h3>💎 הימורי ערך מאומתים (לפי היחסים שהזנת)</h3>${valueRecs.map(recHtml).join("")}</div>` : ""}
+  ${valueRecs.length ? `<div class="card value-band"><h3><span class="pulse-dot"></span>הימורי ערך מאומתים <span class="note" style="display:inline;font-weight:400">לפי היחסים שהזנת</span></h3>${valueRecs.map(recHtml).join("")}</div>` : ""}
   ${daySection("⚽ משחקי היום — " + hebDate(today), todayFx)}
   ${daySection("📅 משחקי מחר — " + hebDate(tomorrow), tomFx)}
   ${todayFx.length || tomFx.length ? "" : `<div class="card"><p class="note">אין משחקים היום או מחר בלוח.</p></div>`}

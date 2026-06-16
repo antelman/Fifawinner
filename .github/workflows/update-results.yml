@@ -29,7 +29,8 @@ jobs:
 
       - name: משיכת תוצאות ועדכון המאגר
         env:
-          FOOTBALL_DATA_KEY: ${{ secrets.FOOTBALL_DATA_KEY }}   # מפתח חינמי מ-football-data.org
+          FOOTBALL_DATA_KEY: ${{ secrets.FOOTBALL_DATA_KEY }}   # מפתח חינמי מ-football-data.org (תוצאה + מחצית)
+          THESPORTSDB_KEY: ${{ secrets.THESPORTSDB_KEY }}        # אופציונלי — מבקיע-ראשון; נופל ל-"123" אם ריק
         run: node scripts/update-results.js
 
       - name: בדיקות שפיות

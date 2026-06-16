@@ -432,8 +432,19 @@ const MODEL = (() => {
 
   /* ---------- שיפוט שוק מול תוצאת 90 דקות (hg=קבוצה ראשונה, ag=שנייה) ----------
      מחזיר true=פגע, false=החטיא, null=לא ניתן לשיפוט מהתוצאה הסופית (מחציות וכו') */
-  function gradeMarket(suffix, hg, ag) {
+  /* שיפוט שוק מול תוצאה. extra = נתוני-על אופציונליים על המשחק שהסתיים:
+       { htHg, htAg } — תוצאת מחצית ראשונה (שערי קבוצה ראשונה/שנייה)
+       { firstScorer } — מי הבקיע ראשון: "H" (ראשונה) | "A" (שנייה) | "none"
+     שווקי מחצית/מבקיעה-ראשונה ניתנים לשיפוט רק כשהנתון הרלוונטי קיים ב-extra;
+     אחרת מוחזר null (לא נשפט) — כדי שאחוז ההצלחה לעולם לא יספור ניחוש. */
+  function gradeMarket(suffix, hg, ag, extra) {
+    extra = extra || {};
     const tot = hg + ag;
+    const hasHT = extra.htHg != null && extra.htAg != null;
+    const htH = +extra.htHg, htA = +extra.htAg;
+    const htRes = hasHT ? (htH > htA ? "1" : htH < htA ? "2" : "X") : null;
+    const ftRes = hg > ag ? "1" : hg < ag ? "2" : "X";
+
     // הנדיקאפ (H±N: שערי הקבוצה הראשונה אחרי הוספת ההנדיקאפ)
     const hc = suffix.match(/^H([+-]\d+):(1|X|2)$/);
     if (hc) {
@@ -446,6 +457,11 @@ const MODEL = (() => {
     if (suffix.startsWith("CS")) {
       const x = +suffix[2], y = +suffix[3];
       return hg === x && ag === y;
+    }
+    // מחצית/סיום HTFT<ht>/<ft> — דורש תוצאת מחצית
+    if (suffix.startsWith("HTFT")) {
+      if (!hasHT) return null;
+      return suffix.slice(4) === htRes + "/" + ftRes;
     }
     switch (suffix) {
       case "1": return hg > ag;
@@ -462,7 +478,17 @@ const MODEL = (() => {
       case "ODD": return tot % 2 === 1;  case "EVEN": return tot % 2 === 0;
       case "R01": return tot <= 1;  case "R23": return tot === 2 || tot === 3;  case "R4P": return tot >= 4;
       case "WB2A": return hg - ag >= 2;  case "WB2B": return ag - hg >= 2;
-      // שווקי מחצית/מבקיעה-ראשונה/העפלה — לא נגזרים מהתוצאה הסופית
+      // ---- שווקי מחצית ראשונה (דורשים htHg/htAg) ----
+      case "HT1": return hasHT ? htRes === "1" : null;
+      case "HTX": return hasHT ? htRes === "X" : null;
+      case "HT2": return hasHT ? htRes === "2" : null;
+      // שער בשתי המחציות: שער במחצית הראשונה (htTot>0) וגם במחצית השנייה (ft>ht)
+      case "GBH": return hasHT ? (htH + htA > 0 && (hg - htH) + (ag - htA) > 0) : null;
+      // ---- מבקיעה ראשונה (דורש firstScorer) ----
+      case "FG1": return extra.firstScorer ? extra.firstScorer === "H" : null;
+      case "FG2": return extra.firstScorer ? extra.firstScorer === "A" : null;
+      case "FG0": return extra.firstScorer ? extra.firstScorer === "none" : null;
+      // שווקי העפלה (נוק-אאוט, הארכה/פנדלים) — לא נגזרים מתוצאת 90 דקות
       default: return null;
     }
   }
