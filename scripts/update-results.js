@@ -152,7 +152,7 @@ async function tsdbFirstScorer(idH, idA, dateISO) {
   const existing = new Map(); // "HOME|AWAY" → row
   for (const r of DATA.results) existing.set(r.home + "|" + r.away, r);
 
-  let added = 0, skippedUnmatched = 0, skippedNoFixture = 0;
+  let added = 0, enriched = 0, skippedUnmatched = 0, skippedNoFixture = 0;
   for (const m of matches) {
     const ft = (m.score && m.score.fullTime) || {};
     const hs = ft.home, as = ft.away;
@@ -170,19 +170,35 @@ async function tsdbFirstScorer(idH, idA, dateISO) {
     }
     const fx = fixtureFor(idH, idA);
     if (!fx) { skippedNoFixture++; continue; } // לא בלוח שלב הבתים שלנו
-    if (existing.has(fx.h + "|" + fx.a)) continue; // כבר קיים
 
     // התאמת התוצאה לכיוון הלוח
     const hg = fx.h === idH ? +hs : +as;
     const ag = fx.h === idH ? +as : +hs;
-    const row = { g: fx.g, home: fx.h, away: fx.a, hg, ag };
-    // תוצאת מחצית — נשמרת בכיוון הלוח כשהמקור סיפק אותה (מאפשרת שיפוט שווקי מחצית)
-    if (htHsrc != null && htAsrc != null) {
-      row.htHg = fx.h === idH ? +htHsrc : +htAsrc;
-      row.htAg = fx.h === idH ? +htAsrc : +htHsrc;
-    }
-    // מבקיע-ראשון — נמשך מ-TheSportsDB רק אם המלצנו על השוק במשחק זה
+    const htHg = (htHsrc != null && htAsrc != null) ? (fx.h === idH ? +htHsrc : +htAsrc) : null;
+    const htAg = (htHsrc != null && htAsrc != null) ? (fx.h === idH ? +htAsrc : +htHsrc) : null;
+    // אילו נתונים משלימים נדרשים לפי ההמלצות שנתנו למשחק
     const need = PICKS.neededExtras(MODEL, DATA.teams[fx.h], DATA.teams[fx.a], fx.d);
+
+    const prev = existing.get(fx.h + "|" + fx.a);
+    if (prev) {
+      // שורה קיימת — משלימים רק נתון משלים חסר שנדרש להמלצות (לא נוגעים בתוצאה)
+      let changed = false;
+      if (need.ht && prev.htHg == null && htHg != null) { prev.htHg = htHg; prev.htAg = htAg; changed = true; }
+      if (need.first && !prev.firstScorer) {
+        const fs1 = await tsdbFirstScorer(fx.h, fx.a, fx.d);
+        if (fs1) { prev.firstScorer = fs1; changed = true; }
+        else console.warn(`  ⚠️ מבקיע-ראשון לא נמצא ל-${fx.h}-${fx.a} (יישאר ממתין)`);
+      }
+      if (changed) {
+        enriched++;
+        console.log(`~ ${fx.h}-${fx.a} הושלם:${prev.htHg != null ? ` מחצית ${prev.htHg}-${prev.htAg}` : ""}${prev.firstScorer ? ` מבקיע ${prev.firstScorer}` : ""}`);
+      }
+      continue;
+    }
+
+    const row = { g: fx.g, home: fx.h, away: fx.a, hg, ag };
+    if (htHg != null) { row.htHg = htHg; row.htAg = htAg; }
+    // מבקיע-ראשון — נמשך מ-TheSportsDB רק אם המלצנו על השוק במשחק זה
     if (need.first) {
       const fs1 = await tsdbFirstScorer(fx.h, fx.a, fx.d);
       if (fs1) row.firstScorer = fs1;
@@ -196,7 +212,7 @@ async function tsdbFirstScorer(idH, idA, dateISO) {
       `${row.firstScorer ? ` (מבקיע ראשון: ${row.firstScorer})` : ""}`);
   }
 
-  console.log(`סיכום: נוספו ${added}, לא-זוהו ${skippedUnmatched}, מחוץ-ללוח ${skippedNoFixture}.`);
+  console.log(`סיכום: נוספו ${added}, הושלמו ${enriched}, לא-זוהו ${skippedUnmatched}, מחוץ-ללוח ${skippedNoFixture}.`);
 
   // המשיכה הצליחה — תמיד מעדכנים את תאריך "הנתונים נכונים ל-" לזמן הבדיקה,
   // גם כשאין תוצאות חדשות, כדי שהפוטר ישקף את הבדיקה האחרונה ולא רק תוצאה אחרונה.
@@ -205,7 +221,7 @@ async function tsdbFirstScorer(idH, idA, dateISO) {
   let src = fs.readFileSync(file, "utf8");
   const prevUpdated = (src.match(/updated:\s*"([^"]*)"/) || [])[1] || null;
 
-  if (added) {
+  if (added || enriched) {
     // סדר התוצאות לפי הופעתן בלוח (יציב), ושכתוב הבלוק בין הסמנים
     const order = new Map(DATA.schedule.map((x, i) => [x.h + "|" + x.a, i]));
     DATA.results.sort((a, b) => (order.get(a.home + "|" + a.away) ?? 99) - (order.get(b.home + "|" + b.away) ?? 99));
@@ -222,14 +238,14 @@ async function tsdbFirstScorer(idH, idA, dateISO) {
       `/* RESULTS:START — נערך אוטומטית; אל תוסיפו טקסט בתוך הבלוק הזה */\n${lines}\n    /* RESULTS:END */`);
   }
 
-  if (!added && prevUpdated === today) {
+  if (!added && !enriched && prevUpdated === today) {
     console.log("אין תוצאות חדשות והתאריך כבר עדכני — אין שינוי.");
     return;
   }
 
   src = src.replace(/updated:\s*"[^"]*"/, `updated: "${today}"`);
   fs.writeFileSync(file, src);
-  console.log(added
-    ? `עודכנו ${added} תוצאות חדשות. סה"כ ${DATA.results.length}. תאריך: ${today}`
+  console.log((added || enriched)
+    ? `עודכנו ${added} תוצאות חדשות, ${enriched} הושלמו בנתוני-על. סה"כ ${DATA.results.length}. תאריך: ${today}`
     : `אין תוצאות חדשות — עודכן רק תאריך הבדיקה ל-${today}.`);
 })();
