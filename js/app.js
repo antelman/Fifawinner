@@ -446,9 +446,19 @@ function verdictMark(key) {
 }
 
 /* ---------- מועמדים לכל השווקים של משחק (להמלצות-צמרת) ---------- */
+// תאריך משחק מהלוח — משמש כ-asOf אחיד: כל משחק נבנה תמיד מ-Elo כפי
+// שהיה לפני תאריכו. משחק עתידי → כל התוצאות מוקדמות ממנו (= הלמידה המלאה);
+// משחק שהסתיים → לא לומד מהתוצאה של עצמו (out-of-sample). כך אין שינוי רטרו.
+function matchAsOf(a, b) {
+  const fx = DATA.schedule.find(x =>
+    (x.h === a && x.a === b) || (x.h === b && x.a === a));
+  return fx ? fx.d : null;
+}
+
 function buildMatchCandidates(a, b, ko) {
-  const m = MODEL.markets(T(a), T(b));
-  const ex = MODEL.extendedMarkets(T(a), T(b));
+  const asOf = matchAsOf(a, b);
+  const m = MODEL.markets(T(a), T(b), asOf);
+  const ex = MODEL.extendedMarkets(T(a), T(b), asOf);
   const k = (s) => `${a}-${b}:${s}`;
   const an = T(a).nameHe, bn = T(b).nameHe;
   const c = [
@@ -486,7 +496,8 @@ function buildMatchCandidates(a, b, ko) {
    מקסימום המלצה אחת לכל משפחת שווקים — כדי לתת 3 כיוונים שונים באמת */
 function matchTopPicks(a, b, ko) {
   const sweet = (p) => p >= 0.45 && p <= 0.8 ? 2 : p > 0.8 && p <= 0.88 ? 1 : p >= 0.35 && p < 0.45 ? 1 : 0;
-  const gap = Math.abs(MODEL.effElo(T(a)) - MODEL.effElo(T(b)));
+  const asOf = matchAsOf(a, b);
+  const gap = Math.abs(MODEL.effElo(T(a), asOf) - MODEL.effElo(T(b), asOf));
   const scored = buildMatchCandidates(a, b, ko)
     .filter(x => x.p >= 0.33 && x.p <= 0.88)
     .map(x => {
@@ -508,7 +519,7 @@ function matchTopPicks(a, b, ko) {
 
 /* ניתוח מילולי אוטומטי למשחק */
 function matchNarrative(a, b, m, lA, lB) {
-  const gap = MODEL.effElo(T(a)) - MODEL.effElo(T(b));
+  const gap = MODEL.effElo(T(a), matchAsOf(a, b)) - MODEL.effElo(T(b), matchAsOf(a, b));
   const fav = gap >= 0 ? a : b, dog = gap >= 0 ? b : a, ag = Math.abs(gap);
   const s = [];
   if (ag >= 250) s.push(`פער כוח גדול: ${T(fav).nameHe} חזקה מ${T(dog).nameHe} ב-${ag} נקודות Elo — תרחיש של שליטה חד-צדדית.`);
@@ -547,8 +558,9 @@ function pickCard(x, idx) {
 
 function matchDetail(a, b, ko = false) {
   const res = resultOf(a, b);
-  const m = MODEL.markets(T(a), T(b));
-  const [lA, lB] = MODEL.lambdas(T(a), T(b));
+  const asOf = matchAsOf(a, b);
+  const m = MODEL.markets(T(a), T(b), asOf);
+  const [lA, lB] = MODEL.lambdas(T(a), T(b), asOf);
   const k = (suffix) => `${a}-${b}:${suffix}`;
   const advA = ko ? MODEL.koAdvanceProb(a, b) : 0;
   const rows = [
@@ -571,7 +583,7 @@ function matchDetail(a, b, ko = false) {
   );
 
   // שווקים מורחבים של ווינר
-  const ex = MODEL.extendedMarkets(T(a), T(b));
+  const ex = MODEL.extendedMarkets(T(a), T(b), asOf);
   const htftOrder = Object.entries(ex.htft).sort((x, y) => y[1] - x[1]).slice(0, 5);
   const exRows = [
     [`יתרון 0:1 — ${T(a).nameHe} (1)`, ex.hcapA_minus1.p1, k("H-1:1")],
@@ -617,7 +629,7 @@ function matchDetail(a, b, ko = false) {
     <h3>${tn(a)} נגד ${tn(b)} ${res ? `<span class="pill score-pill">הסתיים <span dir="ltr">${res}</span></span>` : ""}
         ${ko ? `<span class="pill">נוק-אאוט: 1X2 = 90 דקות בלבד!</span>` : ""}</h3>
     ${matchVerdict}
-    <p class="note">Elo: ${T(a).nameHe} ${MODEL.effElo(T(a))}${T(a).host ? " (כולל ביתיות)" : ""} מול ${T(b).nameHe} ${MODEL.effElo(T(b))}${T(b).host ? " (כולל ביתיות)" : ""}
+    <p class="note">Elo: ${T(a).nameHe} ${MODEL.effElo(T(a), asOf)}${T(a).host ? " (כולל ביתיות)" : ""} מול ${T(b).nameHe} ${MODEL.effElo(T(b), asOf)}${T(b).host ? " (כולל ביתיות)" : ""}
        · תוחלת שערים: ${lA.toFixed(2)} — ${lB.toFixed(2)}</p>
     <div class="narrative">🧠 <b>ניתוח:</b> ${matchNarrative(a, b, m, lA, lB)}</div>
     <div class="paste-box">

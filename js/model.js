@@ -45,17 +45,19 @@ const MODEL = (() => {
     return fx ? fx.d : null;
   }
 
-  // דירוגים נלמדים — מחושב פעם אחת מתוך DATA.results
-  let _learnedElo = null;
-  function learnedElo() {
-    if (_learnedElo) return _learnedElo;
+  // מחשב דירוגים נלמדים מתוך תוצאות הטורניר.
+  // beforeDate (אופציונלי): מחשב רק ממשחקים שהתרחשו *לפני* התאריך הזה —
+  // נחוץ לשיפוט הוגן (out-of-sample): משחק לא "לומד מהתוצאה של עצמו".
+  function computeLearned(beforeDate) {
     const r = {};
     // הטבעת מזהה על כל נבחרת (אם עוד לא קיים) — נחוץ ל-effElo
     for (const id in DATA.teams) { DATA.teams[id].id = id; r[id] = DATA.teams[id].elo; }
 
     // מיון כרונולוגי: תאריך לוח אם קיים, אחרת סדר ההופעה במערך
-    const played = (DATA.results || []).map((m, i) => ({ m, i, d: resultDate(m) }));
+    let played = (DATA.results || []).map((m, i) => ({ m, i, d: resultDate(m) }));
     played.sort((x, y) => (x.d && y.d ? x.d.localeCompare(y.d) : x.i - y.i));
+    // סינון out-of-sample: משחקים מאותו תאריך ואילך לא נכללים בלמידה
+    if (beforeDate) played = played.filter(p => !p.d || p.d < beforeDate);
     const n = played.length;
 
     for (let idx = 0; idx < n; idx++) {
@@ -75,21 +77,39 @@ const MODEL = (() => {
       r[m.home] += delta;
       r[m.away] -= delta;
     }
-    _learnedElo = r;
     return r;
   }
 
-  // איפוס מטמון (אם תוצאות מתעדכנות דינמית)
-  function resetLearned() { _learnedElo = null; }
+  // דירוגים נלמדים מלאים (כל התוצאות) — מטמון; מזין את התחזיות קדימה
+  let _learnedElo = null;
+  function learnedElo() {
+    if (!_learnedElo) _learnedElo = computeLearned(null);
+    return _learnedElo;
+  }
+  // מטמון לדירוגים "נכון לתאריך" (out-of-sample) לפי תאריך גבול
+  const _asOfCache = {};
+  function learnedEloAsOf(beforeDate) {
+    if (!beforeDate) return learnedElo();
+    if (!_asOfCache[beforeDate]) _asOfCache[beforeDate] = computeLearned(beforeDate);
+    return _asOfCache[beforeDate];
+  }
 
-  // Elo אפקטיבי למשחק (דירוג נלמד מתוצאות + בונוס ביתיות למארחות)
-  function effElo(team) {
-    const base = learnedElo()[team.id] ?? team.elo;
+  // איפוס מטמון (אם תוצאות מתעדכנות דינמית)
+  function resetLearned() {
+    _learnedElo = null;
+    for (const k in _asOfCache) delete _asOfCache[k];
+  }
+
+  // Elo אפקטיבי למשחק (דירוג נלמד מתוצאות + בונוס ביתיות למארחות).
+  // asOf (אופציונלי): דירוג כפי שהיה לפני תאריך נתון — לשיפוט הוגן.
+  function effElo(team, asOf) {
+    const base = learnedEloAsOf(asOf)[team.id] ?? team.elo;
     return Math.round(base) + (team.host ? DATA.meta.hostBonus : 0);
   }
 
-  function lambdas(teamA, teamB) {
-    const dr = effElo(teamA) - effElo(teamB);
+  // asOf (אופציונלי): מחשב לפי דירוג כפי שהיה לפני התאריך — לשיפוט הוגן
+  function lambdas(teamA, teamB, asOf) {
+    const dr = effElo(teamA, asOf) - effElo(teamB, asOf);
     let lA = BASE_GOALS * Math.pow(10, dr / ELO_GOAL_SCALE);
     let lB = BASE_GOALS * Math.pow(10, -dr / ELO_GOAL_SCALE);
     // כוונון סגנון עדין: התקפה של A מול הגנה של B
@@ -101,8 +121,8 @@ const MODEL = (() => {
   const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
 
   // מטריצת הסתברויות לכל תוצאה מדויקת
-  function scoreMatrix(teamA, teamB) {
-    const [lA, lB] = lambdas(teamA, teamB);
+  function scoreMatrix(teamA, teamB, asOf) {
+    const [lA, lB] = lambdas(teamA, teamB, asOf);
     const pA = poissonPmf(lA, MAX_GOALS), pB = poissonPmf(lB, MAX_GOALS);
     const m = [];
     let total = 0;
@@ -121,8 +141,8 @@ const MODEL = (() => {
   }
 
   // כל השווקים ממטריצה אחת
-  function markets(teamA, teamB) {
-    const m = scoreMatrix(teamA, teamB);
+  function markets(teamA, teamB, asOf) {
+    const m = scoreMatrix(teamA, teamB, asOf);
     let p1 = 0, px = 0, p2 = 0, over15 = 0, over25 = 0, over35 = 0, btts = 0;
     const scores = [];
     for (let i = 0; i <= MAX_GOALS; i++) {
@@ -169,9 +189,9 @@ const MODEL = (() => {
   // חלוקת שערים בין מחציות: ~45% במחצית הראשונה (ממוצע היסטורי)
   const H1_SHARE = 0.45;
 
-  function extendedMarkets(teamA, teamB) {
-    const m = scoreMatrix(teamA, teamB);
-    const [lA, lB] = lambdas(teamA, teamB);
+  function extendedMarkets(teamA, teamB, asOf) {
+    const m = scoreMatrix(teamA, teamB, asOf);
+    const [lA, lB] = lambdas(teamA, teamB, asOf);
 
     // יתרון תלת-דרכי: התוצאה אחרי הוספת hcp לשערי הקבוצה הראשונה
     function handicap(hcp) {
@@ -518,7 +538,7 @@ const MODEL = (() => {
     lambdas, scoreMatrix, markets, extendedMarkets, fairOdds, minWorthOdds, edge,
     simulateGroups, simulateChampion, groupFixtures, confidence, effElo,
     koAdvanceProb, koPropagate, koWinProb, gradeMarket,
-    learnedElo, resetLearned,
+    learnedElo, learnedEloAsOf, resetLearned, resultDate,
     EDGE_MARGIN
   };
 })();
