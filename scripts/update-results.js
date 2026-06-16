@@ -125,6 +125,21 @@ async function tsdbFindEventId(idH, idA, dateISO) {
   return ev ? { id: ev.idEvent, homeName: ev.strHomeTeam } : null;
 }
 
+// קובע אם אירוע ציר-זמן שייך לקבוצת הבית של המקור. עמיד למבני-API שונים:
+// מנסה strHome (yes/1/home), ואז התאמת שם קבוצה (strTeam/strPlayerTeam) מול הבית.
+function timelineEventIsHome(t, srcHomeName, srcAwayName) {
+  const sh = String(t.strHome || "").toLowerCase();
+  if (sh === "yes" || sh === "1" || sh === "home" || sh === "true") return true;
+  if (sh === "no" || sh === "0" || sh === "away" || sh === "false") return false;
+  // גיבוי: שם הקבוצה באירוע מול שמות הבית/חוץ של המשחק
+  const team = norm(t.strTeam || t.strPlayerTeam || t.strEventTeam || "");
+  if (team) {
+    if (team === norm(srcHomeName) || norm(srcHomeName).includes(team) || team.includes(norm(srcHomeName))) return true;
+    if (team === norm(srcAwayName) || norm(srcAwayName).includes(team) || team.includes(norm(srcAwayName))) return false;
+  }
+  return null; // לא ניתן לקבוע — נתעלם מהאירוע
+}
+
 // מבקיע-ראשון בכיוון הלוח (fx.h). norm מנורמל להשוואת שמות.
 async function tsdbFirstScorer(idH, idA, dateISO) {
   const ev = await tsdbFindEventId(idH, idA, dateISO);
@@ -132,14 +147,15 @@ async function tsdbFirstScorer(idH, idA, dateISO) {
   const tl = await fetchJson(`${TSDB_BASE}/lookuptimeline.php?id=${ev.id}`);
   const items = tl && Array.isArray(tl.timeline) ? tl.timeline : null;
   if (!items || !items.length) return null;
-  // אירועי שער בלבד, ממוינים לפי דקה
+  // אירועי שער בלבד (לא פנדלים בתום משחק), ממוינים לפי דקה
   const goals = items
-    .filter((t) => /goal/i.test(t.strTimeline || "") && !/penalty\s*shoot/i.test(t.strTimelineDetail || ""))
-    .map((t) => ({ min: parseInt(t.intTime, 10) || 0, side: (t.strHome === "yes" || t.strHome === "1") ? "home" : "away" }))
+    .filter((t) => /goal/i.test(t.strTimeline || "") && !/penalty\s*shoot/i.test((t.strTimelineDetail || "") + (t.strTimeline || "")))
+    .map((t) => ({ min: parseInt(t.intTime, 10) || 0, isHome: timelineEventIsHome(t, ev.homeName, ev.awayName) }))
+    .filter((g) => g.isHome !== null)
     .sort((a, b) => a.min - b.min);
-  if (!goals.length) return "none"; // 0-0 — אף אחד לא הבקיע
-  // הצד שהבקיע ראשון לפי המקור → נבחרת → כיוון הלוח
-  const firstSideHomeInSource = goals[0].side === "home";
+  if (!goals.length) return "none"; // אין שערים מזוהים — תיקו 0-0
+  // הצד שהבקיע ראשון לפי המקור → כיוון הלוח (fx.h)
+  const firstSideHomeInSource = goals[0].isHome;
   const evHomeIsOurH = norm(ev.homeName) === norm(DATA.teams[idH].nameEn);
   const scorerIsOurHome = evHomeIsOurH ? firstSideHomeInSource : !firstSideHomeInSource;
   return scorerIsOurHome ? "H" : "A";

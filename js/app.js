@@ -638,6 +638,83 @@ function matchNarrative(a, b, m, lA, lB) {
   return s.join(" ");
 }
 
+/* ============================================================
+   ניתוח מורחב — השוואת נבחרות צד-מול-צד (אנושי, ללא Elo גולמי)
+   ============================================================ */
+
+// נקודת טופס: עיגול צבעוני W/D/L עם tooltip של התוצאה
+function formDot(f) {
+  const cls = f.res === "W" ? "w" : f.res === "L" ? "l" : "d";
+  const lbl = f.res === "W" ? "ניצחון" : f.res === "L" ? "הפסד" : "תיקו";
+  return `<span class="form-dot ${cls}" title="${lbl} ${f.score} מול ${T(f.opp).nameHe}">${f.res === "W" ? "נ" : f.res === "L" ? "ה" : "ת"}</span>`;
+}
+
+// בר 0–10 בתוך כרטיס נבחרת (התקפה/הגנה)
+function statBar(label, val, color) {
+  return `<div class="stat-row"><span class="stat-lbl">${label}</span>
+    <span class="stat-bar"><i style="width:${val * 10}%;background:${color}"></i></span>
+    <b class="stat-val">${val}</b></div>`;
+}
+
+// כרטיס נבחרת אחד (צד אחד של ההשוואה)
+function teamCardHtml(c) {
+  const formHtml = c.form.length
+    ? `<div class="tc-form">${c.form.slice(0, 3).map(formDot).join("")}</div>`
+    : `<div class="tc-form tc-form-empty">טרם שיחקה</div>`;
+  return `<div class="team-card">
+    <div class="tc-head">${flag(c.id)} <b>${c.nameHe}</b>${c.host ? ` <span class="pill host-pill">🏟️ בית</span>` : ""}</div>
+    <div class="tc-rank">מקום <b>${c.power.rank}</b> מתוך ${c.power.total} בכוח</div>
+    ${statBar("🔥 התקפה", c.attack, "var(--red)")}
+    ${statBar("🛡️ הגנה", c.defense, "var(--blue)")}
+    <div class="tc-meta">${c.head.star ? `⭐ ${c.head.star}` : ""}</div>
+    <div class="tc-meta tc-timing">${c.timing.label}</div>
+    <div class="tc-form-wrap"><span class="tc-form-lbl">טופס:</span> ${formHtml}</div>
+  </div>`;
+}
+
+// בר מתפצל אחד: מי מנצח את המֵמד (RTL: a מימין, b משמאל)
+function divergeBar(label, va, vb, max) {
+  const total = va + vb || 1;
+  const pa = (va / total) * 100, pb = (vb / total) * 100;
+  const aWins = va > vb, bWins = vb > va;
+  return `<div class="dv-row">
+    <span class="dv-val ${aWins ? "win" : ""}">${va}</span>
+    <span class="dv-track">
+      <i class="dv-a ${aWins ? "win" : ""}" style="width:${pa}%"></i><i class="dv-b ${bWins ? "win" : ""}" style="width:${pb}%"></i>
+    </span>
+    <span class="dv-val ${bWins ? "win" : ""}">${vb}</span>
+    <span class="dv-lbl">${label}</span>
+  </div>`;
+}
+
+// כל בלוק הניתוח המורחב: כרטיסים + ברים מתפצלים + תרגום אנושי + עובדות.
+function h2hAnalysis(a, b, asOf) {
+  const cmp = PROFILE.compare(a, b, asOf);
+  const ca = cmp.a, cb = cmp.b;
+  const sentences = [`<b>${cmp.dominance.text}</b>`];
+  if (cmp.upset) sentences.push(cmp.upset.text);
+  sentences.push(matchNarrative(a, b, MODEL.markets(T(a), T(b), asOf),
+    ...MODEL.lambdas(T(a), T(b), asOf)));
+
+  const facts = cmp.facts.length
+    ? `<div class="h2h-facts">${cmp.facts.map(f => `<span class="fact-chip">${f}</span>`).join("")}</div>`
+    : "";
+
+  // כוח כללי כציון 1–10 (מקום נמוך → ציון גבוה) כדי שהבר והמספר יתאימו
+  const powScore = (c) => Math.max(1, Math.round((c.power.total - c.power.rank + 1) / c.power.total * 10));
+
+  return `<div class="h2h">
+    <div class="h2h-cards">${teamCardHtml(ca)}<span class="h2h-vs">VS</span>${teamCardHtml(cb)}</div>
+    <div class="h2h-diverge">
+      ${divergeBar("🔥 התקפה", ca.attack, cb.attack)}
+      ${divergeBar("🛡️ הגנה", ca.defense, cb.defense)}
+      ${divergeBar("⚡ כוח כללי", powScore(ca), powScore(cb))}
+    </div>
+    <div class="narrative h2h-narrative">🧠 <b>ניתוח:</b> ${sentences.join(" ")}</div>
+    ${facts}
+  </div>`;
+}
+
 function pickCard(x, idx) {
   const medals = ["🥇", "🥈", "🥉"];
   const userOdds = ODDS[x.key];

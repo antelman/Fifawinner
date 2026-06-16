@@ -25,6 +25,11 @@ const MODEL = (() => {
      שמרני בכוונה (K נמוך) כי מדגם המשחקים עדיין קטן.            */
   const LEARN_K = 20;          // פקטור עדכון שמרני (סטנדרט מונדיאל ~40)
   const LEARN_HOME_ADJ = 60;   // יתרון מארחת/ביתיות לצורך הציפייה בלבד
+  // למידת התקפה/הגנה נפרדת (סגנון Dixon-Coles): כמה שערים נבחרת מבקיעה/סופגת
+  // יחסית לציפייה מ-Elo, עם החלקה בייסיאנית סביב 1.0 ודעיכת זמן.
+  const STR_PRIOR_WEIGHT = 6;  // עוצמת הפריור (כמשחקים וירטואליים סביב 1.0)
+  const STR_DAMP = 0.6;        // ריסון: 1=למידה מלאה, 0=ללא — שמרני למדגם קטן
+  const STR_CLAMP = 0.55;      // גבול מכפיל: [1-0.55, 1+0.55] ≈ [0.45, 1.55]
   // דעיכת זמן (החצי השני של Dixon-Coles): משחקים עדכניים שוקלים יותר.
   // half-life = 6 משחקים → תוצאה לפני ~6 משחקים שוקלת חצי ממשחק נוכחי.
   const DECAY_HALFLIFE = 6;
@@ -139,12 +144,77 @@ const MODEL = (() => {
     return s == null ? H1_PRIOR : s;
   }
 
+  /* ---------- למידת עוצמת התקפה/הגנה לכל נבחרת ----------
+     במקום שכל נבחרת תיוצג ע"י מספר Elo יחיד, לומדים בנפרד:
+       attFactor — כמה שערים היא מבקיעה יחסית לציפייה (>1 = התקפה חזקה)
+       defFactor — כמה היא סופגת יחסית לציפייה (<1 = הגנה חזקה)
+     הציפייה לכל משחק היא ה-λ מ-Elo בלבד (לפני המכפילים — מונע רקורסיה).
+     היחס שערים-בפועל / ציפייה מצטבר עם דעיכת-זמן והחלקה בייסיאנית סביב 1,
+     out-of-sample (רק משחקים לפני asOf). מרוסן (STR_DAMP) ומוגבל (STR_CLAMP).  */
+  function baseLambdasElo(idH, idA) {
+    // λ בסיסי מ-Elo בלבד (כולל בונוס ביתיות) — בלי att/def, למניעת רקורסיה
+    const eH = (learnedElo()[idH] ?? DATA.teams[idH].elo) + (DATA.teams[idH].host ? DATA.meta.hostBonus : 0);
+    const eA = (learnedElo()[idA] ?? DATA.teams[idA].elo) + (DATA.teams[idA].host ? DATA.meta.hostBonus : 0);
+    const dr = Math.round(eH) - Math.round(eA);
+    return [BASE_GOALS * Math.pow(10, dr / ELO_GOAL_SCALE), BASE_GOALS * Math.pow(10, -dr / ELO_GOAL_SCALE)];
+  }
+  function computeStrength(beforeDate) {
+    // צבירה משוקללת: numerator/denominator ליחס att, ול-def
+    const acc = {}; // id → { aNum, aDen, dNum, dDen }
+    const get = (id) => acc[id] || (acc[id] = { aNum: 0, aDen: 0, dNum: 0, dDen: 0 });
+    let played = (DATA.results || []).map((m, i) => ({ m, i, d: resultDate(m) }));
+    played.sort((x, y) => (x.d && y.d ? x.d.localeCompare(y.d) : x.i - y.i));
+    if (beforeDate) played = played.filter(p => !p.d || p.d < beforeDate);
+    const n = played.length;
+    for (let idx = 0; idx < n; idx++) {
+      const m = played[idx].m;
+      if (!DATA.teams[m.home] || !DATA.teams[m.away]) continue;
+      const [expH, expA] = baseLambdasElo(m.home, m.away);
+      const decay = Math.pow(0.5, ((n - 1) - idx) / DECAY_HALFLIFE);
+      const H = get(m.home), A = get(m.away);
+      // התקפת הבית מול הגנת החוץ (משוקלל בציפייה ובדעיכה)
+      H.aNum += m.hg * decay; H.aDen += expH * decay;   // כמה הבקיע הבית מול הצפוי
+      A.dNum += m.hg * decay; A.dDen += expH * decay;   // כמה ספג החוץ מול הצפוי
+      A.aNum += m.ag * decay; A.aDen += expA * decay;
+      H.dNum += m.ag * decay; H.dDen += expA * decay;
+    }
+    const out = {};
+    for (const id in acc) {
+      const s = acc[id];
+      // יחס גולמי מוחלק בייסיאנית סביב 1.0, ואז מרוסן ומוגבל
+      const rawAtt = (s.aNum + STR_PRIOR_WEIGHT) / (s.aDen + STR_PRIOR_WEIGHT);
+      const rawDef = (s.dNum + STR_PRIOR_WEIGHT) / (s.dDen + STR_PRIOR_WEIGHT);
+      const damp = (r) => 1 + STR_DAMP * (r - 1);
+      const cl = (r) => clamp(r, 1 - STR_CLAMP, 1 + STR_CLAMP);
+      out[id] = { att: cl(damp(rawAtt)), def: cl(damp(rawDef)) };
+    }
+    return out;
+  }
+  let _strFull = null;
+  const _strAsOfCache = {};
+  function strengthAsOf(beforeDate) {
+    if (!beforeDate) return (_strFull = _strFull || computeStrength(null));
+    if (!_strAsOfCache[beforeDate]) _strAsOfCache[beforeDate] = computeStrength(beforeDate);
+    return _strAsOfCache[beforeDate];
+  }
+  // מכפילי התקפה/הגנה אפקטיביים: הנלמד (אם קיים) משולב עם ה-Mod הידני כפריור
+  function attFactor(team, asOf) {
+    const s = strengthAsOf(asOf)[team.id];
+    return (team.attMod || 1) * (s ? s.att : 1);
+  }
+  function defFactor(team, asOf) {
+    const s = strengthAsOf(asOf)[team.id];
+    return (team.defMod || 1) * (s ? s.def : 1);
+  }
+
   // איפוס מטמון (אם תוצאות מתעדכנות דינמית)
   function resetLearned() {
     _learnedElo = null;
     for (const k in _asOfCache) delete _asOfCache[k];
     _h1Full = null;
     for (const k in _h1AsOfCache) delete _h1AsOfCache[k];
+    _strFull = null;
+    for (const k in _strAsOfCache) delete _strAsOfCache[k];
   }
 
   // Elo אפקטיבי למשחק (דירוג נלמד מתוצאות + בונוס ביתיות למארחות).
@@ -154,14 +224,33 @@ const MODEL = (() => {
     return Math.round(base) + (team.host ? DATA.meta.hostBonus : 0);
   }
 
+  /* כיווץ-כיול (regularization to the mean): מדידה out-of-sample הראתה
+     שבמדגם קטן המודל "בטוח מדי". מושכים את תוחלת השערים מעט לכיוון
+     הממוצע הניטרלי (BASE_GOALS) — מה שמושך את *כל* ההסתברויות הנגזרות
+     לכיוון המרכז ומשפר את הכיול. הכיווץ יורד אוטומטית ככל שנצברים
+     משחקים (יותר נתונים → אפשר להיות בטוחים יותר).                  */
+  const SHRINK_BASE = 0.18;        // כיווץ התחלתי (מדגם ריק)
+  const SHRINK_HALF_GAMES = 48;    // מס' משחקים שבו הכיווץ יורד למחציתו
+  function shrinkFactor(asOf) {
+    const played = (DATA.results || []).filter(
+      (m) => !asOf || (resultDate(m) && resultDate(m) < asOf)).length;
+    // דעיכה אקספוננציאלית: הרבה נתונים → כיווץ קטן
+    return SHRINK_BASE * Math.pow(0.5, played / SHRINK_HALF_GAMES);
+  }
+
   // asOf (אופציונלי): מחשב לפי דירוג כפי שהיה לפני התאריך — לשיפוט הוגן
   function lambdas(teamA, teamB, asOf) {
     const dr = effElo(teamA, asOf) - effElo(teamB, asOf);
     let lA = BASE_GOALS * Math.pow(10, dr / ELO_GOAL_SCALE);
     let lB = BASE_GOALS * Math.pow(10, -dr / ELO_GOAL_SCALE);
-    // כוונון סגנון עדין: התקפה של A מול הגנה של B
-    lA *= (teamA.attMod || 1) * (teamB.defMod || 1);
-    lB *= (teamB.attMod || 1) * (teamA.defMod || 1);
+    // התקפת A מול הגנת B (וההפך) — מכפילים נלמדים מהשערים בפועל,
+    // משולבים עם כוונון הסגנון הידני (attMod/defMod) כפריור
+    lA *= attFactor(teamA, asOf) * defFactor(teamB, asOf);
+    lB *= attFactor(teamB, asOf) * defFactor(teamA, asOf);
+    // כיווץ-כיול לכיוון הממוצע הניטרלי (מתון, יורד עם הצטברות נתונים)
+    const sh = shrinkFactor(asOf);
+    lA = lA * (1 - sh) + BASE_GOALS * sh;
+    lB = lB * (1 - sh) + BASE_GOALS * sh;
     return [clamp(lA, 0.15, 4.2), clamp(lB, 0.15, 4.2)];
   }
 
@@ -607,11 +696,17 @@ const MODEL = (() => {
     return { perTeam, championDist: dists[0] };
   }
 
+  // נטיית מחצית-ראשונה נלמדת לנבחרת (חשוף לשכבת הפרופיל; אותו מקור אמת)
+  function h1ShareOf(id, asOf) {
+    const t = DATA.teams[id];
+    return t ? h1Share(t, asOf) : H1_PRIOR;
+  }
+
   return {
     lambdas, scoreMatrix, markets, extendedMarkets, fairOdds, minWorthOdds, edge,
     simulateGroups, simulateChampion, groupFixtures, confidence, effElo,
     koAdvanceProb, koPropagate, koWinProb, gradeMarket,
-    learnedElo, learnedEloAsOf, resetLearned, resultDate,
+    learnedElo, learnedEloAsOf, resetLearned, resultDate, h1ShareOf,
     EDGE_MARGIN
   };
 })();
