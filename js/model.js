@@ -18,9 +18,74 @@ const MODEL = (() => {
     return p;
   }
 
-  // Elo אפקטיבי למשחק (כולל בונוס ביתיות למארחות)
+  /* ---------- למידה מתוצאות הטורניר: עדכון Elo קדימה ----------
+     אחרי כל משחק שהסתיים מעדכנים את דירוג שתי הנבחרות לפי
+     התוצאה מול הציפייה (בשיטת eloratings.net). הדירוג המעודכן
+     מזין מכאן והלאה את כל התחזיות — בתים, נוק-אאוט, ביטחון ותצוגה.
+     שמרני בכוונה (K נמוך) כי מדגם המשחקים עדיין קטן.            */
+  const LEARN_K = 20;          // פקטור עדכון שמרני (סטנדרט מונדיאל ~40)
+  const LEARN_HOME_ADJ = 60;   // יתרון מארחת/ביתיות לצורך הציפייה בלבד
+  // דעיכת זמן (החצי השני של Dixon-Coles): משחקים עדכניים שוקלים יותר.
+  // half-life = 6 משחקים → תוצאה לפני ~6 משחקים שוקלת חצי ממשחק נוכחי.
+  const DECAY_HALFLIFE = 6;
+
+  // מכפיל הפרש שערים (eloratings.net): ניצחון גדול מזיז יותר
+  function gdMultiplier(gd) {
+    const a = Math.abs(gd);
+    if (a <= 1) return 1;
+    if (a === 2) return 1.5;
+    return (11 + a) / 8;       // 3→1.75, 4→1.875, ...
+  }
+
+  // תאריך משחק מהלוח הרשמי (לצורך מיון כרונולוגי + דעיכת זמן)
+  function resultDate(m) {
+    if (!DATA.schedule) return null;
+    const fx = DATA.schedule.find(x =>
+      (x.h === m.home && x.a === m.away) || (x.h === m.away && x.a === m.home));
+    return fx ? fx.d : null;
+  }
+
+  // דירוגים נלמדים — מחושב פעם אחת מתוך DATA.results
+  let _learnedElo = null;
+  function learnedElo() {
+    if (_learnedElo) return _learnedElo;
+    const r = {};
+    // הטבעת מזהה על כל נבחרת (אם עוד לא קיים) — נחוץ ל-effElo
+    for (const id in DATA.teams) { DATA.teams[id].id = id; r[id] = DATA.teams[id].elo; }
+
+    // מיון כרונולוגי: תאריך לוח אם קיים, אחרת סדר ההופעה במערך
+    const played = (DATA.results || []).map((m, i) => ({ m, i, d: resultDate(m) }));
+    played.sort((x, y) => (x.d && y.d ? x.d.localeCompare(y.d) : x.i - y.i));
+    const n = played.length;
+
+    for (let idx = 0; idx < n; idx++) {
+      const m = played[idx].m;
+      const h = DATA.teams[m.home], a = DATA.teams[m.away];
+      if (!h || !a || r[m.home] == null || r[m.away] == null) continue;
+      // יתרון בית לצורך הציפייה: מארחת מקבלת בונוס, אחרת בונוס מארח כללי
+      const homeAdj = h.host ? DATA.meta.hostBonus : LEARN_HOME_ADJ;
+      const dr = (r[m.home] + homeAdj) - r[m.away];
+      const expH = 1 / (1 + Math.pow(10, -dr / 400));
+      const actH = m.hg > m.ag ? 1 : (m.hg < m.ag ? 0 : 0.5);
+      // משקל דעיכת זמן: 1.0 למשחק האחרון, יורד אקספוננציאלית לאחור
+      const age = (n - 1) - idx;
+      const decay = Math.pow(0.5, age / DECAY_HALFLIFE);
+      const k = LEARN_K * gdMultiplier(m.hg - m.ag) * decay;
+      const delta = k * (actH - expH);
+      r[m.home] += delta;
+      r[m.away] -= delta;
+    }
+    _learnedElo = r;
+    return r;
+  }
+
+  // איפוס מטמון (אם תוצאות מתעדכנות דינמית)
+  function resetLearned() { _learnedElo = null; }
+
+  // Elo אפקטיבי למשחק (דירוג נלמד מתוצאות + בונוס ביתיות למארחות)
   function effElo(team) {
-    return team.elo + (team.host ? DATA.meta.hostBonus : 0);
+    const base = learnedElo()[team.id] ?? team.elo;
+    return Math.round(base) + (team.host ? DATA.meta.hostBonus : 0);
   }
 
   function lambdas(teamA, teamB) {
@@ -453,6 +518,7 @@ const MODEL = (() => {
     lambdas, scoreMatrix, markets, extendedMarkets, fairOdds, minWorthOdds, edge,
     simulateGroups, simulateChampion, groupFixtures, confidence, effElo,
     koAdvanceProb, koPropagate, koWinProb, gradeMarket,
+    learnedElo, resetLearned,
     EDGE_MARGIN
   };
 })();

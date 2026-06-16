@@ -98,6 +98,46 @@ function trackRecord() {
   return { hit, miss, total: hit + miss };
 }
 
+/* ---------- כיול לפי משפחת שווקים (calibration) ----------
+   לומדים מתוך הביצועים בפועל: איזו משפחת שווקים (תוצאה/שערים/מחציות)
+   באמת פוגעת ומחטיאה, ומטים את דירוג ההמלצות בהתאם. מחקרים מראים
+   שבחירה לפי כיול עדיפה על בחירה לפי דיוק גולמי.
+   החלקה בייסיאנית (פריור 60% עם משקל 4) כדי שמדגם קטן לא יקפיץ.   */
+const CALIB_PRIOR = 0.60;     // שיעור פגיעה מצופה לפני נתונים
+const CALIB_WEIGHT = 4;       // עוצמת הפריור (כמשחקים וירטואליים)
+let _calib = null;
+
+// מחשב hit-rate מוחלק לכל משפחה, ללא קריאה ל-matchTopPicks (מונע רקורסיה)
+function familyCalibration() {
+  if (_calib) return _calib;
+  const acc = {};   // family → {hit, miss}
+  for (const fx of DATA.schedule) {
+    if (!orientedResult(fx.h, fx.a)) continue;
+    for (const x of buildMatchCandidates(fx.h, fx.a, false)) {
+      // רק מועמדים בטווח ההמלצות הממשי — אלו ש"היו על השולחן"
+      if (x.p < 0.33 || x.p > 0.88) continue;
+      const g = gradeKey(x.key);
+      if (g === null) continue;
+      const f = acc[x.family] || (acc[x.family] = { hit: 0, miss: 0 });
+      if (g === true) f.hit++; else f.miss++;
+    }
+  }
+  const rate = {};
+  for (const fam in acc) {
+    const { hit, miss } = acc[fam];
+    rate[fam] = (hit + CALIB_PRIOR * CALIB_WEIGHT) / (hit + miss + CALIB_WEIGHT);
+  }
+  _calib = rate;
+  return rate;
+}
+
+// מכפיל דירוג עדין למשפחה: 1.0 בנייטרל, ±~15% בקצוות (סביב הפריור)
+function familyBoost(family) {
+  const r = familyCalibration()[family];
+  if (r == null) return 1;
+  return 1 + (r - CALIB_PRIOR) * 0.8;   // 0.8 = רגישות מתונה
+}
+
 /* ---------- אתחול ---------- */
 // כל שגיאה — על המסך במקום תקיעה שקטה על מסך הטעינה
 window.addEventListener("error", (e) => {
@@ -449,7 +489,12 @@ function matchTopPicks(a, b, ko) {
   const gap = Math.abs(MODEL.effElo(T(a)) - MODEL.effElo(T(b)));
   const scored = buildMatchCandidates(a, b, ko)
     .filter(x => x.p >= 0.33 && x.p <= 0.88)
-    .map(x => ({ ...x, conf: MODEL.confidence(x.p, gap), score: sweet(x.p) * 10 + x.p * 5 + MODEL.confidence(x.p, gap) }))
+    .map(x => {
+      const conf = MODEL.confidence(x.p, gap);
+      // כיול לפי משפחה: מגביר משפחות שפגעו, מנמיך משפחות שהחטיאו
+      const base = sweet(x.p) * 10 + x.p * 5 + conf;
+      return { ...x, conf, score: base * familyBoost(x.family) };
+    })
     .sort((x, y) => y.score - x.score);
   const picks = [], used = new Set();
   for (const x of scored) {
