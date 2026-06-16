@@ -402,7 +402,12 @@ img.flag {
   background: var(--bg-soft); border: 1px solid var(--border); border-radius: 14px;
   padding: 12px 14px; margin-top: 10px;
 }
-.ls-head { font-size: .9rem; font-weight: 700; color: var(--text-bright); margin-bottom: 10px; }
+.ls-head { font-size: .9rem; font-weight: 700; color: var(--text-bright); margin-bottom: 6px; }
+.ls-legend {
+  font-size: .78rem; color: var(--muted); margin-bottom: 10px;
+  display: flex; align-items: center; gap: 6px; justify-content: flex-end;
+}
+.ls-legend .flag { width: 18px; height: 13px; }
 .ls-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
 .ls-card {
   background: var(--bg3); border: 1px solid var(--border); border-radius: 11px;
@@ -410,9 +415,15 @@ img.flag {
 }
 .ls-card.top { border-color: rgba(244, 201, 91, .35); background: rgba(244, 201, 91, .06); }
 .ls-card.hit { border-color: var(--value); background: rgba(41, 229, 154, .1); }
-.ls-score { font-family: var(--mono); font-size: 1.15rem; font-weight: 700; color: var(--text); line-height: 1; }
+.ls-score {
+  font-family: var(--mono); font-size: 1.1rem; font-weight: 700; color: var(--text); line-height: 1;
+  display: flex; align-items: center; gap: 4px; justify-content: center;
+}
+.ls-side { display: inline-flex; align-items: center; gap: 3px; }
+.ls-side .flag { width: 17px; height: 12px; }
 .ls-card.top .ls-score { color: var(--gold); }
 .ls-card.hit .ls-score { color: var(--value); }
+.ls-check { color: var(--value); }
 .ls-dash { opacity: .5; margin: 0 1px; }
 .ls-bar { width: 100%; background: rgba(255, 255, 255, .06); border-radius: 99px; height: 5px; overflow: hidden; }
 .ls-bar > i { display: block; height: 100%; border-radius: 99px; background: var(--gold); opacity: .8; }

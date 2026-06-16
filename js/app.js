@@ -718,18 +718,27 @@ function h2hAnalysis(a, b, asOf) {
   </div>`;
 }
 
-// תוצאות סבירות — כרטיסי תוצאה עם בר עוצמה יחסי (במקום שורת note נסתרת)
+// תוצאות סבירות — כרטיסי תוצאה עם בר עוצמה יחסי (במקום שורת note נסתרת).
+// s.h = שערי קבוצה a (ראשונה), s.a = שערי קבוצה b — מצמידים דגלים כדי
+// שלא יהיה ספק מי הבקיע כמה (בלי דגלים "2–0" נקרא הפוך בפריסת RTL).
 function likelyScoresHtml(a, b, asOf) {
   const m = MODEL.markets(T(a), T(b), asOf);
   const top = m.topScores.slice(0, 5);
   const maxP = top[0] ? top[0].p : 1;
   return `<div class="likely-scores">
     <div class="ls-head">🎯 התוצאות הסבירות ביותר</div>
+    <div class="ls-legend">${flag(a)} ${T(a).nameHe} <span class="ls-dash">–</span> ${T(b).nameHe} ${flag(b)}</div>
     <div class="ls-grid">
       ${top.map((s, i) => {
         const won = gradeKey(`${a}-${b}:CS${s.h}${s.a}`) === true;
+        // פריסת RTL: קבוצה a מימין → השער שלה (s.h) מימין, שער b (s.a) משמאל
         return `<div class="ls-card${i === 0 ? " top" : ""}${won ? " hit" : ""}">
-          <div class="ls-score" dir="ltr">${s.h}<span class="ls-dash">–</span>${s.a}${won ? " ✓" : ""}</div>
+          <div class="ls-score">
+            <span class="ls-side">${flag(a)}<b>${s.h}</b></span>
+            <span class="ls-dash">–</span>
+            <span class="ls-side"><b>${s.a}</b>${flag(b)}</span>
+            ${won ? `<span class="ls-check">✓</span>` : ""}
+          </div>
           <div class="ls-bar"><i style="width:${(s.p / maxP * 100).toFixed(0)}%"></i></div>
           <div class="ls-pct">${pct1(s.p)}</div>
         </div>`;
