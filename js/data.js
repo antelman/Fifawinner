@@ -71,22 +71,22 @@ const DATA = {
   // וניתן גם ידנית. כיוון home/away חייב להתאים ל-schedule.  עדכון אחרון: 14.6.2026
   results: [
     /* RESULTS:START — נערך אוטומטית; אל תוסיפו טקסט בתוך הבלוק הזה */
-    { g: "A", home: "MEX", away: "RSA", hg: 2, ag: 0, htHg: 1, htAg: 0 },
+    { g: "A", home: "MEX", away: "RSA", hg: 2, ag: 0, htHg: 1, htAg: 0, firstScorer: "H" },
     { g: "A", home: "KOR", away: "CZE", hg: 2, ag: 1, htHg: 0, htAg: 0 },
     { g: "B", home: "CAN", away: "BIH", hg: 1, ag: 1, htHg: 0, htAg: 1 },
     { g: "D", home: "USA", away: "PAR", hg: 4, ag: 1, htHg: 3, htAg: 0 },
-    { g: "B", home: "QAT", away: "SUI", hg: 1, ag: 1, htHg: 0, htAg: 1 },
-    { g: "C", home: "BRA", away: "MAR", hg: 1, ag: 1, htHg: 1, htAg: 1 },
-    { g: "C", home: "HAI", away: "SCO", hg: 0, ag: 1, htHg: 0, htAg: 1 },
+    { g: "B", home: "QAT", away: "SUI", hg: 1, ag: 1, htHg: 0, htAg: 1, firstScorer: "A" },
+    { g: "C", home: "BRA", away: "MAR", hg: 1, ag: 1, htHg: 1, htAg: 1, firstScorer: "A" },
+    { g: "C", home: "HAI", away: "SCO", hg: 0, ag: 1, htHg: 0, htAg: 1, firstScorer: "A" },
     { g: "D", home: "AUS", away: "TUR", hg: 1, ag: 0, htHg: 1, htAg: 0 },
     { g: "E", home: "GER", away: "CUR", hg: 7, ag: 1, htHg: 3, htAg: 1 },
     { g: "E", home: "CIV", away: "ECU", hg: 1, ag: 0, htHg: 0, htAg: 0 },
-    { g: "F", home: "NED", away: "JPN", hg: 2, ag: 2, htHg: 0, htAg: 0 },
+    { g: "F", home: "NED", away: "JPN", hg: 2, ag: 2, htHg: 0, htAg: 0, firstScorer: "H" },
     { g: "F", home: "SWE", away: "TUN", hg: 5, ag: 1, htHg: 2, htAg: 1 },
     { g: "H", home: "ESP", away: "CPV", hg: 0, ag: 0, htHg: 0, htAg: 0 },
-    { g: "G", home: "BEL", away: "EGY", hg: 1, ag: 1, htHg: 0, htAg: 1 },
-    { g: "H", home: "KSA", away: "URU", hg: 1, ag: 1, htHg: 1, htAg: 0 },
-    { g: "G", home: "IRN", away: "NZL", hg: 2, ag: 2, htHg: 1, htAg: 1 }
+    { g: "G", home: "BEL", away: "EGY", hg: 1, ag: 1, htHg: 0, htAg: 1, firstScorer: "A" },
+    { g: "H", home: "KSA", away: "URU", hg: 1, ag: 1, htHg: 1, htAg: 0, firstScorer: "H" },
+    { g: "G", home: "IRN", away: "NZL", hg: 2, ag: 2, htHg: 1, htAg: 1, firstScorer: "A" }
     /* RESULTS:END */
   ],
 
