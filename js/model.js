@@ -94,10 +94,57 @@ const MODEL = (() => {
     return _asOfCache[beforeDate];
   }
 
+  /* ---------- למידת נטיית-מחציות לכל נבחרת ----------
+     ברירת המחדל התיאורטית היא ש-45% מהשערים נופלים במחצית הראשונה.
+     אבל לנבחרות שונות יש קצב שונה (פותחות חזק / מסיימות חזק). מתוך
+     המשחקים שהסתיימו *עם תוצאת מחצית* (htHg/htAg), לומדים לכל נבחרת
+     את חלק המחצית-הראשונה מסך השערים שלה (בעד+נגד) — עם החלקה
+     בייסיאנית סביב 0.45 כדי שמדגם קטן לא יקפיץ.                      */
+  const H1_PRIOR = 0.45;        // נטיית מחצית-ראשונה ברירת מחדל (פריור)
+  const H1_PRIOR_WEIGHT = 8;    // עוצמת הפריור (כשערים וירטואליים)
+
+  // חלק המחצית-הראשונה הנלמד לנבחרת, ממשחקים *לפני* asOf (out-of-sample).
+  // מחזיר { share } — היחס בין שערי-מחצית-1 (בעד+נגד) לסך השערים במשחק.
+  function computeH1Shares(beforeDate) {
+    const acc = {};  // id → { h1Goals, totGoals }
+    for (const m of (DATA.results || [])) {
+      if (m.htHg == null || m.htAg == null) continue;        // אין תוצאת מחצית — לא לומדים
+      const d = resultDate(m);
+      if (beforeDate && d && d >= beforeDate) continue;      // out-of-sample
+      const tot = m.hg + m.ag, h1 = m.htHg + m.htAg;
+      if (tot === 0) continue;                                // 0-0 לא מלמד על תזמון
+      for (const id of [m.home, m.away]) {
+        const a = acc[id] || (acc[id] = { h1: 0, tot: 0 });
+        a.h1 += h1; a.tot += tot;
+      }
+    }
+    const out = {};
+    for (const id in acc) {
+      const { h1, tot } = acc[id];
+      // החלקה בייסיאנית: מושך לכיוון הפריור כשהמדגם קטן
+      out[id] = (h1 + H1_PRIOR * H1_PRIOR_WEIGHT) / (tot + H1_PRIOR_WEIGHT);
+    }
+    return out;
+  }
+  let _h1Full = null;
+  const _h1AsOfCache = {};
+  function h1SharesAsOf(beforeDate) {
+    if (!beforeDate) return (_h1Full = _h1Full || computeH1Shares(null));
+    if (!_h1AsOfCache[beforeDate]) _h1AsOfCache[beforeDate] = computeH1Shares(beforeDate);
+    return _h1AsOfCache[beforeDate];
+  }
+  // נטיית מחצית-ראשונה אפקטיבית לנבחרת (נלמדת אם יש מספיק נתון, אחרת הפריור)
+  function h1Share(team, asOf) {
+    const s = h1SharesAsOf(asOf)[team.id];
+    return s == null ? H1_PRIOR : s;
+  }
+
   // איפוס מטמון (אם תוצאות מתעדכנות דינמית)
   function resetLearned() {
     _learnedElo = null;
     for (const k in _asOfCache) delete _asOfCache[k];
+    _h1Full = null;
+    for (const k in _h1AsOfCache) delete _h1AsOfCache[k];
   }
 
   // Elo אפקטיבי למשחק (דירוג נלמד מתוצאות + בונוס ביתיות למארחות).
@@ -186,9 +233,6 @@ const MODEL = (() => {
     return m;
   }
 
-  // חלוקת שערים בין מחציות: ~45% במחצית הראשונה (ממוצע היסטורי)
-  const H1_SHARE = 0.45;
-
   function extendedMarkets(teamA, teamB, asOf) {
     const m = scoreMatrix(teamA, teamB, asOf);
     const [lA, lB] = lambdas(teamA, teamB, asOf);
@@ -219,10 +263,12 @@ const MODEL = (() => {
     const lT = lA + lB, pNoGoal = Math.exp(-lT);
     const firstA = (lA / lT) * (1 - pNoGoal), firstB = (lB / lT) * (1 - pNoGoal);
 
-    // מחציות: שתי מטריצות בלתי-תלויות (45%/55% מהתוחלת)
+    // מחציות: שתי מטריצות בלתי-תלויות. נטיית המחצית-הראשונה נלמדת לכל
+    // נבחרת בנפרד (h1Share) — מי שפותחת חזק תקבל λ גבוה יותר במחצית 1.
+    const shA = h1Share(teamA, asOf), shB = h1Share(teamB, asOf);
     const HMAX = 6;
-    const m1 = rawMatrix(lA * H1_SHARE, lB * H1_SHARE, HMAX);
-    const m2 = rawMatrix(lA * (1 - H1_SHARE), lB * (1 - H1_SHARE), HMAX);
+    const m1 = rawMatrix(lA * shA, lB * shB, HMAX);
+    const m2 = rawMatrix(lA * (1 - shA), lB * (1 - shB), HMAX);
     let ht1 = 0, htx = 0, ht2 = 0;
     const htft = { "1/1": 0, "1/X": 0, "1/2": 0, "X/1": 0, "X/X": 0, "X/2": 0, "2/1": 0, "2/X": 0, "2/2": 0 };
     for (let i1 = 0; i1 <= HMAX; i1++) for (let j1 = 0; j1 <= HMAX; j1++) {
@@ -235,8 +281,9 @@ const MODEL = (() => {
         htft[htRes + "/" + ftRes] += p1h * m2[i2][j2];
       }
     }
-    // שער בשתי המחציות
-    const goalBothHalves = (1 - Math.exp(-lT * H1_SHARE)) * (1 - Math.exp(-lT * (1 - H1_SHARE)));
+    // שער בשתי המחציות: תוחלת השערים בכל מחצית לפי הנטיות הנלמדות של שתי הנבחרות
+    const lH1 = lA * shA + lB * shB, lH2 = lA * (1 - shA) + lB * (1 - shB);
+    const goalBothHalves = (1 - Math.exp(-lH1)) * (1 - Math.exp(-lH2));
 
     return {
       hcapA_minus1: handicap(-1),  // הקבוצה הראשונה פותחת ב-0:1

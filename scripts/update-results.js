@@ -181,9 +181,11 @@ async function tsdbFirstScorer(idH, idA, dateISO) {
 
     const prev = existing.get(fx.h + "|" + fx.a);
     if (prev) {
-      // שורה קיימת — משלימים רק נתון משלים חסר שנדרש להמלצות (לא נוגעים בתוצאה)
+      // שורה קיימת — משלימים נתון חסר (לא נוגעים בתוצאה)
       let changed = false;
-      if (need.ht && prev.htHg == null && htHg != null) { prev.htHg = htHg; prev.htAg = htAg; changed = true; }
+      // תוצאת מחצית: נשמרת תמיד כשזמינה — נחוצה ללמידת נטיית-מחציות לכל נבחרת
+      if (prev.htHg == null && htHg != null) { prev.htHg = htHg; prev.htAg = htAg; changed = true; }
+      // מבקיע-ראשון: נמשך רק אם המלצנו על השוק (חוסך בקשות TheSportsDB)
       if (need.first && !prev.firstScorer) {
         const fs1 = await tsdbFirstScorer(fx.h, fx.a, fx.d);
         if (fs1) { prev.firstScorer = fs1; changed = true; }
@@ -197,6 +199,7 @@ async function tsdbFirstScorer(idH, idA, dateISO) {
     }
 
     const row = { g: fx.g, home: fx.h, away: fx.a, hg, ag };
+    // תוצאת מחצית — נשמרת תמיד כשזמינה (חינם מאותו אובייקט; נחוצה ללמידה ולשיפוט)
     if (htHg != null) { row.htHg = htHg; row.htAg = htAg; }
     // מבקיע-ראשון — נמשך מ-TheSportsDB רק אם המלצנו על השוק במשחק זה
     if (need.first) {

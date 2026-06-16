@@ -116,7 +116,7 @@ function verdictBadge(hit) {
 }
 // שמות בעברית למשפחות השווקים — לתצוגת הפילוח
 const FAMILY_LABELS = {
-  result: "תוצאה (1X2 / צ'אנס כפול / הנדיקאפ)",
+  result: "תוצאה (1X2 / הנדיקאפ / העפלה)",
   goals: "שערים (מעל/מתחת · שתיהן מבקיעות)",
   halves: "מחציות (מבקיעה ראשונה · יתרון במחצית)",
 };
@@ -255,25 +255,28 @@ function generateRecs() {
       if (played.has(a + "|" + b)) continue;
       const m = MODEL.markets(T(a), T(b));
       const gap = MODEL.effElo(T(a)) - MODEL.effElo(T(b));
-      const base = { group: g, match: `${tn(a)} — ${tn(b)}` };
+      // פילוח 1X2 מלא — מוצג תמיד בכרטיס ההמלצה, ללא קשר לבחירה
+      const odds1x2 = { p1: m.p1, px: m.px, p2: m.p2,
+        n1: `ניצחון ${tn(a)} (1)`, nx: "תיקו (X)", n2: `ניצחון ${tn(b)} (2)` };
+      const base = { group: g, match: `${tn(a)} — ${tn(b)}`, odds1x2 };
 
-      // תקרה 0.85: מעליה היחס ההוגן < ~1.18 — עמלת הווינר הופכת זאת להימור גרוע תמיד
-      if (m.p1 >= 0.58 && m.p1 <= 0.85)
-        recs.push({ ...base, market: "1X2", pick: `ניצחון ${tn(a)} (1)`, p: m.p1,
-          conf: MODEL.confidence(m.p1, gap), key: `${a}-${b}:1`,
-          why: `פער כוח ${Math.abs(gap)} נק' Elo לטובת ${T(a).nameHe}` });
-      else if (m.p2 >= 0.58 && m.p2 <= 0.85)
-        recs.push({ ...base, market: "1X2", pick: `ניצחון ${tn(b)} (2)`, p: m.p2,
-          conf: MODEL.confidence(m.p2, gap), key: `${a}-${b}:2`,
-          why: `פער כוח ${Math.abs(gap)} נק' Elo לטובת ${T(b).nameHe}` });
-      else {
-        const dc = m.dc1x >= m.dcx2 ? { p: m.dc1x, lbl: `${tn(a)} או תיקו (1X)`, k: "1X" }
-                                    : { p: m.dcx2, lbl: `${tn(b)} או תיקו (X2)`, k: "X2" };
-        if (dc.p >= 0.66 && dc.p <= 0.88)
-          recs.push({ ...base, market: "צ'אנס כפול", pick: dc.lbl, p: dc.p,
-            conf: MODEL.confidence(dc.p, gap), key: `${a}-${b}:${dc.k}`,
-            why: "משחק צמוד — גידור על שתי תוצאות" });
-      }
+      // המלצה חד-משמעית: התוצאה היחידה (1 / X / 2) שהמודל מעריך כסבירה ביותר.
+      // בלי צ'אנס כפול — או ניצחון, או הפסד, או תיקו.
+      const outcomes = [
+        { p: m.p1, lbl: `ניצחון ${tn(a)} (1)`, k: "1",
+          why: `הסיכוי הגבוה ביותר — פער ${Math.abs(gap)} נק' Elo לטובת ${T(a).nameHe}` },
+        { p: m.px, lbl: "תיקו (X)", k: "X",
+          why: "משחק צמוד — התיקו הוא התוצאה הסבירה ביותר" },
+        { p: m.p2, lbl: `ניצחון ${tn(b)} (2)`, k: "2",
+          why: `הסיכוי הגבוה ביותר — פער ${Math.abs(gap)} נק' Elo לטובת ${T(b).nameHe}` },
+      ];
+      const best = outcomes.sort((x, y) => y.p - x.p)[0];
+      // תקרה 0.85: מעליה היחס ההוגן < ~1.18 — עמלת הווינר הופכת זאת להימור גרוע תמיד.
+      // רף תחתון 0.40: התוצאה הסבירה ביותר חייבת להיות מספיק בולטת כדי להמליץ עליה.
+      if (best.p >= 0.40 && best.p <= 0.85)
+        recs.push({ ...base, market: "1X2", pick: best.lbl, p: best.p,
+          conf: MODEL.confidence(best.p, gap), key: `${a}-${b}:${best.k}`,
+          why: best.why });
       if (m.under25 >= 0.62)
         recs.push({ ...base, market: "שערים", pick: "מתחת 2.5 שערים", p: m.under25,
           conf: MODEL.confidence(m.under25, 0), key: `${a}-${b}:U25`,
@@ -341,6 +344,18 @@ function generateRecs() {
   return recs;
 }
 
+/* פילוח 1/X/2 — מוצג תמיד ליד המלצת תוצאה, ללא קשר לבחירה.
+   מסמן את התוצאה שעליה הומלץ (לפי סיומת המפתח). */
+function odds1x2Html(o, key) {
+  if (!o) return "";
+  const picked = key ? key.slice(key.lastIndexOf(":") + 1) : "";
+  const cell = (lbl, p, code) => `<span class="o1x2-cell${picked === code ? " picked" : ""}">
+      <span class="o1x2-lbl">${lbl}</span><b>${pct(p)}</b></span>`;
+  return `<div class="o1x2" title="הסתברות לכל תוצאה ב-90 דקות">
+    ${cell("1", o.p1, "1")}${cell("X", o.px, "X")}${cell("2", o.p2, "2")}
+  </div>`;
+}
+
 function recHtml(r) {
   const isVal = r.edge !== undefined && r.edge > 0;
   const edgeHtml = r.edge !== undefined
@@ -353,6 +368,7 @@ function recHtml(r) {
     <div class="what">
       <b>${r.pick}</b> <span class="pill">${r.match}</span> ${edgeHtml}
       <div class="why">${r.why} · ביטחון: <span class="stars">${stars(r.conf)}</span></div>
+      ${odds1x2Html(r.odds1x2, r.key)}
     </div>
     <div class="nums">
       יחס הוגן: <b class="fair">${odds(r.fair)}</b><br>
@@ -371,12 +387,22 @@ function hebDate(iso) {
   return new Date(iso + "T12:00:00").toLocaleDateString("he-IL", { weekday: "long", day: "numeric", month: "numeric" });
 }
 
+/* פילוח 1/X/2 ישירות ממודל המשחק — להצגה בכותרת כל כרטיס משחק */
+function match1x2Html(a, b) {
+  const m = MODEL.markets(T(a), T(b), matchAsOf(a, b));
+  const o = { p1: m.p1, px: m.px, p2: m.p2 };
+  // מסמן את התוצאה הסבירה ביותר
+  const top = o.p1 >= o.px && o.p1 >= o.p2 ? "1" : o.px >= o.p2 ? "X" : "2";
+  return odds1x2Html(o, `:${top}`);
+}
+
 /* כרטיס משחק יומי: כותרת + 3 ההמלצות שלו (פגע/החטיא אם הסתיים) */
 function dayMatchCard(fx) {
   const res = resultOf(fx.h, fx.a);
   const head = `<h3>${tn(fx.h)} <span class="vs">נגד</span> ${tn(fx.a)}
     <span class="pill">בית ${fx.g}${fx.est ? " · תאריך משוער" : ""}</span>
-    ${res ? `<span class="pill score-pill">הסתיים ${res}</span>` : ""}</h3>`;
+    ${res ? `<span class="pill score-pill">הסתיים ${res}</span>` : ""}</h3>
+    ${match1x2Html(fx.h, fx.a)}`;
   const picks = matchTopPicks(fx.h, fx.a, false);
   if (res) {
     // משחק שהסתיים: מציג את ההמלצות שניתנו עם פסיקת פגע/החטיא
@@ -545,8 +571,6 @@ function buildMatchCandidates(a, b, ko) {
     { label: `ניצחון ${an} (1)`, p: m.p1, key: k("1"), family: "result", why: "תוצאת 90 דקות" },
     { label: `ניצחון ${bn} (2)`, p: m.p2, key: k("2"), family: "result", why: "תוצאת 90 דקות" },
     { label: "תיקו (X)", p: m.px, key: k("X"), family: "result", why: "תוצאת 90 דקות" },
-    { label: `${an} או תיקו (1X)`, p: m.dc1x, key: k("1X"), family: "result", why: "צ'אנס כפול — גידור על שתי תוצאות" },
-    { label: `${bn} או תיקו (X2)`, p: m.dcx2, key: k("X2"), family: "result", why: "צ'אנס כפול — גידור על שתי תוצאות" },
     { label: `${an} בהפרש 2+ שערים (הנדיקאפ: יתרון 0:1 ל${bn})`, p: ex.hcapA_minus1.p1, key: k("H-1:1"), family: "result", why: `הנדיקאפ +1: ${an} מנצחת גם אחרי שמזכים את ${bn} בשער — ניצחון בהפרש 2+` },
     { label: `${an} בהפרש 3+ שערים (הנדיקאפ ווינר: יתרון 0:2 ל${bn})`, p: ex.hcapA_minus2.p1, key: k("H-2:1"), family: "result", why: `קו ה-+2 של ווינר: ${an} מנצחת גם אחרי שמזכים את ${bn} בשני שערים — ניצחון בהפרש 3+` },
     { label: `${an} מנצחת ביותר משער`, p: ex.winBy2A, key: k("WB2A"), family: "result", why: "ניצחון בהפרש 2+ שערים" },
@@ -708,6 +732,7 @@ function matchDetail(a, b, ko = false) {
   return `<div class="card" style="margin-top:16px">
     <h3>${tn(a)} נגד ${tn(b)} ${res ? `<span class="pill score-pill">הסתיים <span dir="ltr">${res}</span></span>` : ""}
         ${ko ? `<span class="pill">נוק-אאוט: 1X2 = 90 דקות בלבד!</span>` : ""}</h3>
+    ${odds1x2Html({ p1: m.p1, px: m.px, p2: m.p2 }, `:${m.p1 >= m.px && m.p1 >= m.p2 ? "1" : m.px >= m.p2 ? "X" : "2"}`)}
     ${matchVerdict}
     <p class="note">Elo: ${T(a).nameHe} ${MODEL.effElo(T(a), asOf)}${T(a).host ? " (כולל ביתיות)" : ""} מול ${T(b).nameHe} ${MODEL.effElo(T(b), asOf)}${T(b).host ? " (כולל ביתיות)" : ""}
        · תוחלת שערים: ${lA.toFixed(2)} — ${lB.toFixed(2)}</p>

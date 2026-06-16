@@ -206,6 +206,17 @@ input:focus, select:focus { outline: none; border-color: var(--value); }
 .rec .nums b.fair { color: var(--gold); }
 .rec .nums b:not(.fair) { color: var(--text-bright); }
 .stars { color: var(--gold); letter-spacing: 1px; }
+
+/* פילוח 1/X/2 — שלוש הסתברויות התוצאה, תמיד מוצג ליד המלצת תוצאה */
+.o1x2 { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.o1x2-cell { display: flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 7px;
+  background: var(--bg3); border: 1px solid var(--border, rgba(255,255,255,.08));
+  font-size: .8rem; color: var(--muted); }
+.o1x2-cell .o1x2-lbl { font-weight: 700; color: var(--faint); }
+.o1x2-cell b { font-family: var(--mono); color: var(--text-bright); }
+.o1x2-cell.picked { background: rgba(212, 175, 55, .14); border-color: var(--gold); }
+.o1x2-cell.picked .o1x2-lbl, .o1x2-cell.picked b { color: var(--gold); }
+
 .rec.is-value { background: var(--bg3); border-color: rgba(41, 229, 154, .18); }
 .rec.is-value .badge b { color: var(--value); }
 
