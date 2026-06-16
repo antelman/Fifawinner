@@ -62,6 +62,28 @@ function resultOf(a, b) {
   }
   return null;
 }
+// טבלת בית מתוצאות אמת בלבד — מתעדכנת אוטומטית לפי DATA.results
+function groupStandings(groupId) {
+  const table = {};
+  for (const id of DATA.groups[groupId]) {
+    table[id] = { id, p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, gd: 0, pts: 0 };
+  }
+  for (const r of DATA.results) {
+    if (!(r.home in table) || !(r.away in table)) continue;
+    const home = table[r.home], away = table[r.away];
+    home.p++; away.p++;
+    home.gf += r.hg; home.ga += r.ag;
+    away.gf += r.ag; away.ga += r.hg;
+    if (r.hg > r.ag) { home.w++; home.pts += 3; away.l++; }
+    else if (r.hg < r.ag) { away.w++; away.pts += 3; home.l++; }
+    else { home.d++; away.d++; home.pts++; away.pts++; }
+  }
+  for (const id in table) table[id].gd = table[id].gf - table[id].ga;
+  // מיון: נקודות, הפרש שערים, שערי זכות (כללי FIFA), ואז שם לדטרמיניזם
+  return Object.values(table).sort((x, y) =>
+    y.pts - x.pts || y.gd - x.gd || y.gf - x.gf || (x.id < y.id ? -1 : 1));
+}
+
 // תוצאה מכוונת לפי סדר הפיקסצ'ר (a=בית, b=חוץ) — לשיפוט שווקים
 function orientedResult(a, b) {
   for (const r of DATA.results) {
@@ -675,24 +697,43 @@ function matchDetail(a, b, ko = false) {
    ============================================================ */
 function viewGroups() {
   return `<div class="grid cols2">${Object.keys(DATA.groups).map(g => {
-    const rows = DATA.groups[g].map(id => ({ id, ...SIM[id] }))
-      .sort((x, y) => y.expPts - x.expPts);
+    const standings = groupStandings(g);
+    const anyPlayed = standings.some(s => s.p > 0);
+    const proj = {};
+    for (const id of DATA.groups[g]) proj[id] = SIM[id];
     return `<div class="card group-card">
-      <h3>בית ${g}</h3>
+      <h3>בית ${g}${anyPlayed ? "" : ` <span class="note" style="font-weight:400">· טרם נפתח</span>`}</h3>
       <table>
-        <colgroup><col style="width:38%"><col style="width:14%"><col style="width:14%"><col style="width:14%"><col style="width:20%"></colgroup>
-        <tr><th style="text-align:right">נבחרת</th><th>תוחלת<br>נק'</th><th>זוכת<br>בית</th><th>העפלה</th><th></th></tr>
-        ${rows.map(r => `<tr>
-          <td class="team" data-team="${r.id}">${tn(r.id)}</td>
-          <td>${r.expPts.toFixed(1)}</td>
-          <td>${pct(r.pWinGroup)}</td>
-          <td>${pct(r.pAdvance)}</td>
-          <td><div class="bar"><i style="width:${(r.pAdvance * 100).toFixed(0)}%"></i></div></td>
+        <colgroup><col style="width:30%"><col style="width:7%"><col style="width:7%"><col style="width:7%"><col style="width:7%"><col style="width:13%"><col style="width:9%"><col style="width:13%"></colgroup>
+        <tr>
+          <th style="text-align:right">נבחרת</th>
+          <th title="משחקים">מ׳</th><th title="ניצחונות">נ׳</th><th title="תיקו">ת׳</th><th title="הפסדים">ה׳</th>
+          <th title="שערים זכות:חובה">שערים</th><th title="הפרש שערים">הפרש</th><th>נק׳</th>
+        </tr>
+        ${standings.map((s, i) => `<tr${i === 1 ? ' style="border-bottom:2px solid var(--gold)"' : ''}>
+          <td class="team" data-team="${s.id}">${tn(s.id)}</td>
+          <td>${s.p}</td><td>${s.w}</td><td>${s.d}</td><td>${s.l}</td>
+          <td>${s.gf}:${s.ga}</td>
+          <td>${s.gd > 0 ? "+" + s.gd : s.gd}</td>
+          <td><b>${s.pts}</b></td>
         </tr>`).join("")}
       </table>
+      <details style="margin-top:8px">
+        <summary style="cursor:pointer;color:var(--muted);font-size:.82rem">תחזית סימולציה (זוכת בית / העפלה)</summary>
+        <table style="margin-top:6px">
+          <colgroup><col style="width:40%"><col style="width:18%"><col style="width:18%"><col style="width:24%"></colgroup>
+          <tr><th style="text-align:right">נבחרת</th><th>זוכת<br>בית</th><th>העפלה</th><th></th></tr>
+          ${standings.map(s => ({ id: s.id, ...proj[s.id] })).sort((x, y) => y.pAdvance - x.pAdvance).map(r => `<tr>
+            <td class="team" data-team="${r.id}">${tn(r.id)}</td>
+            <td>${pct(r.pWinGroup)}</td>
+            <td>${pct(r.pAdvance)}</td>
+            <td><div class="bar"><i style="width:${(r.pAdvance * 100).toFixed(0)}%"></i></div></td>
+          </tr>`).join("")}
+        </table>
+      </details>
     </div>`;
   }).join("")}</div>
-  <p class="note">"העפלה" כוללת גם מסלול מקום-3 (8 השלישיות הטובות מ-12 עולות). לחצו על שם נבחרת לפרופיל 10 שנים מלא. תוצאות שכבר נרשמו (${DATA.results.length} משחקים) מקובעות בסימולציה.</p>`;
+  <p class="note">הטבלה למעלה היא <b>מצב אמת</b> לפי תוצאות שכבר נרשמו (${DATA.results.length} משחקים) — מתעדכנת אוטומטית עם כל תוצאה חדשה. הקו הזהוב מסמן את גבול 2 הראשונים. "העפלה" בתחזית כוללת גם מסלול מקום-3 (8 השלישיות הטובות מ-12 עולות). לחצו על שם נבחרת לפרופיל מלא.</p>`;
 }
 
 /* ============================================================
