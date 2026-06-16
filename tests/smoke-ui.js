@@ -64,7 +64,7 @@ if (_futureFx) {
   check("דף משחק עתידי: ללא פסיקה", !futureDetail.includes("ההמלצות שנשפטו"));
 }
 const htmlGroups = viewGroups();
-check("טאב בתים מרונדר (12 בתים)", (htmlGroups.match(/בית [A-L]</g) || []).length === 12);
+check("טאב בתים מרונדר (12 בתים)", (htmlGroups.match(/<h3>בית [A-L]/g) || []).length === 12);
 selFixture = ["ESP", "URU"];
 selGroup = "H";
 const htmlMatches = viewMatches();
@@ -87,8 +87,6 @@ const r3 = applyPastedOdds("ESP", "URU", "אין כאן כלום 100 200");
 check("טקסט בלי יחסים נדחה", !r3.ok);
 const htmlFut = viewFutures();
 check("טאב עתידיים מרונדר", htmlFut.includes("זוכת המונדיאל"));
-const htmlGuide = viewGuide();
-check("טאב מדריך מרונדר", htmlGuide.includes("חישוב זכייה"));
 
 // טאב נוק-אאוט: ריק → הנחיות; מלא → טבלת מסלול מדויק
 const htmlKoEmpty = viewKO();

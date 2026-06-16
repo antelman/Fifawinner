@@ -107,17 +107,54 @@ function verdictBadge(hit) {
   if (hit === false) return `<span class="pill verdict-miss">✗ החטיאה</span>`;
   return "";
 }
-// מאזן ההמלצות: כל ה-top-picks של משחקים שהסתיימו
+// שמות בעברית למשפחות השווקים — לתצוגת הפילוח
+const FAMILY_LABELS = {
+  result: "תוצאה (1X2 / צ'אנס כפול / הנדיקאפ)",
+  goals: "שערים (מעל/מתחת · שתיהן מבקיעות)",
+  halves: "מחציות (מבקיעה ראשונה · יתרון במחצית)",
+};
+// מאזן ההמלצות: כל ה-top-picks של משחקים שהסתיימו, כולל פילוח לפי משפחת שוק
 function trackRecord() {
   let hit = 0, miss = 0;
+  const byFamily = {};   // family → { hit, miss }
   for (const fx of DATA.schedule) {
     if (!orientedResult(fx.h, fx.a)) continue;
     for (const p of matchTopPicks(fx.h, fx.a, false)) {
       const g = gradeKey(p.key);
-      if (g === true) hit++; else if (g === false) miss++;
+      if (g !== true && g !== false) continue;
+      const f = byFamily[p.family] || (byFamily[p.family] = { hit: 0, miss: 0 });
+      if (g === true) { hit++; f.hit++; } else { miss++; f.miss++; }
     }
   }
-  return { hit, miss, total: hit + miss };
+  // פילוח ממוין מהמדויק לפחות מדויק (רק משפחות עם משחקים שנשפטו)
+  const breakdown = Object.entries(byFamily)
+    .map(([family, s]) => ({
+      family,
+      label: FAMILY_LABELS[family] || family,
+      hit: s.hit, miss: s.miss, total: s.hit + s.miss,
+      pct: Math.round(s.hit / (s.hit + s.miss) * 100),
+    }))
+    .sort((a, b) => b.pct - a.pct);
+  return { hit, miss, total: hit + miss, breakdown };
+}
+
+// פילוח אחוז ההצלחה לפי סוג הימור — מראה במה אנחנו חזקים יותר
+function trackBreakdownHtml(breakdown) {
+  if (!breakdown || breakdown.length < 2) return "";
+  const rows = breakdown.map(b => `
+    <div class="bd-row">
+      <div class="bd-head">
+        <span class="bd-label">${b.label}</span>
+        <span class="bd-pct ${b.pct >= 50 ? "good" : "bad"}">${b.pct}%</span>
+      </div>
+      <div class="bd-bar"><i class="${b.pct >= 50 ? "good" : "bad"}" style="width:${b.pct}%"></i></div>
+      <div class="note bd-count">${b.hit} פגעו · ${b.miss} החטיאו (${b.total} נשפטו)</div>
+    </div>`).join("");
+  return `<div class="card track-breakdown">
+    <h3>📊 באיזה הימור אנחנו מדויקים יותר?</h3>
+    <p class="note">פילוח אחוז הפגיעה לפי סוג ההימור — ככל שהאחוז גבוה יותר, ההמלצות בקטגוריה הזו אמינות יותר.</p>
+    ${rows}
+  </div>`;
 }
 
 /* ---------- כיול לפי משפחת שווקים (calibration) ----------
@@ -195,8 +232,7 @@ function render() {
   else if (activeTab === "matches") el.innerHTML = viewMatches();
   else if (activeTab === "groups") el.innerHTML = viewGroups();
   else if (activeTab === "futures") el.innerHTML = viewFutures();
-  else if (activeTab === "ko") el.innerHTML = viewKO();
-  else el.innerHTML = viewGuide();
+  else el.innerHTML = viewKO();
   bindEvents();
 }
 
@@ -402,7 +438,8 @@ function viewRecs() {
           <h3>אחוז הצלחת ההמלצות</h3>
           <div class="track-sub"><b>${tr.hit}</b> מתוך <b>${tr.total}</b> ההמלצות החזקות פגעו${tr.miss ? ` · ${tr.miss} החטיאו` : ""}</div>
           <div class="note">מתעדכן אוטומטית לפי תוצאות המשחקים שהסתיימו</div>
-        </div></div>`
+        </div></div>
+      ${trackBreakdownHtml(tr.breakdown)}`
     : "";
   return `
   ${trBanner}
@@ -897,41 +934,6 @@ function viewKO() {
     </div>
   </div>`).join("")}
   ${selKoMatch ? matchDetail(selKoMatch[0], selKoMatch[1], true) : ""}`;
-}
-
-/* ============================================================
-   מדריך
-   ============================================================ */
-function viewGuide() {
-  return `<div class="card guide">
-    <h3>📖 פורמט הווינר — מה חייבים לדעת</h3>
-    <ul>
-      <li><b>חישוב זכייה:</b> סכום ההימור × מכפלת היחסים. דוגמה: ₪100 על יחס 2.50 ויחס 1.50 בצירוף = ₪375.</li>
-      <li><b>סכומים:</b> מינימום ₪10 לטופס, בכפולות של ₪5.</li>
-      <li><b>סימוני אירועים:</b> S = מותר הימור בודד · D = חובה לצרף אירוע נוסף · ללא סימון = חובה צירוף 3+. רוב משחקי המונדיאל מסומנים S.</li>
-      <li><b>1X2 נקבע ב-90 דקות בלבד</b> — בנוק-אאוט שוק "מי יעפיל" (כולל הארכה ופנדלים) הוא שוק נפרד!</li>
-    </ul>
-    <h3>🧠 חמשת כללי הזהב של המערכת</h3>
-    <ol>
-      <li><b>ערך לפני הכל:</b> מהמרים רק כש-P(מודל) × יחס ווינר &gt; 1.07. העמלה של הווינר (10%–18%) הופכת את רוב ההימורים לתוחלת שלילית.</li>
-      <li><b>סינגלים, לא צירופים:</b> כל בחירה בצירוף מוסיפה את עמלת הבית שלה. צירוף 5 "בטוחים" = הימור גרוע.</li>
-      <li><b>להימנע מיחסים מתחת 1.35:</b> שם העמלה היחסית הכי דורסנית.</li>
-      <li><b>זהירות במחזור 3 של הבתים:</b> קבוצות שהעפילו מורידות הילוך — המודל (וגם השוק) פחות אמינים שם.</li>
-      <li><b>ניהול בנקרול:</b> 1%–2% מהבנקרול להימור, קבוע. בלי "להכפיל כדי לחזור".</li>
-    </ol>
-    <h3>🌎 גורמים ייחודיים למונדיאל 2026 (מגולמים חלקית במודל)</h3>
-    <table>
-      <tr><th>גורם</th><th>השפעה</th></tr>
-      <tr><td>ביתיות מקסיקו/ארה"ב/קנדה</td><td>+50 Elo במודל. אצטקה בגובה 2,240מ' — יתרון נוסף למקסיקו שלא מגולם במלואו</td></tr>
-      <tr><td>חום קיץ בצהריים (משחקי 12:00)</td><td>פוגע בקבוצות פרסינג אירופיות; יתרון לדרום-אמריקאיות ואפריקאיות</td></tr>
-      <tr><td>נסיעות ענק בין ערים</td><td>קבוצות עם בסיס-קבע (מארחות) נשחקות פחות</td></tr>
-      <tr><td>פורמט 48 קבוצות חדש</td><td>8 שלישיות עולות מ-12 בתים → "העפלה" שווה יותר ממה שנדמה לאנדרדוגיות</td></tr>
-      <tr><td>מוטיבציות מיוחדות</td><td>מסי (39) ורונאלדו (41) במונדיאל אחרון; דשאן נפרד מצרפת</td></tr>
-    </table>
-    <h3>⚠️ הימור אחראי</h3>
-    <p>המערכת היא כלי ניתוח, לא מכונת כסף. גם הימור-ערך מפסיד בחלק גדול מהפעמים — היתרון הוא סטטיסטי וארוך-טווח בלבד.
-    אם ההימורים מפסיקים להיות בידור — קו תמיכה: <b dir="ltr">*5777</b>.</p>
-  </div>`;
 }
 
 /* הדבקה מהירה: חילוץ יחסים מטקסט חופשי שהועתק מאתר/אפליקציית ווינר.

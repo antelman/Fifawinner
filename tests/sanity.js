@@ -78,9 +78,13 @@ check("USA 4-1: ניצחון בית פגע, מתחת 2.5 החטיא", G("1", 4, 
 const big = MODEL.markets(DATA.teams.BRA, DATA.teams.SCO); // ~290 פער
 check("פייבוריט בפער ~300 בטווח 65-80%", big.p1 > 0.65 && big.p1 < 0.80, (big.p1 * 100).toFixed(1) + "%");
 
-// 4. סימטריה: קבוצות שוות → p1≈p2
-const even = MODEL.markets(DATA.teams.SWE, DATA.teams.TUN);
-check("קבוצות שוות מאוזנות", Math.abs(even.p1 - even.p2) < 0.05, `1=${(even.p1 * 100).toFixed(1)}% 2=${(even.p2 * 100).toFixed(1)}%`);
+// 4. סימטריה: שתי נבחרות זהות לחלוטין → p1≈p2 (קלט מראה ⇒ פלט מראה).
+//    משתמשים בקבוצה סינתטית מול עותק זהה שלה — Elo *וגם* מקדמי התקפה/הגנה
+//    שווים — כי המודל מתבסס על attMod/defMod ולא רק על Elo. שתי נבחרות אמת
+//    בעלות Elo קרוב אך מקדמי סגנון שונים אינן "שוות" ולכן אינן בדיקה תקפה.
+const twin = { id: "TWIN", elo: 1700, host: false, attMod: 1.0, defMod: 1.0 };
+const even = MODEL.markets(twin, { ...twin, id: "TWIN2" });
+check("קבוצות שוות מאוזנות", Math.abs(even.p1 - even.p2) < 0.001, `1=${(even.p1 * 100).toFixed(1)}% 2=${(even.p2 * 100).toFixed(1)}%`);
 
 // 5. סימולציית בתים
 console.log("\nמריץ מונטה-קרלו (20,000)...");
