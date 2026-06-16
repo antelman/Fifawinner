@@ -121,21 +121,33 @@ async function fetchFinishedMatches() {
   }
 
   console.log(`סיכום: נוספו ${added}, לא-זוהו ${skippedUnmatched}, מחוץ-ללוח ${skippedNoFixture}.`);
-  if (!added) { console.log("אין תוצאות חדשות — אין שינוי."); return; }
 
-  // סדר התוצאות לפי הופעתן בלוח (יציב), ושכתוב הבלוק בין הסמנים
-  const order = new Map(DATA.schedule.map((x, i) => [x.h + "|" + x.a, i]));
-  DATA.results.sort((a, b) => (order.get(a.home + "|" + a.away) ?? 99) - (order.get(b.home + "|" + b.away) ?? 99));
-  const lines = DATA.results.map(r =>
-    `    { g: "${r.g}", home: "${r.home}", away: "${r.away}", hg: ${r.hg}, ag: ${r.ag} }`).join(",\n");
+  // המשיכה הצליחה — תמיד מעדכנים את תאריך "הנתונים נכונים ל-" לזמן הבדיקה,
+  // גם כשאין תוצאות חדשות, כדי שהפוטר ישקף את הבדיקה האחרונה ולא רק תוצאה אחרונה.
   const today = new Date().toLocaleDateString("en-CA");
-
   const file = path.join(root, "js/data.js");
   let src = fs.readFileSync(file, "utf8");
-  src = src.replace(
-    /\/\* RESULTS:START[\s\S]*?RESULTS:END \*\//,
-    `/* RESULTS:START — נערך אוטומטית; אל תוסיפו טקסט בתוך הבלוק הזה */\n${lines}\n    /* RESULTS:END */`);
+  const prevUpdated = (src.match(/updated:\s*"([^"]*)"/) || [])[1] || null;
+
+  if (added) {
+    // סדר התוצאות לפי הופעתן בלוח (יציב), ושכתוב הבלוק בין הסמנים
+    const order = new Map(DATA.schedule.map((x, i) => [x.h + "|" + x.a, i]));
+    DATA.results.sort((a, b) => (order.get(a.home + "|" + a.away) ?? 99) - (order.get(b.home + "|" + b.away) ?? 99));
+    const lines = DATA.results.map(r =>
+      `    { g: "${r.g}", home: "${r.home}", away: "${r.away}", hg: ${r.hg}, ag: ${r.ag} }`).join(",\n");
+    src = src.replace(
+      /\/\* RESULTS:START[\s\S]*?RESULTS:END \*\//,
+      `/* RESULTS:START — נערך אוטומטית; אל תוסיפו טקסט בתוך הבלוק הזה */\n${lines}\n    /* RESULTS:END */`);
+  }
+
+  if (!added && prevUpdated === today) {
+    console.log("אין תוצאות חדשות והתאריך כבר עדכני — אין שינוי.");
+    return;
+  }
+
   src = src.replace(/updated:\s*"[^"]*"/, `updated: "${today}"`);
   fs.writeFileSync(file, src);
-  console.log(`עודכנו ${added} תוצאות חדשות. סה"כ ${DATA.results.length}. תאריך: ${today}`);
+  console.log(added
+    ? `עודכנו ${added} תוצאות חדשות. סה"כ ${DATA.results.length}. תאריך: ${today}`
+    : `אין תוצאות חדשות — עודכן רק תאריך הבדיקה ל-${today}.`);
 })();
