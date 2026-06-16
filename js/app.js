@@ -33,6 +33,11 @@ const odds = (x) => x === Infinity ? "—" : x.toFixed(2);
 const T = (id) => DATA.teams[id];
 const tn = (id) => `${T(id).flag} ${T(id).nameHe}`;
 const stars = (n) => "★".repeat(n) + "☆".repeat(5 - n);
+// תאריך YYYY-MM-DD → D.M.YYYY (ללא אפסים מובילים); מחזיר "" אם אין/לא תקין
+const fmtDate = (iso) => {
+  const p = (iso || "").split("-");
+  return p.length === 3 ? `${+p[2]}.${+p[1]}.${p[0]}` : "";
+};
 
 function saveOdds() { STORE.setItem("fw_odds", JSON.stringify(ODDS)); }
 function saveBracket() { STORE.setItem("fw_bracket", JSON.stringify(BRACKET)); }
@@ -95,10 +100,10 @@ window.addEventListener("error", (e) => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-  // תאריך עדכון הנתונים בפוטר — דינמי מ-DATA.meta.updated (YYYY-MM-DD → D.M.YYYY)
-  const _dd = (DATA.meta.updated || "").split("-");
+  // תאריך עדכון הנתונים בפוטר — דינמי מ-DATA.meta.updated
   const _ddEl = document.getElementById("dataDate");
-  if (_ddEl && _dd.length === 3) _ddEl.textContent = `${+_dd[2]}.${+_dd[1]}.${_dd[0]}`;
+  const _dd = fmtDate(DATA.meta.updated);
+  if (_ddEl && _dd) _ddEl.textContent = _dd;
   document.querySelectorAll(".tab-btn").forEach(btn =>
     btn.addEventListener("click", () => {
       document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
@@ -284,7 +289,7 @@ function scoreboardHtml() {
   if (!finished.length) return "";
   const recent = finished.slice(-6).reverse();
   return `<div class="card scoreboard">
-    <h3>📋 תוצאות אחרונות <span class="pill">${DATA.meta.updated}</span></h3>
+    <h3>📋 תוצאות אחרונות <span class="pill">${fmtDate(DATA.meta.updated)}</span></h3>
     <div class="score-grid">
       ${recent.map(fx => {
         const r = orientedResult(fx.h, fx.a);
