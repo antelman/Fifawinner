@@ -680,13 +680,14 @@ function viewGroups() {
     return `<div class="card group-card">
       <h3>בית ${g}</h3>
       <table>
-        <tr><th style="text-align:right">נבחרת</th><th>תוחלת נק'</th><th>זוכת בית</th><th>העפלה</th><th></th></tr>
+        <colgroup><col style="width:38%"><col style="width:14%"><col style="width:14%"><col style="width:14%"><col style="width:20%"></colgroup>
+        <tr><th style="text-align:right">נבחרת</th><th>תוחלת<br>נק'</th><th>זוכת<br>בית</th><th>העפלה</th><th></th></tr>
         ${rows.map(r => `<tr>
           <td class="team" data-team="${r.id}">${tn(r.id)}</td>
           <td>${r.expPts.toFixed(1)}</td>
           <td>${pct(r.pWinGroup)}</td>
           <td>${pct(r.pAdvance)}</td>
-          <td style="min-width:70px"><div class="bar"><i style="width:${(r.pAdvance * 100).toFixed(0)}%"></i></div></td>
+          <td><div class="bar"><i style="width:${(r.pAdvance * 100).toFixed(0)}%"></i></div></td>
         </tr>`).join("")}
       </table>
     </div>`;

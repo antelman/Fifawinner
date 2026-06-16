@@ -17,6 +17,7 @@ body {
   background: var(--bg); color: var(--text);
   font-family: "Segoe UI", "Heebo", Arial, sans-serif;
   direction: rtl; min-height: 100vh;
+  overflow-x: hidden; /* מונע גלילה אופקית של כל הדף */
 }
 .container { max-width: 1100px; margin: 0 auto; padding: 16px; }
 
@@ -54,15 +55,21 @@ nav.tabs {
 .card {
   background: var(--bg2); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 16px; margin-bottom: 14px;
+  overflow-wrap: break-word; /* מונע גלישת מילים ארוכות */
 }
 .card h3 { margin-bottom: 10px; }
 .grid { display: grid; gap: 14px; }
-.grid.cols2 { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
+.grid.cols2 { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+
+/* טבלאות רחבות (שוק/עתידיים/נוק-אאוט) — גלילה אופקית במקום גלישה */
+.market-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; }
+.guide table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
 /* בתים */
-.group-card table { width: 100%; border-collapse: collapse; font-size: .92rem; }
-.group-card th, .group-card td { padding: 6px 4px; text-align: center; border-bottom: 1px solid var(--border); }
-.group-card td.team { text-align: right; cursor: pointer; white-space: nowrap; }
+.group-card table { width: 100%; border-collapse: collapse; font-size: .9rem; table-layout: fixed; }
+.group-card th, .group-card td { padding: 6px 3px; text-align: center; border-bottom: 1px solid var(--border); }
+.group-card th { font-size: .72rem; color: var(--muted); font-weight: 600; line-height: 1.2; }
+.group-card td.team { text-align: right; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .group-card td.team:hover { color: var(--gold); }
 .bar { background: var(--bg3); border-radius: 4px; height: 8px; overflow: hidden; }
 .bar > i { display: block; height: 100%; background: var(--green); }
@@ -221,6 +228,14 @@ footer { text-align: center; color: var(--muted); font-size: .8rem; padding: 28p
 
 @media (max-width: 600px) {
   .rec { grid-template-columns: 1fr; }
-  .rec .nums { text-align: right; }
+  .rec .nums { text-align: right; white-space: normal; }
   header h1 { font-size: 1.4rem; }
+  .container { padding: 12px; }
+  .card { padding: 12px; }
+  .tab-btn { padding: 8px 13px; font-size: .9rem; }
+  /* מאזן ההמלצות — לא לגלוש על מסך צר */
+  .track-banner { flex-wrap: wrap; gap: 12px; }
+  .track-big { font-size: 2.4rem; min-width: 84px; }
+  .select-row select, .select-row input { flex: 1 1 auto; min-width: 0; }
+  .score-item b { font-size: 1rem; }
 }
