@@ -144,6 +144,53 @@ const MODEL = (() => {
     return s == null ? H1_PRIOR : s;
   }
 
+  /* ---------- למידת נטיית מבקיעה-ראשונה לכל נבחרת ----------
+     מעבר למה שתוחלת השערים מנבאת, יש נבחרות "פותחות חזק" שמבקיעות
+     ראשונות לעתים קרובות מהצפוי. לומדים מכפיל-הטיה מ-firstScorer:
+     היחס בין כמה פעמים הבקיעה ראשונה בפועל לבין הצפוי לפי המודל
+     (out-of-sample, החלקה בייסיאנית סביב 1.0). מרוסן ומוגבל.        */
+  const FG_PRIOR_WEIGHT = 5;   // עוצמת פריור (כמשחקים וירטואליים סביב 1)
+  const FG_DAMP = 0.5;         // ריסון מתון
+  const FG_CLAMP = 0.4;        // גבול ההטיה: [0.6, 1.4]
+  function computeFirstGoalBias(beforeDate) {
+    const acc = {};  // id → { scoredFirst, expFirst }
+    const get = (id) => acc[id] || (acc[id] = { act: 0, exp: 0 });
+    for (const m of (DATA.results || [])) {
+      if (!m.firstScorer) continue;                          // אין נתון מבקיע-ראשון
+      const d = resultDate(m);
+      if (beforeDate && d && d >= beforeDate) continue;       // out-of-sample
+      if (!DATA.teams[m.home] || !DATA.teams[m.away]) continue;
+      // הצפי להבקיע ראשון לפי תוחלת השערים (לפני הטיה — מונע רקורסיה)
+      const [eH, eA] = baseLambdasElo(m.home, m.away);
+      const eT = eH + eA, pNo = Math.exp(-eT);
+      const expH = eT > 0 ? (eH / eT) * (1 - pNo) : 0;
+      const expA = eT > 0 ? (eA / eT) * (1 - pNo) : 0;
+      const H = get(m.home), A = get(m.away);
+      H.exp += expH; A.exp += expA;
+      if (m.firstScorer === "H") H.act += 1;
+      else if (m.firstScorer === "A") A.act += 1;
+      // "none" (0-0) — אף אחד לא הבקיע, רק תורם ל-exp
+    }
+    const out = {};
+    for (const id in acc) {
+      const { act, exp } = acc[id];
+      const raw = (act + FG_PRIOR_WEIGHT) / (exp + FG_PRIOR_WEIGHT);
+      out[id] = clamp(1 + FG_DAMP * (raw - 1), 1 - FG_CLAMP, 1 + FG_CLAMP);
+    }
+    return out;
+  }
+  let _fgFull = null;
+  const _fgAsOfCache = {};
+  function fgBiasAsOf(beforeDate) {
+    if (!beforeDate) return (_fgFull = _fgFull || computeFirstGoalBias(null));
+    if (!_fgAsOfCache[beforeDate]) _fgAsOfCache[beforeDate] = computeFirstGoalBias(beforeDate);
+    return _fgAsOfCache[beforeDate];
+  }
+  function fgBias(team, asOf) {
+    const b = fgBiasAsOf(asOf)[team.id];
+    return b == null ? 1 : b;
+  }
+
   /* ---------- למידת עוצמת התקפה/הגנה לכל נבחרת ----------
      במקום שכל נבחרת תיוצג ע"י מספר Elo יחיד, לומדים בנפרד:
        attFactor — כמה שערים היא מבקיעה יחסית לציפייה (>1 = התקפה חזקה)
@@ -215,6 +262,8 @@ const MODEL = (() => {
     for (const k in _h1AsOfCache) delete _h1AsOfCache[k];
     _strFull = null;
     for (const k in _strAsOfCache) delete _strAsOfCache[k];
+    _fgFull = null;
+    for (const k in _fgAsOfCache) delete _fgAsOfCache[k];
   }
 
   // Elo אפקטיבי למשחק (דירוג נלמד מתוצאות + בונוס ביתיות למארחות).
@@ -348,9 +397,12 @@ const MODEL = (() => {
         if (j - i >= 2) winBy2B += p;
       }
 
-    // מבקיעה ראשונה: מרוץ שני תהליכי פואסון
+    // מבקיעה ראשונה: מרוץ שני תהליכי פואסון, מוטה בנטייה הנלמדת של כל נבחרת.
+    // ההטיה משנה את *חלוקת* המרוץ בין הצדדים, אך הסכום (1-pNoGoal) נשמר.
     const lT = lA + lB, pNoGoal = Math.exp(-lT);
-    const firstA = (lA / lT) * (1 - pNoGoal), firstB = (lB / lT) * (1 - pNoGoal);
+    const bA = lA * fgBias(teamA, asOf), bB = lB * fgBias(teamB, asOf), bT = bA + bB;
+    const firstA = bT > 0 ? (bA / bT) * (1 - pNoGoal) : 0;
+    const firstB = bT > 0 ? (bB / bT) * (1 - pNoGoal) : 0;
 
     // מחציות: שתי מטריצות בלתי-תלויות. נטיית המחצית-הראשונה נלמדת לכל
     // נבחרת בנפרד (h1Share) — מי שפותחת חזק תקבל λ גבוה יותר במחצית 1.
@@ -630,13 +682,35 @@ const MODEL = (() => {
   }
 
   /* ---------- דירוג ביטחון להמלצה (1–5) ---------- */
-  function confidence(p, eloGap) {
+  // ביטחון 1–5: מבוסס הסתברות + פער-Elo, ומתוקן לפי כמות הראיות.
+  // evidence (אופציונלי): מס' המשחקים הנלמדים של שתי הנבחרות יחד —
+  // מעט נתונים → ענישת ביטחון (לא להתחייב על הערכה דלת-בסיס);
+  // הרבה נתונים → המודל מבוסס יותר. ברירת מחדל: בלי תיקון (תאימות לאחור).
+  function confidence(p, eloGap, evidence) {
     let c = 1;
     if (p >= 0.55) c++;
     if (p >= 0.65) c++;
     if (p >= 0.75) c++;
     if (Math.abs(eloGap) >= 250) c++;
-    return Math.min(c, 5);
+    c = Math.min(c, 5);
+    if (evidence != null) {
+      // ענישה כשמעט ראיות: 0 משחקים → −1, עולה ל-0 סביב 4 משחקים
+      if (evidence <= 1) c -= 1;
+      else if (evidence <= 3) c -= 0.5;
+      c = Math.max(1, Math.round(c));
+    }
+    return c;
+  }
+  // מס' המשחקים הנלמדים של נבחרת עד asOf (כמדד לכמות הראיות עליה)
+  function teamGamesPlayed(team, asOf) {
+    let n = 0;
+    for (const m of (DATA.results || [])) {
+      if (m.home !== team.id && m.away !== team.id) continue;
+      const d = resultDate(m);
+      if (asOf && d && d >= asOf) continue;
+      n++;
+    }
+    return n;
   }
 
   /* ============================================================
@@ -701,12 +775,25 @@ const MODEL = (() => {
     const t = DATA.teams[id];
     return t ? h1Share(t, asOf) : H1_PRIOR;
   }
+  // פרופיל-עוצמה נלמד לנבחרת — לשקיפות בעמוד הפרופיל/ניתוח
+  function strengthOf(id, asOf) {
+    const t = DATA.teams[id];
+    if (!t) return null;
+    return {
+      att: attFactor(t, asOf),       // מכפיל התקפה אפקטיבי (ידני × נלמד)
+      def: defFactor(t, asOf),       // מכפיל הגנה אפקטיבי
+      firstGoalBias: fgBias(t, asOf),// נטיית מבקיעה-ראשונה
+      h1Share: h1Share(t, asOf),     // חלק שערי מחצית ראשונה
+      games: teamGamesPlayed(t, asOf)// כמות הראיות (משחקים נלמדים)
+    };
+  }
 
   return {
     lambdas, scoreMatrix, markets, extendedMarkets, fairOdds, minWorthOdds, edge,
     simulateGroups, simulateChampion, groupFixtures, confidence, effElo,
     koAdvanceProb, koPropagate, koWinProb, gradeMarket,
     learnedElo, learnedEloAsOf, resetLearned, resultDate, h1ShareOf,
+    strengthOf, teamGamesPlayed,
     EDGE_MARGIN
   };
 })();

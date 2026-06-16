@@ -51,7 +51,7 @@ const PROFILE = (() => {
     const score = (lam) => clamp(round1(2 + (lam - 0.6) * 3.6), 0, 10);
     return {
       attack: score(lFor),
-      defense: clamp(round1(10 - (score(lAgainst) - 0)), 0, 10), // הגנה: הפוך מספיגה
+      defense: clamp(round1(10 - score(lAgainst)), 0, 10), // הגנה = הפוך מספיגה צפויה
       lFor: round1(lFor), lAgainst: round1(lAgainst)
     };
   }
@@ -143,14 +143,19 @@ const PROFILE = (() => {
       if (c.timing.opensStrong) facts.push(`⚡ ${c.nameHe} פותחת חזק — שווה לבדוק את שוק "מחצית ראשונה".`);
       else if (c.timing.finishesStrong) facts.push(`🔚 ${c.nameHe} מסיימת חזק — שערים מאוחרים הם החתימה שלה.`);
     }
-    // 2) פער-כוח קיצוני / משחק שקול
-    if (gap >= 350) facts.push(`📊 פער ענק של ${gap} נק' כוח בין הקבוצות — מהגדולים במשחק זה.`);
-    else if (gap <= 60) facts.push(`⚖️ משחק שקול כמעט לחלוטין — ${gap} נק' כוח בלבד מפרידות.`);
-    // 3) קרב התקפה מול הגנה
+    // 2) פער-כוח / משחק שקול — תמיד יורה אחד מהשניים
+    const strongerId = ca.elo >= cb.elo ? a : b;
+    const strongerName = DATA.teams[strongerId].nameHe;
+    if (gap >= 300) facts.push(`📊 פער כוח גדול — ${strongerName} חזקה משמעותית (${gap} נק').`);
+    else if (gap <= 70) facts.push(`⚖️ משחק שקול כמעט לחלוטין — ${gap} נק' כוח בלבד מפרידות.`);
+    else facts.push(`📊 ${strongerName} פייבוריטית, אך לא בפער קיצוני (${gap} נק').`);
+    // 3) קרב התקפה מול הגנה — או "מושלמת בכל המדדים"
     const strongAtt = ca.attack >= cb.attack ? ca : cb;
     const strongDef = ca.defense >= cb.defense ? ca : cb;
     if (strongAtt.id !== strongDef.id)
       facts.push(`🔥🛡️ קרב סגנונות: ההתקפה של ${strongAtt.nameHe} (${strongAtt.attack}/10) מול ההגנה של ${strongDef.nameHe} (${strongDef.defense}/10).`);
+    else if (strongAtt.attack >= 7.5 && strongAtt.defense >= 7)
+      facts.push(`💪 ${strongAtt.nameHe} מובילה גם בהתקפה (${strongAtt.attack}/10) וגם בהגנה (${strongAtt.defense}/10).`);
     // 4) וו היסטורי — אם לאחת יש הישג מונדיאל בולט
     for (const c of [ca, cb]) {
       const p = c.pedigree;

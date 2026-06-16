@@ -602,10 +602,12 @@ function matchTopPicks(a, b, ko) {
   const sweet = (p) => p >= 0.45 && p <= 0.8 ? 2 : p > 0.8 && p <= 0.88 ? 1 : p >= 0.35 && p < 0.45 ? 1 : 0;
   const asOf = matchAsOf(a, b);
   const gap = Math.abs(MODEL.effElo(T(a), asOf) - MODEL.effElo(T(b), asOf));
+  // ראיות: מס' המשחקים הנלמדים של שתי הנבחרות יחד — ביטחון נמוך כשמעט נתונים
+  const evid = MODEL.teamGamesPlayed(T(a), asOf) + MODEL.teamGamesPlayed(T(b), asOf);
   const scored = buildMatchCandidates(a, b, ko)
     .filter(x => x.p >= 0.33 && x.p <= 0.88)
     .map(x => {
-      const conf = MODEL.confidence(x.p, gap);
+      const conf = MODEL.confidence(x.p, gap, evid);
       // כיול לפי משפחה: מגביר משפחות שפגעו, מנמיך משפחות שהחטיאו
       const base = sweet(x.p) * 10 + x.p * 5 + conf;
       return { ...x, conf, score: base * familyBoost(x.family) };
@@ -811,13 +813,13 @@ function matchDetail(a, b, ko = false) {
         ${ko ? `<span class="pill">נוק-אאוט: 1X2 = 90 דקות בלבד!</span>` : ""}</h3>
     ${odds1x2Html({ p1: m.p1, px: m.px, p2: m.p2 }, `:${m.p1 >= m.px && m.p1 >= m.p2 ? "1" : m.px >= m.p2 ? "X" : "2"}`)}
     ${matchVerdict}
-    <p class="note">Elo: ${T(a).nameHe} ${MODEL.effElo(T(a), asOf)}${T(a).host ? " (כולל ביתיות)" : ""} מול ${T(b).nameHe} ${MODEL.effElo(T(b), asOf)}${T(b).host ? " (כולל ביתיות)" : ""}
-       · תוחלת שערים: ${lA.toFixed(2)} — ${lB.toFixed(2)}</p>
-    <div class="narrative">🧠 <b>ניתוח:</b> ${matchNarrative(a, b, m, lA, lB)}</div>
+    ${h2hAnalysis(a, b, asOf)}
     <h3 style="margin:16px 0 8px">🔥 3 ההמלצות החזקות למשחק</h3>
     ${matchTopPicks(a, b, ko).map(pickCard).join("")}
     <details style="margin-top:18px">
     <summary style="cursor:pointer;color:var(--gold);font-weight:700;padding:6px 0">📊 למתקדמים: כל השווקים והמספרים המלאים</summary>
+    <p class="note">Elo: ${T(a).nameHe} ${MODEL.effElo(T(a), asOf)}${T(a).host ? " (כולל ביתיות)" : ""} מול ${T(b).nameHe} ${MODEL.effElo(T(b), asOf)}${T(b).host ? " (כולל ביתיות)" : ""}
+       · תוחלת שערים: ${lA.toFixed(2)} — ${lB.toFixed(2)}</p>
     <table class="market-table">
       <tr><th>שוק</th><th>P מודל</th><th>יחס הוגן</th><th>כדאי מ-</th><th>יחס ווינר</th><th>Edge</th></tr>
       ${rows.map(([lbl, p, key]) => `<tr>

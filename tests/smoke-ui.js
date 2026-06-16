@@ -1,6 +1,7 @@
 /* בדיקת עשן לרינדור הממשק ללא דפדפן — node tests/smoke-ui.js */
 global.DATA = require("../js/data.js");
 global.MODEL = require("../js/model.js");
+global.PROFILE = require("../js/profile.js");
 
 // סטאבים מינימליים של דפדפן
 global.localStorage = { getItem: () => null, setItem: () => {}, removeItem: () => {} };
@@ -77,6 +78,22 @@ const picks = matchTopPicks("ESP", "URU", false);
 check("3 המלצות ממשפחות שונות", picks.length === 3 && new Set(picks.map(p => p.family)).size === 3,
   picks.map(p => p.family).join(","));
 check("המלצות בטווח שימושי", picks.every(p => p.p >= 0.33 && p.p <= 0.88));
+
+// ===== ניתוח מורחב: השוואת נבחרות צד-מול-צד =====
+check("דף משחק: כרטיסי נבחרת צד-מול-צד", htmlMatches.includes("team-card") && htmlMatches.includes("h2h-cards"));
+check("דף משחק: ברים מתפצלים + עובדות", htmlMatches.includes("dv-track") && htmlMatches.includes("התקפה"));
+check("דף משחק: תרגום אנושי (אחוז שליטה)", htmlMatches.includes("מהתרחישים"));
+// Elo גולמי הוסתר מאחורי 'למתקדמים' (לא בתצוגה הראשית של הניתוח)
+const _h2hBlock = htmlMatches.slice(htmlMatches.indexOf('class="h2h"'), htmlMatches.indexOf("3 ההמלצות החזקות"));
+check("Elo גולמי לא בתצוגה הראשית", !_h2hBlock.includes("Elo:"));
+// דטרמיניזם out-of-sample: כרטיס נבחרת קבוע לאותו asOf (לא משתנה רטרו)
+const _c1 = JSON.stringify(PROFILE.teamCard("ESP", "2026-06-26"));
+const _c2 = JSON.stringify(PROFILE.teamCard("ESP", "2026-06-26"));
+check("כרטיס נבחרת דטרמיניסטי לאותו asOf", _c1 === _c2);
+const _cardESP = PROFILE.teamCard("ESP", null);
+check("כרטיס נבחרת: דירוג-כוח, התקפה, הגנה", _cardESP.power.rank >= 1
+  && _cardESP.attack >= 0 && _cardESP.attack <= 10 && _cardESP.defense >= 0 && _cardESP.defense <= 10,
+  `ESP מקום ${_cardESP.power.rank}, התקפה ${_cardESP.attack}, הגנה ${_cardESP.defense}`);
 
 const htmlFut = viewFutures();
 check("טאב עתידיים מרונדר", htmlFut.includes("זוכת המונדיאל"));

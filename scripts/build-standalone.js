@@ -6,11 +6,11 @@ const read = (f) => fs.readFileSync(path.join(root, f), "utf8");
 
 let html = read("index.html");
 const css = read("css/style.css");
-const js = ["js/data.js", "js/model.js", "js/app.js"].map(read).join("\n;\n");
+const js = ["js/data.js", "js/model.js", "js/profile.js", "js/app.js"].map(read).join("\n;\n");
 
 html = html.replace('<link rel="stylesheet" href="css/style.css">', "<style>\n" + css + "\n</style>");
 html = html.replace(
-  /<script src="js\/data.js"><\/script>\s*<script src="js\/model.js"><\/script>\s*<script src="js\/app.js"><\/script>/,
+  /<script src="js\/data.js"><\/script>\s*<script src="js\/model.js"><\/script>\s*<script src="js\/profile.js"><\/script>\s*<script src="js\/app.js"><\/script>/,
   "<script>\n" + js + "\n</script>");
 
 if (html.includes('src="js/') || html.includes('href="css/'))
