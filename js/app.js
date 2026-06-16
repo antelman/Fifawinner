@@ -714,6 +714,27 @@ function h2hAnalysis(a, b, asOf) {
     </div>
     <div class="narrative h2h-narrative">🧠 <b>ניתוח:</b> ${sentences.join(" ")}</div>
     ${facts}
+    ${likelyScoresHtml(a, b, asOf)}
+  </div>`;
+}
+
+// תוצאות סבירות — כרטיסי תוצאה עם בר עוצמה יחסי (במקום שורת note נסתרת)
+function likelyScoresHtml(a, b, asOf) {
+  const m = MODEL.markets(T(a), T(b), asOf);
+  const top = m.topScores.slice(0, 5);
+  const maxP = top[0] ? top[0].p : 1;
+  return `<div class="likely-scores">
+    <div class="ls-head">🎯 התוצאות הסבירות ביותר</div>
+    <div class="ls-grid">
+      ${top.map((s, i) => {
+        const won = gradeKey(`${a}-${b}:CS${s.h}${s.a}`) === true;
+        return `<div class="ls-card${i === 0 ? " top" : ""}${won ? " hit" : ""}">
+          <div class="ls-score" dir="ltr">${s.h}<span class="ls-dash">–</span>${s.a}${won ? " ✓" : ""}</div>
+          <div class="ls-bar"><i style="width:${(s.p / maxP * 100).toFixed(0)}%"></i></div>
+          <div class="ls-pct">${pct1(s.p)}</div>
+        </div>`;
+      }).join("")}
+    </div>
   </div>`;
 }
 
@@ -844,7 +865,6 @@ function matchDetail(a, b, ko = false) {
       ⚠️ ביחסים גבוהים (תוצאה מדויקת, מחצית/סיום) עמלת הווינר גבוהה במיוחד — דרשו פער גדול מ"כדאי מ-".</p>
     </details>
     </details>
-    <p class="note">🎯 תוצאות סבירות: ${m.topScores.map(s => `<b>${s.h}–${s.a}</b> (${pct1(s.p)})`).join(" · ")}</p>
   </div>`;
 }
 

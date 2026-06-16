@@ -404,10 +404,35 @@ img.flag {
   background: var(--bg3); border: 1px solid var(--border); border-radius: 99px;
   padding: 5px 11px; font-size: .8rem; color: var(--text-bright); line-height: 1.5;
 }
+/* תוצאות סבירות — כרטיסי תוצאה עם בר עוצמה */
+.likely-scores {
+  background: var(--bg-soft); border: 1px solid var(--border); border-radius: 14px;
+  padding: 12px 14px; margin-top: 10px;
+}
+.ls-head { font-size: .9rem; font-weight: 700; color: var(--text-bright); margin-bottom: 10px; }
+.ls-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.ls-card {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 11px;
+  padding: 9px 6px 8px; text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center;
+}
+.ls-card.top { border-color: rgba(244, 201, 91, .35); background: rgba(244, 201, 91, .06); }
+.ls-card.hit { border-color: var(--value); background: rgba(41, 229, 154, .1); }
+.ls-score { font-family: var(--mono); font-size: 1.15rem; font-weight: 700; color: var(--text); line-height: 1; }
+.ls-card.top .ls-score { color: var(--gold); }
+.ls-card.hit .ls-score { color: var(--value); }
+.ls-dash { opacity: .5; margin: 0 1px; }
+.ls-bar { width: 100%; background: rgba(255, 255, 255, .06); border-radius: 99px; height: 5px; overflow: hidden; }
+.ls-bar > i { display: block; height: 100%; border-radius: 99px; background: var(--gold); opacity: .8; }
+.ls-card.hit .ls-bar > i { background: var(--value); opacity: 1; }
+.ls-pct { font-family: var(--mono); font-size: .76rem; color: var(--muted); }
+
 @media (max-width: 480px) {
   .h2h-cards { grid-template-columns: 1fr 1fr; }
   .h2h-vs { grid-column: 1 / -1; order: -1; }
   .dv-lbl { min-width: 58px; font-size: .76rem; }
+  .ls-grid { gap: 5px; }
+  .ls-score { font-size: 1rem; }
+  .ls-card { padding: 7px 3px 6px; }
 }
 
 .pick-card {
@@ -2029,12 +2054,18 @@ const PROFILE = (() => {
 
   // ציון 0–10 להתקפה ולהגנה: λ צפוי מול יריב ממוצע, ממופה לסולם נוח.
   // התקפה — כמה הנבחרת מבקיעה; הגנה — כמה מעט היא סופגת (הפוך).
+  // משתמש במכפילי ההתקפה/הגנה ה*נלמדים* של המודל (strengthOf) — לא רק
+  // ב-Mod הידני — כך שהכרטיס משקף את מה שהמודל באמת למד מהשערים בפועל.
   function attackDefense(id, asOf) {
     const t = DATA.teams[id];
     const dr = MODEL.effElo(t, asOf) - avgElo(asOf);
+    // מכפילי עוצמה נלמדים (כוללים כבר את ה-Mod הידני כפריור); נפילה ל-Mod אם אין
+    const str = MODEL.strengthOf ? MODEL.strengthOf(id, asOf) : null;
+    const att = str ? str.att : (t.attMod || 1);
+    const def = str ? str.def : (t.defMod || 1);
     // λ מול יריב ממוצע (אותה נוסחה כמו MODEL.lambdas, ללא היריב הספציפי)
-    const lFor = TOURN_AVG_GOALS * Math.pow(10, dr / 1100) * (t.attMod || 1);
-    const lAgainst = TOURN_AVG_GOALS * Math.pow(10, -dr / 1100) * (t.defMod || 1);
+    const lFor = TOURN_AVG_GOALS * Math.pow(10, dr / 1100) * att;
+    const lAgainst = TOURN_AVG_GOALS * Math.pow(10, -dr / 1100) * def;
     // מיפוי λ→0–10: 0.6 שער≈2, 1.32≈5, 2.4≈8.5 (סולם תפיסתי, לא לינארי)
     const score = (lam) => clamp(round1(2 + (lam - 0.6) * 3.6), 0, 10);
     return {
@@ -2892,6 +2923,27 @@ function h2hAnalysis(a, b, asOf) {
     </div>
     <div class="narrative h2h-narrative">🧠 <b>ניתוח:</b> ${sentences.join(" ")}</div>
     ${facts}
+    ${likelyScoresHtml(a, b, asOf)}
+  </div>`;
+}
+
+// תוצאות סבירות — כרטיסי תוצאה עם בר עוצמה יחסי (במקום שורת note נסתרת)
+function likelyScoresHtml(a, b, asOf) {
+  const m = MODEL.markets(T(a), T(b), asOf);
+  const top = m.topScores.slice(0, 5);
+  const maxP = top[0] ? top[0].p : 1;
+  return `<div class="likely-scores">
+    <div class="ls-head">🎯 התוצאות הסבירות ביותר</div>
+    <div class="ls-grid">
+      ${top.map((s, i) => {
+        const won = gradeKey(`${a}-${b}:CS${s.h}${s.a}`) === true;
+        return `<div class="ls-card${i === 0 ? " top" : ""}${won ? " hit" : ""}">
+          <div class="ls-score" dir="ltr">${s.h}<span class="ls-dash">–</span>${s.a}${won ? " ✓" : ""}</div>
+          <div class="ls-bar"><i style="width:${(s.p / maxP * 100).toFixed(0)}%"></i></div>
+          <div class="ls-pct">${pct1(s.p)}</div>
+        </div>`;
+      }).join("")}
+    </div>
   </div>`;
 }
 
@@ -3022,7 +3074,6 @@ function matchDetail(a, b, ko = false) {
       ⚠️ ביחסים גבוהים (תוצאה מדויקת, מחצית/סיום) עמלת הווינר גבוהה במיוחד — דרשו פער גדול מ"כדאי מ-".</p>
     </details>
     </details>
-    <p class="note">🎯 תוצאות סבירות: ${m.topScores.map(s => `<b>${s.h}–${s.a}</b> (${pct1(s.p)})`).join(" · ")}</p>
   </div>`;
 }
 

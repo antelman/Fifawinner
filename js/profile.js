@@ -41,12 +41,18 @@ const PROFILE = (() => {
 
   // ציון 0–10 להתקפה ולהגנה: λ צפוי מול יריב ממוצע, ממופה לסולם נוח.
   // התקפה — כמה הנבחרת מבקיעה; הגנה — כמה מעט היא סופגת (הפוך).
+  // משתמש במכפילי ההתקפה/הגנה ה*נלמדים* של המודל (strengthOf) — לא רק
+  // ב-Mod הידני — כך שהכרטיס משקף את מה שהמודל באמת למד מהשערים בפועל.
   function attackDefense(id, asOf) {
     const t = DATA.teams[id];
     const dr = MODEL.effElo(t, asOf) - avgElo(asOf);
+    // מכפילי עוצמה נלמדים (כוללים כבר את ה-Mod הידני כפריור); נפילה ל-Mod אם אין
+    const str = MODEL.strengthOf ? MODEL.strengthOf(id, asOf) : null;
+    const att = str ? str.att : (t.attMod || 1);
+    const def = str ? str.def : (t.defMod || 1);
     // λ מול יריב ממוצע (אותה נוסחה כמו MODEL.lambdas, ללא היריב הספציפי)
-    const lFor = TOURN_AVG_GOALS * Math.pow(10, dr / 1100) * (t.attMod || 1);
-    const lAgainst = TOURN_AVG_GOALS * Math.pow(10, -dr / 1100) * (t.defMod || 1);
+    const lFor = TOURN_AVG_GOALS * Math.pow(10, dr / 1100) * att;
+    const lAgainst = TOURN_AVG_GOALS * Math.pow(10, -dr / 1100) * def;
     // מיפוי λ→0–10: 0.6 שער≈2, 1.32≈5, 2.4≈8.5 (סולם תפיסתי, לא לינארי)
     const score = (lam) => clamp(round1(2 + (lam - 0.6) * 3.6), 0, 10);
     return {

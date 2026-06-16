@@ -69,7 +69,8 @@ check("טאב בתים מרונדר (12 בתים)", (htmlGroups.match(/<h3>בי�
 selFixture = ["ESP", "URU"];
 selGroup = "H";
 const htmlMatches = viewMatches();
-check("טאב משחקים + פירוט משחק", htmlMatches.includes("מעל 2.5") && htmlMatches.includes("תוצאות סבירות"));
+check("טאב משחקים + פירוט משחק", htmlMatches.includes("מעל 2.5") && htmlMatches.includes("התוצאות הסבירות ביותר"));
+check("דף משחק: כרטיסי תוצאות סבירות עם בר", htmlMatches.includes("likely-scores") && htmlMatches.includes("ls-card"));
 check("שווקים מורחבים בפירוט משחק", htmlMatches.includes("שווקים מורחבים") && htmlMatches.includes("יתרון 0:1")
   && htmlMatches.includes("מחצית/סיום") && htmlMatches.includes("מבקיעה ראשונה") && htmlMatches.includes("תוצאה מדויקת"));
 check("המלצות-צמרת במסך משחק", htmlMatches.includes("3 ההמלצות החזקות") && htmlMatches.includes("🥇")

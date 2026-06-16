@@ -397,10 +397,35 @@ img.flag {
   background: var(--bg3); border: 1px solid var(--border); border-radius: 99px;
   padding: 5px 11px; font-size: .8rem; color: var(--text-bright); line-height: 1.5;
 }
+/* תוצאות סבירות — כרטיסי תוצאה עם בר עוצמה */
+.likely-scores {
+  background: var(--bg-soft); border: 1px solid var(--border); border-radius: 14px;
+  padding: 12px 14px; margin-top: 10px;
+}
+.ls-head { font-size: .9rem; font-weight: 700; color: var(--text-bright); margin-bottom: 10px; }
+.ls-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.ls-card {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 11px;
+  padding: 9px 6px 8px; text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center;
+}
+.ls-card.top { border-color: rgba(244, 201, 91, .35); background: rgba(244, 201, 91, .06); }
+.ls-card.hit { border-color: var(--value); background: rgba(41, 229, 154, .1); }
+.ls-score { font-family: var(--mono); font-size: 1.15rem; font-weight: 700; color: var(--text); line-height: 1; }
+.ls-card.top .ls-score { color: var(--gold); }
+.ls-card.hit .ls-score { color: var(--value); }
+.ls-dash { opacity: .5; margin: 0 1px; }
+.ls-bar { width: 100%; background: rgba(255, 255, 255, .06); border-radius: 99px; height: 5px; overflow: hidden; }
+.ls-bar > i { display: block; height: 100%; border-radius: 99px; background: var(--gold); opacity: .8; }
+.ls-card.hit .ls-bar > i { background: var(--value); opacity: 1; }
+.ls-pct { font-family: var(--mono); font-size: .76rem; color: var(--muted); }
+
 @media (max-width: 480px) {
   .h2h-cards { grid-template-columns: 1fr 1fr; }
   .h2h-vs { grid-column: 1 / -1; order: -1; }
   .dv-lbl { min-width: 58px; font-size: .76rem; }
+  .ls-grid { gap: 5px; }
+  .ls-score { font-size: 1rem; }
+  .ls-card { padding: 7px 3px 6px; }
 }
 
 .pick-card {
