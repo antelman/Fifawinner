@@ -146,7 +146,7 @@ const PROFILE = (() => {
 
     // 1) פותחת/מסיימת חזק
     for (const c of [ca, cb]) {
-      if (c.timing.opensStrong) facts.push(`⚡ ${c.nameHe} פותחת חזק — שווה לבדוק את שוק "מחצית ראשונה".`);
+      if (c.timing.opensStrong) facts.push(`⚡ ${c.nameHe} פותחת חזק — לעיתים קרובות מובילה כבר במחצית הראשונה.`);
       else if (c.timing.finishesStrong) facts.push(`🔚 ${c.nameHe} מסיימת חזק — שערים מאוחרים הם החתימה שלה.`);
     }
     // 2) פער-כוח / משחק שקול — תמיד יורה אחד מהשניים
@@ -162,7 +162,7 @@ const PROFILE = (() => {
       facts.push(`🔥🛡️ קרב סגנונות: ההתקפה של ${strongAtt.nameHe} (${strongAtt.attack}/10) מול ההגנה של ${strongDef.nameHe} (${strongDef.defense}/10).`);
     else if (strongAtt.attack >= 7.5 && strongAtt.defense >= 7)
       facts.push(`💪 ${strongAtt.nameHe} מובילה גם בהתקפה (${strongAtt.attack}/10) וגם בהגנה (${strongAtt.defense}/10).`);
-    // 4) וו היסטורי — אם לאחת יש הישג מונדיאל בולט
+    // 4) וו היסטורי — אם לאחת יש הישג טורניר בולט
     for (const c of [ca, cb]) {
       const p = c.pedigree;
       if (p.wc22 && /גמר|מקום [34]|חצי/.test(p.wc22)) { facts.push(`🏅 ${c.nameHe} ב-2022: ${p.wc22.split("—")[0].split("(")[0].trim()}.`); break; }

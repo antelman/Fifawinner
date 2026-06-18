@@ -6,11 +6,10 @@
    ============================================================ */
 
 const MODEL = (() => {
-  const BASE_GOALS = 1.32;   // ממוצע שערים לקבוצה במשחק מונדיאל
+  const BASE_GOALS = 1.32;   // ממוצע שערים לקבוצה במשחק בטורניר
   const ELO_GOAL_SCALE = 1100; // מכויל: פער 300 Elo → ~73% לפייבוריט ב-1X2
   const DC_RHO = 0.10;       // ניפוח תיקו נמוך בסגנון Dixon-Coles
   const MAX_GOALS = 8;
-  const EDGE_MARGIN = 1.07;  // מרווח ביטחון ליחס מינימלי כדאי
 
   function poissonPmf(lambda, max) {
     const p = [Math.exp(-lambda)];
@@ -23,7 +22,7 @@ const MODEL = (() => {
      התוצאה מול הציפייה (בשיטת eloratings.net). הדירוג המעודכן
      מזין מכאן והלאה את כל התחזיות — בתים, נוק-אאוט, ביטחון ותצוגה.
      שמרני בכוונה (K נמוך) כי מדגם המשחקים עדיין קטן.            */
-  const LEARN_K = 20;          // פקטור עדכון שמרני (סטנדרט מונדיאל ~40)
+  const LEARN_K = 20;          // פקטור עדכון שמרני (סטנדרט טורניר ~40)
   const LEARN_HOME_ADJ = 60;   // יתרון מארחת/ביתיות לצורך הציפייה בלבד
   // למידת התקפה/הגנה נפרדת (סגנון Dixon-Coles): כמה שערים נבחרת מבקיעה/סופגת
   // יחסית לציפייה מ-Elo, עם החלקה בייסיאנית סביב 1.0 ודעיכת זמן.
@@ -354,13 +353,8 @@ const MODEL = (() => {
     };
   }
 
-  const fairOdds = (p) => p > 0 ? 1 / p : Infinity;
-  const minWorthOdds = (p) => p > 0 ? EDGE_MARGIN / p : Infinity;
-  // Edge מול יחס ווינר אמיתי: חיובי = הימור ערך
-  const edge = (p, odds) => p * odds - 1;
-
   /* ============================================================
-     שווקים מורחבים (ווינר): יתרון, טווחי שערים, מחציות, מבקיעה ראשונה
+     שווקים מורחבים: יתרון, טווחי שערים, מחציות, מבקיעה ראשונה
      ============================================================ */
 
   // מטריצת פואסון גנרית (ללא תיקון DC — משמשת למחציות)
@@ -429,7 +423,7 @@ const MODEL = (() => {
     return {
       hcapA_minus1: handicap(-1),  // הקבוצה הראשונה פותחת ב-0:1
       hcapA_plus1: handicap(1),    // הקבוצה הראשונה פותחת ב-1:0
-      hcapA_minus2: handicap(-2),  // הקבוצה הראשונה פותחת ב-0:2 (קו ה-+2 של ווינר)
+      hcapA_minus2: handicap(-2),  // הקבוצה הראשונה פותחת ב-0:2
       hcapA_plus2: handicap(2),    // הקבוצה הראשונה פותחת ב-2:0
       range01: r01, range23: r23, range4plus: r4p,
       odd, even: 1 - odd,
@@ -536,7 +530,7 @@ const MODEL = (() => {
     return out;
   }
 
-  /* ---------- נוק-אאוט מקורב → P(זוכת המונדיאל) ----------
+  /* ---------- נוק-אאוט מקורב → P(זוכת הטורניר) ----------
      הגרלה אקראית תחת אילוץ אי-מפגש בני אותו בית בסיבוב ה-32.
      תיקו ב-90 ד' מוכרע בהסתברות מוטת-Elo (הארכה/פנדלים).      */
   function koWinProb(idA, idB) {
@@ -789,12 +783,11 @@ const MODEL = (() => {
   }
 
   return {
-    lambdas, scoreMatrix, markets, extendedMarkets, fairOdds, minWorthOdds, edge,
+    lambdas, scoreMatrix, markets, extendedMarkets,
     simulateGroups, simulateChampion, groupFixtures, confidence, effElo,
     koAdvanceProb, koPropagate, koWinProb, gradeMarket,
     learnedElo, learnedEloAsOf, resetLearned, resultDate, h1ShareOf,
-    strengthOf, teamGamesPlayed,
-    EDGE_MARGIN
+    strengthOf, teamGamesPlayed
   };
 })();
 

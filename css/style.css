@@ -73,15 +73,9 @@ header { padding: 22px 4px 4px; display: flex; flex-wrap: wrap; align-items: cen
 }
 .brand-text { line-height: 1.1; }
 header h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -.4px; }
-header h1 .gold { color: var(--value); }   /* "Winner" בירוק-הערך */
+header h1 .gold { color: var(--value); }
 header .sub { color: var(--muted); margin-top: 2px; font-size: .85rem; font-weight: 500; }
-.pipeline {
-  margin-inline-start: auto; font-family: var(--mono); font-size: .7rem; color: var(--faint);
-  letter-spacing: .5px; display: flex; align-items: center; gap: 6px;
-}
-.pipeline span { color: var(--value); }
 .disclaimer { width: 100%; }
-@media (max-width: 600px) { .pipeline { margin-inline-start: 0; font-size: .62rem; } }
 .disclaimer {
   background: linear-gradient(120deg, rgba(244, 201, 91, .07), transparent);
   border: 1px solid rgba(244, 201, 91, .25); color: #f3dba8;
@@ -92,25 +86,26 @@ header .sub { color: var(--muted); margin-top: 2px; font-size: .85rem; font-weig
 
 /* ---------- ניווט ---------- */
 nav.tabs {
-  display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
-  margin: 18px 0; position: sticky; top: 0; z-index: 50;
-  padding: 10px 0;
-  background: rgba(8, 11, 15, .82);
-  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--border);
+  margin-inline-start: auto;
+  display: flex; flex-wrap: wrap; gap: 22px; align-items: center;
 }
 .tab-btn {
-  background: rgba(255, 255, 255, .03); color: var(--text-bright);
-  border: 1px solid var(--border-strong);
-  padding: 9px 18px; border-radius: 10px; cursor: pointer;
+  background: none; border: none; cursor: pointer;
+  color: var(--muted);
+  padding: 4px 0 8px; position: relative;
   font-family: inherit; font-weight: 700; font-size: .95rem;
-  transition: all .15s;
+  transition: color .15s;
 }
-.tab-btn:hover { border-color: var(--value); color: var(--text); }
-.tab-btn.active {
-  background: var(--value); color: var(--value-ink);
-  border-color: var(--value); font-weight: 800;
-  box-shadow: 0 6px 20px rgba(41, 229, 154, .28);
+.tab-btn::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+  border-radius: 2px; background: var(--value);
+  transform: scaleX(0); transition: transform .18s;
+}
+.tab-btn:hover { color: var(--text-bright); }
+.tab-btn.active { color: var(--text-bright); }
+.tab-btn.active::after { transform: scaleX(1); }
+@media (max-width: 600px) {
+  nav.tabs { margin-inline-start: 0; width: 100%; gap: 16px; justify-content: flex-start; }
 }
 
 /* ---------- טעינה ---------- */
@@ -123,7 +118,6 @@ nav.tabs {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes fw-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-@keyframes fw-pulse { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
 #content { animation: fw-up .4s ease both; }
 
 /* ---------- כרטיסים ---------- */
@@ -151,9 +145,6 @@ h2 { font-weight: 800; font-size: 1.15rem; letter-spacing: -.3px; }
 }
 .market-table td { font-family: var(--mono); font-size: .85rem; color: var(--text-dim); }
 .market-table td.lbl { text-align: right; font-family: "Heebo", sans-serif; color: var(--text-bright); white-space: normal; }
-.edge-pos { color: var(--value); font-weight: 700; }
-.edge-neg { color: var(--red); }
-.fair { color: var(--gold) !important; }
 
 /* בתים */
 .group-card table { width: 100%; border-collapse: collapse; font-size: .88rem; table-layout: fixed; }
@@ -190,7 +181,7 @@ input:focus, select:focus { outline: none; border-color: var(--value); }
 
 /* ---------- המלצות ---------- */
 .rec {
-  display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;
+  display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center;
   background: var(--bg2); border: 1px solid var(--border);
   border-radius: 13px; padding: 14px 16px; margin-bottom: 10px;
 }
@@ -201,10 +192,6 @@ input:focus, select:focus { outline: none; border-color: var(--value); }
 .rec .badge { font-size: .66rem; color: var(--faint); }
 .rec .what b { font-size: 1rem; }
 .rec .what .why { color: var(--muted2); font-size: .82rem; margin-top: 5px; line-height: 1.5; }
-.rec .nums { text-align: left; font-size: .78rem; color: var(--muted); white-space: nowrap; }
-.rec .nums b { font-family: var(--mono); }
-.rec .nums b.fair { color: var(--gold); }
-.rec .nums b:not(.fair) { color: var(--text-bright); }
 .stars { color: var(--gold); letter-spacing: 1px; }
 
 /* פילוח 1/X/2 — שלוש הסתברויות התוצאה, תמיד מוצג ליד המלצת תוצאה */
@@ -217,20 +204,6 @@ input:focus, select:focus { outline: none; border-color: var(--value); }
 .o1x2-cell.picked { background: rgba(212, 175, 55, .14); border-color: var(--gold); }
 .o1x2-cell.picked .o1x2-lbl, .o1x2-cell.picked b { color: var(--gold); }
 
-.rec.is-value { background: var(--bg3); border-color: rgba(41, 229, 154, .18); }
-.rec.is-value .badge b { color: var(--value); }
-
-/* באנד הימורי ערך — מסגרת זוהר ירוקה */
-.value-band {
-  background: linear-gradient(135deg, rgba(41, 229, 154, .07), rgba(41, 229, 154, .02));
-  border-color: rgba(41, 229, 154, .28);
-}
-.value-band h3 { display: flex; align-items: center; gap: 9px; }
-.pulse-dot {
-  width: 9px; height: 9px; border-radius: 50%; background: var(--value);
-  box-shadow: 0 0 10px var(--value); animation: fw-pulse 1.6s ease infinite; flex-shrink: 0;
-}
-
 img.flag {
   display: inline-block; vertical-align: -3px; width: 25px; height: 18px;
   object-fit: cover; border-radius: 3px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .14);
@@ -241,10 +214,6 @@ img.flag {
   display: inline-block; background: rgba(255, 255, 255, .04); border-radius: 99px;
   padding: 2px 9px; font-size: .74rem; color: var(--muted); margin-inline-start: 6px;
   font-weight: 500;
-}
-.value-flag {
-  background: var(--value); color: var(--value-ink); border: none;
-  font-family: var(--mono); font-weight: 700;
 }
 .verdict-hit { background: rgba(41, 229, 154, .14); color: var(--value); font-weight: 700; }
 .verdict-miss { background: rgba(255, 100, 124, .14); color: var(--red); font-weight: 700; }
@@ -440,7 +409,7 @@ img.flag {
 }
 
 .pick-card {
-  display: grid; grid-template-columns: auto 1fr auto; gap: 14px 16px; align-items: center;
+  display: grid; grid-template-columns: auto 1fr; gap: 14px 16px; align-items: center;
   background: var(--bg2); border: 1px solid var(--border); border-radius: 14px;
   padding: 16px 18px; margin-bottom: 11px;
 }
@@ -450,14 +419,10 @@ img.flag {
 .pick-card .pick-title { font-size: 1rem; font-weight: 700; display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
 .pick-card .why { color: var(--muted2); font-size: .85rem; margin-top: 5px; line-height: 1.5; }
 .pick-card .why b { color: var(--text-bright); font-family: var(--mono); }
-.pick-card .nums { text-align: left; font-size: .78rem; color: var(--muted); white-space: nowrap; }
-.pick-card .nums b { color: var(--text-bright); font-family: var(--mono); }
 @media (max-width: 600px) {
   .pick-card { grid-template-columns: auto 1fr; }
-  .pick-card .nums { grid-column: 1 / -1; text-align: right; }
 }
 
-/* גרסת ירוק לכרטיס המלצה עם ערך */
 details > summary { cursor: pointer; }
 details > summary.gold-sum,
 details > summary {
@@ -503,14 +468,15 @@ footer {
   font-size: .78rem; padding: 24px 0 40px; line-height: 1.7; border-top: 1px solid var(--border-soft); margin-top: 8px;
 }
 footer code { font-family: var(--mono); color: var(--muted); }
+footer p { max-width: 760px; margin: 0 auto 7px; text-align: right; }
+footer h3 { text-align: center; }
 
 @media (max-width: 600px) {
   .rec { grid-template-columns: 1fr; }
-  .rec .nums { text-align: right; white-space: normal; }
   header h1 { font-size: 1.4rem; }
   .container { padding: 0 12px 80px; }
   .card { padding: 14px 16px; }
-  .tab-btn { padding: 8px 13px; font-size: .85rem; }
+  .tab-btn { font-size: .85rem; }
   .track-banner { flex-wrap: wrap; gap: 14px; }
   .track-big { font-size: 2.5rem; min-width: 84px; }
   .select-row select, .select-row input { flex: 1 1 auto; min-width: 0; }

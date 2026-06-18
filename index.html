@@ -3,33 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FifaWinner · מנוע ערך — מונדיאל 2026</title>
+<title>WINEM WINNERS · תחזיות — אליפות העולם 2026</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <div class="container">
   <header>
     <div class="brand">
-      <div class="brand-mark">+</div>
       <div class="brand-text">
-        <h1>Fifa<span class="gold">Winner</span></h1>
-        <div class="sub">מנוע ערך · מונדיאל 2026</div>
+        <h1>WINEM <span class="gold">WINNERS</span></h1>
+        <div class="sub">אדי ומקס תהנו מהטורניר · אליפות העולם 2026</div>
       </div>
     </div>
-    <div class="pipeline">ELO <span>→</span> POISSON <span>→</span> MONTE&nbsp;CARLO</div>
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="recs">המלצות</button>
+      <button class="tab-btn" data-tab="matches">משחקים</button>
+      <button class="tab-btn" data-tab="groups">בתים</button>
+      <button class="tab-btn" data-tab="futures">עתידיים</button>
+      <button class="tab-btn" data-tab="ko">נוק-אאוט</button>
+    </nav>
     <div class="disclaimer">
-      ⚠️ הכלי לסיוע אנליטי בלבד — אינו ייעוץ ואינו מבטיח רווח. הימורים כרוכים בסיכון. גילאי 18+. שחקו באחריות.
-      קו תמיכה לנפגעי הימורים: <b dir="ltr">*5777</b>
+      ⚠️ <b>WINEM WINNERS</b> הוא כלי פרטי, ניסיוני וללא מטרת רווח לניתוח סטטיסטי בלבד. הנתונים, התחזיות וההשוואות המוצגים מבוססים על מודלים מתמטיים ואינם מהווים ייעוץ, המלצה, שידול או הזמנה לבצע הימור או כל פעולה כספית אחרת. השימוש בכלי נעשה באחריות המשתמש בלבד, והוא מיועד לבני 18 ומעלה ובכפוף לדין החל.
+      <a href="terms.html" style="color:var(--gold);font-weight:700;text-decoration:underline">תנאי שימוש וכתב ויתור מלא ←</a>
     </div>
   </header>
-
-  <nav class="tabs">
-    <button class="tab-btn active" data-tab="recs">🎯 המלצות</button>
-    <button class="tab-btn" data-tab="matches">⚔️ משחקים</button>
-    <button class="tab-btn" data-tab="groups">📊 בתים</button>
-    <button class="tab-btn" data-tab="futures">🏆 עתידיים</button>
-    <button class="tab-btn" data-tab="ko">🥊 נוק-אאוט</button>
-  </nav>
 
   <main id="content">
     <noscript><div class="disclaimer">⚠️ JavaScript חסום בתצוגה הזו — פתחו את הקובץ ב-Safari או Chrome (כפתור שיתוף ← "פתח ב...").</div></noscript>
@@ -39,9 +36,17 @@
   </main>
 
   <footer>
-    נתונים עודכנו <span id="dataDate">15.6.2026</span> ·
-    כלי ניתוח בלבד — לא מכונת כסף. גם הימור־ערך מפסיד לעיתים קרובות; היתרון סטטיסטי וארוך־טווח.<br>
-    הימור אחראי · קו תמיכה <b dir="ltr">*5777</b> · מקורות: FIFA, eloratings.net (השראה), winner.co.il — ראו <code>README</code>
+    <h3 style="color:var(--text-bright);font-size:1rem;margin-bottom:8px">כתב ויתור ואחריות</h3>
+    <p><b>WINEM WINNERS</b> הוא פרויקט אישי, ניסיוני, לא-מסחרי וללא מטרת רווח. הכלי נועד למטרות מחקר, למידה, ניתוח סטטיסטי ובידור בלבד.</p>
+    <p>ההסתברויות, התחזיות, הדירוגים, הסימולציות, השוואות המודל מול נתוני שוק וכל מידע אחר המוצג באתר מבוססים על מודלים סטטיסטיים ונתונים היסטוריים ועלולים להיות שגויים, חלקיים או בלתי מעודכנים. אין לראות במידע המוצג ייעוץ מקצועי מכל סוג, המלצה להימור, שידול להשתתפות בהימורים, הבטחה לרווח או התחייבות לתוצאה כלשהי.</p>
+    <p>הכלי אינו מאפשר ביצוע הימורים, אינו מפעיל שירות הימורים, אינו מקבל כספים, אינו מתווך בין משתמשים לבין מפעילי הימורים ואינו קשור לגוף הימורים כלשהו.</p>
+    <p>השימוש בכלי ובמידע המופיע בו נעשה באחריות המשתמש בלבד. יוצרי ומפעילי הכלי לא יישאו באחריות לכל נזק, הפסד, אובדן רווח, הסתמכות או תוצאה הנובעים מהשימוש במידע המוצג.</p>
+    <p>השימוש מיועד לבני 18 ומעלה בלבד ובכפוף לדין החל. הימורים עלולים לגרום להתמכרות ולהפסדים כספיים. לסיוע ומידע ניתן לפנות לקו התמיכה <b dir="ltr">*5777</b>.</p>
+    <p style="margin-top:10px">
+      <a href="terms.html" style="color:var(--gold);font-weight:700;text-decoration:underline">תנאי שימוש וכתב ויתור מלא</a>
+      · נתונים עודכנו <span id="dataDate">15.6.2026</span>
+      · מקורות: eloratings.net (השראה) — ראו <code>README</code>
+    </p>
   </footer>
 </div>
 

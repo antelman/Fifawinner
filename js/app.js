@@ -17,7 +17,6 @@ const STORE = (() => {
 
 let SIM = null;   // תוצאות סימולציית בתים
 let KO = null;    // תוצאות סימולציית אלוף
-let ODDS = JSON.parse(STORE.getItem("fw_odds") || "{}");
 // סוגריים הנוק-אאוט — ממולאים בממשק בסוף שלב הבתים (27.6)
 let BRACKET = JSON.parse(STORE.getItem("fw_bracket") || "null")
   || { r32: Array.from({ length: 16 }, () => [null, null]), winners: {} };
@@ -47,7 +46,6 @@ const fmtDate = (iso) => {
   return p.length === 3 ? `${+p[2]}.${+p[1]}.${p[0]}` : "";
 };
 
-function saveOdds() { STORE.setItem("fw_odds", JSON.stringify(ODDS)); }
 function saveBracket() { STORE.setItem("fw_bracket", JSON.stringify(BRACKET)); }
 
 function playedSet() {
@@ -271,7 +269,7 @@ function generateRecs() {
           why: `הסיכוי הגבוה ביותר — פער ${Math.abs(gap)} נק' Elo לטובת ${T(b).nameHe}` },
       ];
       const best = outcomes.sort((x, y) => y.p - x.p)[0];
-      // תקרה 0.85: מעליה היחס ההוגן < ~1.18 — עמלת הווינר הופכת זאת להימור גרוע תמיד.
+      // תקרה 0.85: מעליה ההסתברות גבוהה מדי מכדי להיחשב להמלצה מעניינת.
       // רף תחתון 0.40: התוצאה הסבירה ביותר חייבת להיות מספיק בולטת כדי להמליץ עליה.
       if (best.p >= 0.40 && best.p <= 0.85)
         recs.push({ ...base, market: "1X2", pick: best.lbl, p: best.p,
@@ -328,19 +326,12 @@ function generateRecs() {
   const champs = Object.keys(DATA.teams).map(id => [id, KO[id].pChampion])
     .sort((x, y) => y[1] - x[1]).slice(0, 3);
   for (const [id, p] of champs) {
-    const mkt = DATA.meta.marketChampion[id];
-    recs.push({ group: "🏆", match: "זוכת המונדיאל", market: "אלופה", pick: tn(id), p,
+    recs.push({ group: "🏆", match: "זוכת הטורניר", market: "אלופה", pick: tn(id), p,
       conf: 2, key: `CHAMP:${id}`,
-      why: mkt ? `המודל: ${pct1(p)} · השוק העולמי: ${pct1(mkt)}` : `המודל: ${pct1(p)}` });
+      why: `הערכת המודל: ${pct1(p)}` });
   }
 
-  for (const r of recs) {
-    r.fair = MODEL.fairOdds(r.p);
-    r.minOdds = MODEL.minWorthOdds(r.p);
-    const userOdds = ODDS[r.key];
-    if (userOdds) r.edge = MODEL.edge(r.p, userOdds);
-  }
-  recs.sort((x, y) => (y.edge ?? -9) - (x.edge ?? -9) || y.conf - x.conf || y.p - x.p);
+  recs.sort((x, y) => y.conf - x.conf || y.p - x.p);
   return recs;
 }
 
@@ -357,24 +348,12 @@ function odds1x2Html(o, key) {
 }
 
 function recHtml(r) {
-  const isVal = r.edge !== undefined && r.edge > 0;
-  const edgeHtml = r.edge !== undefined
-    ? (isVal
-      ? `<span class="pill value-flag">VALUE +${(r.edge * 100).toFixed(1)}%</span>`
-      : `<span class="pill">Edge ${(r.edge * 100).toFixed(1)}%</span>`)
-    : "";
-  return `<div class="rec${isVal ? " is-value" : ""}">
+  return `<div class="rec">
     <div class="badge"><b>${pct(r.p)}</b>${r.market}</div>
     <div class="what">
-      <b>${r.pick}</b> <span class="pill">${r.match}</span> ${edgeHtml}
+      <b>${r.pick}</b> <span class="pill">${r.match}</span>
       <div class="why">${r.why} · ביטחון: <span class="stars">${stars(r.conf)}</span></div>
       ${odds1x2Html(r.odds1x2, r.key)}
-    </div>
-    <div class="nums">
-      יחס הוגן: <b class="fair">${odds(r.fair)}</b><br>
-      כדאי מ-: <b>${odds(r.minOdds)}</b><br>
-      יחס ווינר: <input type="number" step="0.01" min="1" data-oddskey="${r.key}"
-        value="${ODDS[r.key] || ""}" placeholder="הזן">
     </div>
   </div>`;
 }
@@ -463,19 +442,17 @@ function viewRecs() {
     ? `<h2 style="margin:18px 0 10px">${title}</h2>${fxs.map(dayMatchCard).join("")}` : "";
 
   const recs = generateRecs();
-  const valueRecs = recs.filter(r => r.edge !== undefined && r.edge > 0);
   // נבחרות כלליות: מגוונות, בלי משחקי היום/מחר (כבר מוצגים למעלה)
   const shown = new Set([...todayFx, ...tomFx].map(f => `${f.h}-${f.a}`));
   const top = [], seen = new Set();
   for (const r of recs) {
-    if (valueRecs.includes(r)) continue;
     if (r.key && [...shown].some(s => r.key.startsWith(s + ":"))) continue;
     if (seen.has(r.group)) continue;
     seen.add(r.group);
     top.push(r);
     if (top.length === 5) break;
   }
-  const rest = recs.filter(r => !valueRecs.includes(r) && !top.includes(r));
+  const rest = recs.filter(r => !top.includes(r));
   const tr = trackRecord();
   const successPct = tr.total ? Math.round(tr.hit / tr.total * 100) : 0;
   const trBanner = tr.total
@@ -491,12 +468,11 @@ function viewRecs() {
   return `
   ${trBanner}
   ${scoreboardHtml()}
-  ${valueRecs.length ? `<div class="card value-band"><h3><span class="pulse-dot"></span>הימורי ערך מאומתים <span class="note" style="display:inline;font-weight:400">לפי היחסים שהזנת</span></h3>${valueRecs.map(recHtml).join("")}</div>` : ""}
   ${daySection("⚽ משחקי היום — " + hebDate(today), todayFx)}
   ${daySection("📅 משחקי מחר — " + hebDate(tomorrow), tomFx)}
   ${todayFx.length || tomFx.length ? "" : `<div class="card"><p class="note">אין משחקים היום או מחר בלוח.</p></div>`}
   <h2 style="margin:22px 0 10px">🎯 הזדמנויות נוספות מכל הטורניר</h2>
-  <p class="note">"כדאי מ-" = היחס המינימלי בווינר שממנו יש ערך. גבוה ממנו — מהמרים; נמוך — מוותרים. הזנת יחס מחשבת Edge ומסמנת <span class="pill value-flag">VALUE</span>.</p>
+  <p class="note">ההמלצות מדורגות לפי רמת הביטחון של המודל וההסתברות שהוא מעניק — מהחזקות לפחות.</p>
   ${top.map(recHtml).join("")}
   <details style="margin-top:16px">
     <summary style="cursor:pointer;color:var(--gold);font-weight:700;padding:10px">📋 עוד ${rest.length} המלצות (כל הבתים, העפלות, אלופה...)</summary>
@@ -534,15 +510,6 @@ function viewMatches() {
   ${detail}`;
 }
 
-function oddsInputCell(key) {
-  return `<td><input type="number" step="0.01" min="1" data-oddskey="${key}" value="${ODDS[key] || ""}" placeholder="—"></td>`;
-}
-function edgeCell(p, key) {
-  const o = ODDS[key];
-  if (!o) return "<td>—</td>";
-  const e = MODEL.edge(p, o);
-  return `<td class="${e > 0 ? "edge-pos" : "edge-neg"}">${e > 0 ? "+" : ""}${(e * 100).toFixed(1)}%</td>`;
-}
 // סימון ✓/✗ קטן לתא שם-שוק בטבלה (אם המשחק הסתיים והשוק ניתן לשיפוט)
 function verdictMark(key) {
   const g = gradeKey(key);
@@ -572,7 +539,7 @@ function buildMatchCandidates(a, b, ko) {
     { label: `ניצחון ${bn} (2)`, p: m.p2, key: k("2"), family: "result", why: "תוצאת 90 דקות" },
     { label: "תיקו (X)", p: m.px, key: k("X"), family: "result", why: "תוצאת 90 דקות" },
     { label: `${an} בהפרש 2+ שערים (הנדיקאפ: יתרון 0:1 ל${bn})`, p: ex.hcapA_minus1.p1, key: k("H-1:1"), family: "result", why: `הנדיקאפ +1: ${an} מנצחת גם אחרי שמזכים את ${bn} בשער — ניצחון בהפרש 2+` },
-    { label: `${an} בהפרש 3+ שערים (הנדיקאפ ווינר: יתרון 0:2 ל${bn})`, p: ex.hcapA_minus2.p1, key: k("H-2:1"), family: "result", why: `קו ה-+2 של ווינר: ${an} מנצחת גם אחרי שמזכים את ${bn} בשני שערים — ניצחון בהפרש 3+` },
+    { label: `${an} בהפרש 3+ שערים (הנדיקאפ: יתרון 0:2 ל${bn})`, p: ex.hcapA_minus2.p1, key: k("H-2:1"), family: "result", why: `${an} מנצחת גם אחרי שמזכים את ${bn} בשני שערים — ניצחון בהפרש 3+` },
     { label: `${an} מנצחת ביותר משער`, p: ex.winBy2A, key: k("WB2A"), family: "result", why: "ניצחון בהפרש 2+ שערים" },
     { label: `${bn} מנצחת ביותר משער`, p: ex.winBy2B, key: k("WB2B"), family: "result", why: "ניצחון בהפרש 2+ שערים" },
     { label: "מעל 2.5 שערים", p: m.over25, key: k("O25"), family: "goals", why: "תוחלת שערים גבוהה במשחק" },
@@ -580,7 +547,7 @@ function buildMatchCandidates(a, b, ko) {
     { label: "מעל 1.5 שערים", p: m.over15, key: k("O15"), family: "goals", why: "לפחות שני שערים במשחק" },
     { label: "שתי הקבוצות מבקיעות", p: m.btts, key: k("BTTS"), family: "goals", why: "שתי התקפות מתפקדות מול הגנות פגיעות" },
     { label: "לא — שתיהן מבקיעות", p: m.noBtts, key: k("NBTTS"), family: "goals", why: "לפחות צד אחד צפוי לשמור על רשת נקייה" },
-    { label: "סה\"כ שערים: 2–3", p: ex.range23, key: k("R23"), family: "goals", why: "הטווח השכיח ביותר במונדיאל" },
+    { label: "סה\"כ שערים: 2–3", p: ex.range23, key: k("R23"), family: "goals", why: "הטווח השכיח ביותר בטורניר" },
     { label: `מבקיעה ראשונה: ${an}`, p: ex.firstGoalA, key: k("FG1"), family: "halves", why: "מרוץ לשער הראשון לפי תוחלות ההבקעה" },
     { label: `מבקיעה ראשונה: ${bn}`, p: ex.firstGoalB, key: k("FG2"), family: "halves", why: "מרוץ לשער הראשון לפי תוחלות ההבקעה" },
     { label: `מחצית ראשונה: ${an} (1)`, p: ex.ht1, key: k("HT1"), family: "halves", why: "יתרון כבר במחצית" },
@@ -749,23 +716,15 @@ function likelyScoresHtml(a, b, asOf) {
 
 function pickCard(x, idx) {
   const medals = ["🥇", "🥈", "🥉"];
-  const userOdds = ODDS[x.key];
-  const edgeHtml = userOdds
-    ? (MODEL.edge(x.p, userOdds) > 0
-      ? `<span class="pill value-flag">VALUE +${(MODEL.edge(x.p, userOdds) * 100).toFixed(1)}%</span>`
-      : `<span class="pill">Edge ${(MODEL.edge(x.p, userOdds) * 100).toFixed(1)}%</span>`)
-    : "";
   const verdict = gradeKey(x.key);            // ✓/✗ אם המשחק הסתיים והשוק ניתן לשיפוט
   const cls = verdict === true ? " ok" : verdict === false ? " bad" : "";
   return `<div class="pick-card${cls}">
-    <div class="odds-box"><b>${odds(MODEL.fairOdds(x.p))}</b><span>יחס הוגן</span></div>
+    <div class="odds-box"><b>${pct1(x.p)}</b><span>סבירות</span></div>
     <div class="pick-body">
-      <div class="pick-title">${medals[idx]} ${x.label} ${verdictBadge(verdict)} ${edgeHtml}</div>
-      <div class="why">${x.why} · הסתברות: <b>${pct1(x.p)}</b> · ביטחון: <span class="stars">${stars(x.conf)}</span></div>
+      <div class="pick-title">${medals[idx]} ${x.label} ${verdictBadge(verdict)}</div>
+      <div class="why">${x.why} · ביטחון: <span class="stars">${stars(x.conf)}</span></div>
       <div class="bar" style="margin-top:6px"><i style="width:${(x.p * 100).toFixed(0)}%"></i></div>
     </div>
-    <div class="nums">כדאי מ-: <b>${odds(MODEL.minWorthOdds(x.p))}</b><br>
-      יחס ווינר: <input type="number" step="0.01" min="1" data-oddskey="${x.key}" value="${userOdds || ""}" placeholder="הזן"></div>
   </div>`;
 }
 
@@ -795,7 +754,7 @@ function matchDetail(a, b, ko = false) {
     [`🥊 ${T(b).nameHe} מעפילה (כולל הארכה/פנדלים)`, 1 - advA, k("ADV2")]
   );
 
-  // שווקים מורחבים של ווינר
+  // שווקים מורחבים
   const ex = MODEL.extendedMarkets(T(a), T(b), asOf);
   const htftOrder = Object.entries(ex.htft).sort((x, y) => y[1] - x[1]).slice(0, 5);
   const exRows = [
@@ -851,27 +810,20 @@ function matchDetail(a, b, ko = false) {
     <p class="note">Elo: ${T(a).nameHe} ${MODEL.effElo(T(a), asOf)}${T(a).host ? " (כולל ביתיות)" : ""} מול ${T(b).nameHe} ${MODEL.effElo(T(b), asOf)}${T(b).host ? " (כולל ביתיות)" : ""}
        · תוחלת שערים: ${lA.toFixed(2)} — ${lB.toFixed(2)}</p>
     <table class="market-table">
-      <tr><th>שוק</th><th>P מודל</th><th>יחס הוגן</th><th>כדאי מ-</th><th>יחס ווינר</th><th>Edge</th></tr>
+      <tr><th>שוק</th><th>הסתברות המודל</th></tr>
       ${rows.map(([lbl, p, key]) => `<tr>
         <td class="lbl">${verdictMark(key)}${lbl}</td><td>${pct1(p)}</td>
-        <td class="fair">${odds(MODEL.fairOdds(p))}</td>
-        <td>${odds(MODEL.minWorthOdds(p))}</td>
-        ${oddsInputCell(key)}${edgeCell(p, key)}
       </tr>`).join("")}
     </table>
     <details style="margin-top:14px">
       <summary style="cursor:pointer;color:var(--gold);font-weight:700">➕ שווקים מורחבים (יתרון, מחציות, מבקיעה ראשונה, תוצאה מדויקת...)</summary>
       <table class="market-table" style="margin-top:10px">
-        <tr><th>שוק</th><th>P מודל</th><th>יחס הוגן</th><th>כדאי מ-</th><th>יחס ווינר</th><th>Edge</th></tr>
+        <tr><th>שוק</th><th>הסתברות המודל</th></tr>
         ${exRows.map(([lbl, p, key]) => `<tr>
           <td class="lbl">${verdictMark(key)}${lbl}</td><td>${pct1(p)}</td>
-          <td class="fair">${odds(MODEL.fairOdds(p))}</td>
-          <td>${odds(MODEL.minWorthOdds(p))}</td>
-          ${oddsInputCell(key)}${edgeCell(p, key)}
         </tr>`).join("")}
       </table>
-      <p class="note">שווקי המחציות מחושבים בהנחת חלוקת 45%/55% של תוחלת השערים בין המחציות (ממוצע היסטורי).
-      ⚠️ ביחסים גבוהים (תוצאה מדויקת, מחצית/סיום) עמלת הווינר גבוהה במיוחד — דרשו פער גדול מ"כדאי מ-".</p>
+      <p class="note">שווקי המחציות מחושבים בהנחת חלוקת 45%/55% של תוחלת השערים בין המחציות (ממוצע היסטורי).</p>
     </details>
     </details>
   </div>`;
@@ -930,40 +882,30 @@ function viewFutures() {
     .sort((x, y) => y.p - x.p).slice(0, 16);
   return `
   <div class="card">
-    <h3>🏆 זוכת המונדיאל — מודל מול שוק עולמי</h3>
+    <h3>🏆 זוכת הטורניר — תחזית המודל</h3>
     <table class="market-table">
-      <tr><th>נבחרת</th><th>אלופה</th><th>גמר</th><th>חצי גמר</th><th>יחס הוגן</th><th>כדאי מ-</th><th>שוק עולמי</th><th>יחס ווינר</th><th>Edge</th></tr>
+      <tr><th>נבחרת</th><th>אלופה</th><th>גמר</th><th>חצי גמר</th></tr>
       ${champRows.map(r => {
-        const mkt = DATA.meta.marketChampion[r.id];
-        const key = `CHAMP:${r.id}`;
         return `<tr>
           <td class="lbl">${tn(r.id)}</td>
           <td><b>${pct1(r.p)}</b></td><td>${pct1(r.f)}</td><td>${pct1(r.s)}</td>
-          <td class="fair">${odds(MODEL.fairOdds(r.p))}</td>
-          <td>${odds(MODEL.minWorthOdds(r.p))}</td>
-          <td>${mkt ? pct1(mkt) : "—"}</td>
-          ${oddsInputCell(key)}${edgeCell(r.p, key)}
         </tr>`;
       }).join("")}
     </table>
-    <p class="note">סימולציית הנוק-אאוט מקורבת (הגרלת מסלולים אקראית תחת אילוצים) — ראו docs/methodology.md.
-    פערים בין המודל לשוק: המודל מאמין בארגנטינה (Elo גבוה) יותר מהשוק; השוק מאמין בצרפת ובברזיל יותר מהמודל.</p>
+    <p class="note">סימולציית הנוק-אאוט מקורבת (הגרלת מסלולים אקראית תחת אילוצים) — ראו docs/methodology.md.</p>
   </div>
   <div class="card">
     <h3>📈 העפלה משלב הבתים — הבטוחות והמסוכנות</h3>
     <table class="market-table">
-      <tr><th>נבחרת</th><th>בית</th><th>העפלה</th><th>יחס הוגן</th><th>כדאי מ-</th><th>יחס ווינר</th><th>Edge</th></tr>
+      <tr><th>נבחרת</th><th>בית</th><th>העפלה</th></tr>
       ${ids.map(id => ({ id, p: SIM[id].pAdvance })).sort((x, y) => y.p - x.p)
         .filter(r => r.p >= 0.45 && r.p <= 0.97)
         .map(r => `<tr>
           <td class="lbl">${tn(r.id)}</td><td>${T(r.id).group || groupOfTeam(r.id)}</td>
           <td><b>${pct1(r.p)}</b></td>
-          <td class="fair">${odds(MODEL.fairOdds(r.p))}</td>
-          <td>${odds(MODEL.minWorthOdds(r.p))}</td>
-          ${oddsInputCell("ADV:" + r.id)}${edgeCell(r.p, "ADV:" + r.id)}
         </tr>`).join("")}
     </table>
-    <p class="note">מוצגות רק נבחרות בטווח 45%–97% — מתחת/מעל לזה היחסים בווינר בדרך כלל לא מעניינים.</p>
+    <p class="note">מוצגות רק נבחרות בטווח 45%–97% — סביב הגבול הזה ההכרעה הכי צמודה.</p>
   </div>`;
 }
 
@@ -1049,14 +991,11 @@ function viewKO() {
     propagation = `<div class="card">
       <h3>📐 חישוב מסלול מדויק (מחליף את הסימולציה המקורבת)</h3>
       <table class="market-table">
-        <tr><th>נבחרת</th><th>שמינית</th><th>רבע</th><th>חצי</th><th>גמר</th><th>אלופה</th><th>יחס הוגן (אלופה)</th><th>כדאי מ-</th><th>יחס ווינר</th><th>Edge</th></tr>
+        <tr><th>נבחרת</th><th>שמינית</th><th>רבע</th><th>חצי</th><th>גמר</th><th>אלופה</th></tr>
         ${rows.map(r => `<tr>
           <td class="lbl">${tn(r.id)}</td>
           <td>${pct1(r.pR16)}</td><td>${pct1(r.pQF)}</td><td>${pct1(r.pSF)}</td><td>${pct1(r.pF)}</td>
           <td><b>${pct1(r.pChampion)}</b></td>
-          <td class="fair">${odds(MODEL.fairOdds(r.pChampion))}</td>
-          <td>${odds(MODEL.minWorthOdds(r.pChampion))}</td>
-          ${oddsInputCell("KOCHAMP:" + r.id)}${edgeCell(r.pChampion, "KOCHAMP:" + r.id)}
         </tr>`).join("")}
       </table>
       <p class="note">מנצחות שסומנו "בפועל" מקובעות (הסתברות 1) והחישוב מתעדכן בהתאם. שוק "מי יעפיל" של כל משחק — בכפתור ניתוח.</p>
@@ -1067,12 +1006,12 @@ function viewKO() {
   <div class="card">
     <h3>🥊 שלב הנוק-אאוט — עדכון בסוף שלב הבתים</h3>
     <p class="note">
-      המסלולים הרשמיים ננעלים ב-<b>27.6.2026</b> בסוף שלב הבתים (שיבוץ השלישיות תלוי ב-495 תרחישי FIFA — אי אפשר לדעת מראש).
+      המסלולים הרשמיים ננעלים ב-<b>27.6.2026</b> בסוף שלב הבתים (שיבוץ השלישיות תלוי ב-495 תרחישים אפשריים — אי אפשר לדעת מראש).
       ברגע שהלוח יתפרסם: מלאו כאן את 16 מפגשי שלב ה-32 <b>לפי סדר הסוגריים הרשמי</b>
       (מנצחות משחקים 1–2 נפגשות בשמינית הגמר הראשונה, 3–4 בשנייה וכן הלאה).
       הנתונים נשמרים בדפדפן. סטטוס: <b>${filled}/16</b> ${dupes ? '<span class="pill" style="color:var(--red)">⚠️ נבחרת מופיעה פעמיים!</span>' : ""}
     </p>
-    <p class="note">💡 <b>חשוב לווינר:</b> בנוק-אאוט שוק 1X2 נסגר ב-90 דקות (תיקו = X משלם!), ושוק "מי יעפיל" כולל הארכה ופנדלים — המערכת מציגה את שניהם.</p>
+    <p class="note">💡 <b>שימו לב:</b> בנוק-אאוט שוק 1X2 נסגר ב-90 דקות (תיקו = X), ושוק "מי יעפיל" כולל הארכה ופנדלים — המערכת מציגה את שניהם.</p>
   </div>
   ${propagation}
   ${rounds.map(([name, matches], idx) => `<div class="card">
@@ -1133,12 +1072,6 @@ function bindEvents() {
       if (d) d.scrollIntoView({ behavior: "smooth" });
     }));
 
-  document.querySelectorAll("input[data-oddskey]").forEach(inp =>
-    inp.addEventListener("change", () => {
-      const v = parseFloat(inp.value);
-      if (v > 1) ODDS[inp.dataset.oddskey] = v; else delete ODDS[inp.dataset.oddskey];
-      saveOdds(); render();
-    }));
 }
 
 function showTeam(id) {
@@ -1147,11 +1080,11 @@ function showTeam(id) {
     <div class="modal">
       <button class="close" id="modal-close">✕</button>
       <h2>${flag(id)} ${t.nameHe} <span class="pill">${t.nameEn}</span></h2>
-      <p class="note">בית ${groupOfTeam(id)} · ${t.confed} · דירוג FIFA: ${t.fifa} · Elo מודל: ${t.elo}${t.host ? " (+50 ביתיות)" : ""} · מאמן: ${t.coach}</p>
+      <p class="note">בית ${groupOfTeam(id)} · ${t.confed} · דירוג עולמי: ${t.fifa} · Elo מודל: ${t.elo}${t.host ? " (+50 ביתיות)" : ""} · מאמן: ${t.coach}</p>
       <dl>
         <dt>סימולציה</dt><dd>זוכת בית: ${pct1(SIM[id].pWinGroup)} · העפלה: ${pct1(SIM[id].pAdvance)} · אלופה: ${pct1(KO[id].pChampion)}</dd>
-        <dt>מונדיאל 2018</dt><dd>${t.wc18}</dd>
-        <dt>מונדיאל 2022</dt><dd>${t.wc22}</dd>
+        <dt>אליפות 2018</dt><dd>${t.wc18}</dd>
+        <dt>אליפות 2022</dt><dd>${t.wc22}</dd>
         <dt>אליפויות יבשתיות (10 שנים)</dt><dd>${t.continental}</dd>
         <dt>מוקדמות 2026</dt><dd>${t.qual26}</dd>
         <dt>תמונת עשור</dt><dd>${t.tenYear}</dd>
