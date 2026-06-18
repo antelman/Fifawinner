@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FifaWinner · מנוע ערך — מונדיאל 2026</title>
+<title>WINEM WINNERS · תחזיות — אליפות העולם 2026</title>
 <style>
 /* ============================================================
    FifaWinner — "Edge Terminal" design system (RTL, dark)
@@ -93,25 +93,26 @@ header .sub { color: var(--muted); margin-top: 2px; font-size: .85rem; font-weig
 
 /* ---------- ניווט ---------- */
 nav.tabs {
-  display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
-  margin: 18px 0; position: sticky; top: 0; z-index: 50;
-  padding: 10px 0;
-  background: rgba(8, 11, 15, .82);
-  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--border);
+  margin-inline-start: auto;
+  display: flex; flex-wrap: wrap; gap: 22px; align-items: center;
 }
 .tab-btn {
-  background: rgba(255, 255, 255, .03); color: var(--text-bright);
-  border: 1px solid var(--border-strong);
-  padding: 9px 18px; border-radius: 10px; cursor: pointer;
+  background: none; border: none; cursor: pointer;
+  color: var(--muted);
+  padding: 4px 0 8px; position: relative;
   font-family: inherit; font-weight: 700; font-size: .95rem;
-  transition: all .15s;
+  transition: color .15s;
 }
-.tab-btn:hover { border-color: var(--value); color: var(--text); }
-.tab-btn.active {
-  background: var(--value); color: var(--value-ink);
-  border-color: var(--value); font-weight: 800;
-  box-shadow: 0 6px 20px rgba(41, 229, 154, .28);
+.tab-btn::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+  border-radius: 2px; background: var(--value);
+  transform: scaleX(0); transition: transform .18s;
+}
+.tab-btn:hover { color: var(--text-bright); }
+.tab-btn.active { color: var(--text-bright); }
+.tab-btn.active::after { transform: scaleX(1); }
+@media (max-width: 600px) {
+  nav.tabs { margin-inline-start: 0; width: 100%; gap: 16px; justify-content: flex-start; }
 }
 
 /* ---------- טעינה ---------- */
@@ -124,7 +125,6 @@ nav.tabs {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes fw-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-@keyframes fw-pulse { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
 #content { animation: fw-up .4s ease both; }
 
 /* ---------- כרטיסים ---------- */
@@ -152,9 +152,6 @@ h2 { font-weight: 800; font-size: 1.15rem; letter-spacing: -.3px; }
 }
 .market-table td { font-family: var(--mono); font-size: .85rem; color: var(--text-dim); }
 .market-table td.lbl { text-align: right; font-family: "Heebo", sans-serif; color: var(--text-bright); white-space: normal; }
-.edge-pos { color: var(--value); font-weight: 700; }
-.edge-neg { color: var(--red); }
-.fair { color: var(--gold) !important; }
 
 /* בתים */
 .group-card table { width: 100%; border-collapse: collapse; font-size: .88rem; table-layout: fixed; }
@@ -191,7 +188,7 @@ input:focus, select:focus { outline: none; border-color: var(--value); }
 
 /* ---------- המלצות ---------- */
 .rec {
-  display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;
+  display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center;
   background: var(--bg2); border: 1px solid var(--border);
   border-radius: 13px; padding: 14px 16px; margin-bottom: 10px;
 }
@@ -202,10 +199,6 @@ input:focus, select:focus { outline: none; border-color: var(--value); }
 .rec .badge { font-size: .66rem; color: var(--faint); }
 .rec .what b { font-size: 1rem; }
 .rec .what .why { color: var(--muted2); font-size: .82rem; margin-top: 5px; line-height: 1.5; }
-.rec .nums { text-align: left; font-size: .78rem; color: var(--muted); white-space: nowrap; }
-.rec .nums b { font-family: var(--mono); }
-.rec .nums b.fair { color: var(--gold); }
-.rec .nums b:not(.fair) { color: var(--text-bright); }
 .stars { color: var(--gold); letter-spacing: 1px; }
 
 /* פילוח 1/X/2 — שלוש הסתברויות התוצאה, תמיד מוצג ליד המלצת תוצאה */
@@ -218,20 +211,6 @@ input:focus, select:focus { outline: none; border-color: var(--value); }
 .o1x2-cell.picked { background: rgba(212, 175, 55, .14); border-color: var(--gold); }
 .o1x2-cell.picked .o1x2-lbl, .o1x2-cell.picked b { color: var(--gold); }
 
-.rec.is-value { background: var(--bg3); border-color: rgba(41, 229, 154, .18); }
-.rec.is-value .badge b { color: var(--value); }
-
-/* באנד הימורי ערך — מסגרת זוהר ירוקה */
-.value-band {
-  background: linear-gradient(135deg, rgba(41, 229, 154, .07), rgba(41, 229, 154, .02));
-  border-color: rgba(41, 229, 154, .28);
-}
-.value-band h3 { display: flex; align-items: center; gap: 9px; }
-.pulse-dot {
-  width: 9px; height: 9px; border-radius: 50%; background: var(--value);
-  box-shadow: 0 0 10px var(--value); animation: fw-pulse 1.6s ease infinite; flex-shrink: 0;
-}
-
 img.flag {
   display: inline-block; vertical-align: -3px; width: 25px; height: 18px;
   object-fit: cover; border-radius: 3px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .14);
@@ -242,10 +221,6 @@ img.flag {
   display: inline-block; background: rgba(255, 255, 255, .04); border-radius: 99px;
   padding: 2px 9px; font-size: .74rem; color: var(--muted); margin-inline-start: 6px;
   font-weight: 500;
-}
-.value-flag {
-  background: var(--value); color: var(--value-ink); border: none;
-  font-family: var(--mono); font-weight: 700;
 }
 .verdict-hit { background: rgba(41, 229, 154, .14); color: var(--value); font-weight: 700; }
 .verdict-miss { background: rgba(255, 100, 124, .14); color: var(--red); font-weight: 700; }
@@ -441,7 +416,7 @@ img.flag {
 }
 
 .pick-card {
-  display: grid; grid-template-columns: auto 1fr auto; gap: 14px 16px; align-items: center;
+  display: grid; grid-template-columns: auto 1fr; gap: 14px 16px; align-items: center;
   background: var(--bg2); border: 1px solid var(--border); border-radius: 14px;
   padding: 16px 18px; margin-bottom: 11px;
 }
@@ -451,14 +426,10 @@ img.flag {
 .pick-card .pick-title { font-size: 1rem; font-weight: 700; display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
 .pick-card .why { color: var(--muted2); font-size: .85rem; margin-top: 5px; line-height: 1.5; }
 .pick-card .why b { color: var(--text-bright); font-family: var(--mono); }
-.pick-card .nums { text-align: left; font-size: .78rem; color: var(--muted); white-space: nowrap; }
-.pick-card .nums b { color: var(--text-bright); font-family: var(--mono); }
 @media (max-width: 600px) {
   .pick-card { grid-template-columns: auto 1fr; }
-  .pick-card .nums { grid-column: 1 / -1; text-align: right; }
 }
 
-/* גרסת ירוק לכרטיס המלצה עם ערך */
 details > summary { cursor: pointer; }
 details > summary.gold-sum,
 details > summary {
@@ -504,13 +475,15 @@ footer {
   font-size: .78rem; padding: 24px 0 40px; line-height: 1.7; border-top: 1px solid var(--border-soft); margin-top: 8px;
 }
 footer code { font-family: var(--mono); color: var(--muted); }
+footer p { max-width: 760px; margin: 0 auto 7px; text-align: right; }
+footer h3 { text-align: center; }
 
 @media (max-width: 600px) {
   .rec { grid-template-columns: 1fr; }
   header h1 { font-size: 1.4rem; }
   .container { padding: 0 12px 80px; }
   .card { padding: 14px 16px; }
-  .tab-btn { padding: 8px 13px; font-size: .85rem; }
+  .tab-btn { font-size: .85rem; }
   .track-banner { flex-wrap: wrap; gap: 14px; }
   .track-big { font-size: 2.5rem; min-width: 84px; }
   .select-row select, .select-row input { flex: 1 1 auto; min-width: 0; }
@@ -522,26 +495,23 @@ footer code { font-family: var(--mono); color: var(--muted); }
 <div class="container">
   <header>
     <div class="brand">
-      <div class="brand-mark">+</div>
       <div class="brand-text">
         <h1>WINEM <span class="gold">WINNERS</span></h1>
         <div class="sub">אדי ומקס תהנו מהטורניר · אליפות העולם 2026</div>
       </div>
     </div>
-    <div class="pipeline">ELO <span>→</span> POISSON <span>→</span> MONTE&nbsp;CARLO</div>
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="recs">המלצות</button>
+      <button class="tab-btn" data-tab="matches">משחקים</button>
+      <button class="tab-btn" data-tab="groups">בתים</button>
+      <button class="tab-btn" data-tab="futures">עתידיים</button>
+      <button class="tab-btn" data-tab="ko">נוק-אאוט</button>
+    </nav>
     <div class="disclaimer">
-      ⚠️ הכלי לסיוע אנליטי בלבד — אינו ייעוץ ואינו מבטיח רווח. הימורים כרוכים בסיכון. גילאי 18+. שחקו באחריות.
-      קו תמיכה לנפגעי הימורים: <b dir="ltr">*5777</b>
+      ⚠️ <b>WINEM WINNERS</b> הוא כלי פרטי, ניסיוני וללא מטרת רווח לניתוח סטטיסטי בלבד. הנתונים, התחזיות וההשוואות המוצגים מבוססים על מודלים מתמטיים ואינם מהווים ייעוץ, המלצה, שידול או הזמנה לבצע הימור או כל פעולה כספית אחרת. השימוש בכלי נעשה באחריות המשתמש בלבד, והוא מיועד לבני 18 ומעלה ובכפוף לדין החל.
+      <a href="terms.html" style="color:var(--gold);font-weight:700;text-decoration:underline">תנאי שימוש וכתב ויתור מלא ←</a>
     </div>
   </header>
-
-  <nav class="tabs">
-    <button class="tab-btn active" data-tab="recs">🎯 המלצות</button>
-    <button class="tab-btn" data-tab="matches">⚔️ משחקים</button>
-    <button class="tab-btn" data-tab="groups">📊 בתים</button>
-    <button class="tab-btn" data-tab="futures">🏆 עתידיים</button>
-    <button class="tab-btn" data-tab="ko">🥊 נוק-אאוט</button>
-  </nav>
 
   <main id="content">
     <noscript><div class="disclaimer">⚠️ JavaScript חסום בתצוגה הזו — פתחו את הקובץ ב-Safari או Chrome (כפתור שיתוף ← "פתח ב...").</div></noscript>
@@ -551,16 +521,24 @@ footer code { font-family: var(--mono); color: var(--muted); }
   </main>
 
   <footer>
-    נתונים עודכנו <span id="dataDate">15.6.2026</span> ·
-    כלי ניתוח בלבד — לא מכונת כסף. גם הימור־ערך מפסיד לעיתים קרובות; היתרון סטטיסטי וארוך־טווח.<br>
-    הימור אחראי · קו תמיכה <b dir="ltr">*5777</b> · מקורות: FIFA, eloratings.net (השראה), winner.co.il — ראו <code>README</code>
+    <h3 style="color:var(--text-bright);font-size:1rem;margin-bottom:8px">כתב ויתור ואחריות</h3>
+    <p><b>WINEM WINNERS</b> הוא פרויקט אישי, ניסיוני, לא-מסחרי וללא מטרת רווח. הכלי נועד למטרות מחקר, למידה, ניתוח סטטיסטי ובידור בלבד.</p>
+    <p>ההסתברויות, התחזיות, הדירוגים, הסימולציות, השוואות המודל מול נתוני שוק וכל מידע אחר המוצג באתר מבוססים על מודלים סטטיסטיים ונתונים היסטוריים ועלולים להיות שגויים, חלקיים או בלתי מעודכנים. אין לראות במידע המוצג ייעוץ מקצועי מכל סוג, המלצה להימור, שידול להשתתפות בהימורים, הבטחה לרווח או התחייבות לתוצאה כלשהי.</p>
+    <p>הכלי אינו מאפשר ביצוע הימורים, אינו מפעיל שירות הימורים, אינו מקבל כספים, אינו מתווך בין משתמשים לבין מפעילי הימורים ואינו קשור לגוף הימורים כלשהו.</p>
+    <p>השימוש בכלי ובמידע המופיע בו נעשה באחריות המשתמש בלבד. יוצרי ומפעילי הכלי לא יישאו באחריות לכל נזק, הפסד, אובדן רווח, הסתמכות או תוצאה הנובעים מהשימוש במידע המוצג.</p>
+    <p>השימוש מיועד לבני 18 ומעלה בלבד ובכפוף לדין החל. הימורים עלולים לגרום להתמכרות ולהפסדים כספיים. לסיוע ומידע ניתן לפנות לקו התמיכה <b dir="ltr">*5777</b>.</p>
+    <p style="margin-top:10px">
+      <a href="terms.html" style="color:var(--gold);font-weight:700;text-decoration:underline">תנאי שימוש וכתב ויתור מלא</a>
+      · נתונים עודכנו <span id="dataDate">15.6.2026</span>
+      · מקורות: eloratings.net (השראה) — ראו <code>README</code>
+    </p>
   </footer>
 </div>
 
 <div id="modal-root"></div>
 <script>
 /* ============================================================
-   FifaWinner — מאגר נתונים מונדיאל 2026
+   FifaWinner — מאגר נתונים אליפות העולם 2026
    ------------------------------------------------------------
    מבנה:
    DATA.teams[id]  — נבחרת: דירוגים, היסטוריית 10 שנים, סגל, סגנון
@@ -575,7 +553,7 @@ footer code { font-family: var(--mono); color: var(--muted); }
                                      (ידני בלבד — חסר ב-API החינמי; לשיפוט "מבקיעה ראשונה")
    שדות נבחרת:
      elo        — דירוג כוח (הערכת מודל בהשראת eloratings.net, יוני 2026)
-     fifa       — דירוג FIFA 11.6.2026 (מאומת לצמרת; השאר הערכה)
+     fifa       — דירוג עולמי 11.6.2026 (מאומת לצמרת; השאר הערכה)
      host       — מארחת (מקבלת בונוס ביתיות במודל)
      attMod/defMod — כוונון סגנון עדין (1.0=ניטרלי; att>1 התקפית, def<1 הגנה חזקה)
      tier       — מדרגת שווי סגל (1=עלית עולמית ... 5=מינימלי)
@@ -584,7 +562,7 @@ footer code { font-family: var(--mono); color: var(--muted); }
 const DATA = {
   meta: {
     updated: "2026-06-18",
-    tournament: "מונדיאל 2026 — ארה\"ב, מקסיקו, קנדה",
+    tournament: "אליפות העולם 2026 — ארה\"ב, מקסיקו, קנדה",
     eloNote: "דירוגי הכוח הם הערכות מודל נכון ליוני 2026",
     hostBonus: 50,
     // עוגני התייחסות עולמיים (יוני 2026): הסתברות גלומה לזכייה
@@ -607,7 +585,7 @@ const DATA = {
   },
 
   // לוח שלב הבתים המלא (תאריכים מקומיים ארה"ב/ET; est=הערכה ±יום)
-  // מקורות: FIFA / CBS / NBC / Yahoo, יוני 2026
+  // מקורות: CBS / NBC / Yahoo, יוני 2026
   schedule: [
     { d: "2026-06-11", g: "A", h: "MEX", a: "RSA" }, { d: "2026-06-11", g: "A", h: "KOR", a: "CZE" },
     { d: "2026-06-12", g: "B", h: "CAN", a: "BIH" }, { d: "2026-06-12", g: "D", h: "USA", a: "PAR" },
@@ -655,7 +633,9 @@ const DATA = {
     { g: "L", home: "ENG", away: "CRO", hg: 4, ag: 2, htHg: 2, htAg: 2, firstScorer: "H" },
     { g: "L", home: "GHA", away: "PAN", hg: 1, ag: 0, htHg: 0, htAg: 0 },
     { g: "J", home: "AUT", away: "JOR", hg: 3, ag: 1, htHg: 1, htAg: 0, firstScorer: "H" },
-    { g: "K", home: "COL", away: "UZB", hg: 3, ag: 1, htHg: 1, htAg: 0, firstScorer: "H" }
+    { g: "K", home: "COL", away: "UZB", hg: 3, ag: 1, htHg: 1, htAg: 0, firstScorer: "H" },
+    { g: "A", home: "CZE", away: "RSA", hg: 1, ag: 1, htHg: 1, htAg: 0 },
+    { g: "B", home: "SUI", away: "BIH", hg: 4, ag: 1, htHg: 0, htAg: 0 }
     /* RESULTS:END */
   ],
 
@@ -680,7 +660,7 @@ const DATA = {
       stars: ["רונוון וויליאמס (שוער)", "תמבה זוואנה", "לייל פוסטר"],
       wc18: "לא העפילה", wc22: "לא העפילה",
       continental: "אליפות אפריקה: מקום 3 ב-2023 (ההישג הגדול בעשור), רבע גמר 2025",
-      qual26: "זכתה בבית המוקדמות האפריקאי שלה (מעל ניגריה!) — חזרה ראשונה למונדיאל מאז 2010",
+      qual26: "זכתה בבית המוקדמות האפריקאי שלה (מעל ניגריה!) — חזרה ראשונה לטורניר מאז 2010",
       tenYear: "עשור של בינוניות ואז קפיצה תחת ברוס: הגנה מאורגנת, שוער-קפטן ברמה עולמית",
       note: "פתחה בהפסד 0-2 למקסיקו. תתקשה מול קוריאה וצ'כיה על מקום 3"
     },
@@ -693,7 +673,7 @@ const DATA = {
       wc22: "שמינית גמר (הפסד לברזיל) — העפילה בדרמה מול פורטוגל",
       continental: "אליפות אסיה 2023: חצי גמר (הפסד לירדן). דור זהב שמתבגר",
       qual26: "העפילה בקלות יחסית ממוקדמות אסיה",
-      tenYear: "יציבות: 3 מונדיאלים רצופים עם רגעי שיא. סון בן 33 — טורניר גדול אחרון",
+      tenYear: "יציבות: 3 טורנירים רצופים עם רגעי שיא. סון בן 33 — טורניר גדול אחרון",
       note: "פתחה ב-2-1 דרמטי על צ'כיה — דריסת רגל חזקה למקום 2 בבית"
     },
     CZE: {
@@ -703,7 +683,7 @@ const DATA = {
       stars: ["פטריק שיק", "אדם הלוז'ק", "לוקאש פרובוד"],
       wc18: "לא העפילה", wc22: "לא העפילה",
       continental: "יורו 2020: רבע גמר (שיק מלך שערים משותף). יורו 2024: שלב הבתים",
-      qual26: "מקום 2 במוקדמות אחרי נורווגיה, העפילה דרך הפלייאוף האירופי — מונדיאל ראשון מאז 2006",
+      qual26: "מקום 2 במוקדמות אחרי נורווגיה, העפילה דרך הפלייאוף האירופי — השתתפות ראשונה מאז 2006",
       tenYear: "נבחרת גלים: מסוגלת להפיל גדולות (הולנד ביורו 2020) ולהפסיד לקטנות",
       note: "פתחה בהפסד 1-2 לקוריאה — חייבת נקודות מול דרא\"פ"
     },
@@ -738,7 +718,7 @@ const DATA = {
       stars: ["אכרם עפיף", "אלמועז עלי"],
       wc18: "לא העפילה", wc22: "מארחת — 0 נקודות, המארחת החלשה בהיסטוריה",
       continental: "אליפות אסיה: זכייה 2019 (סנסציה) וזכייה 2023 (בבית) — עפיף MVP",
-      qual26: "העפילה מסיבוב 4 האסייתי — מונדיאל ראשון שאליו העפילה במגרש",
+      qual26: "העפילה מסיבוב 4 האסייתי — טורניר ראשון שאליו העפילה במגרש",
       tenYear: "פרויקט אספייר: שיא באסיה, כישלון מול רמה עולמית. כל הסגל מהליגה המקומית",
       note: "מועמדת טבעית למקום האחרון בבית, אך מסוכנת מקטאר 2022"
     },
@@ -749,7 +729,7 @@ const DATA = {
       stars: ["אדין ג'קו (40!)", "אניס חאיירוביץ'", "ניקולא קטיץ'"],
       wc18: "לא העפילה", wc22: "לא העפילה",
       continental: "לא העפילה ליורו בעשור האחרון (הפסדי פלייאוף כואבים)",
-      qual26: "מקום 2 במוקדמות (אחרי אוסטריה), עברה את הפלייאוף — מונדיאל ראשון מאז 2014",
+      qual26: "מקום 2 במוקדמות (אחרי אוסטריה), עברה את הפלייאוף — השתתפות ראשונה מאז 2014",
       tenYear: "עשור של החמצות פלייאוף ואז פריצה תחת ברברז. תלות בג'קו המזדקן",
       note: "פותחת מול קנדה בטורונטו היום (12.6). אנדרדוג עם לב גדול"
     },
@@ -784,7 +764,7 @@ const DATA = {
       stars: ["דאקנס נזון", "פרנצדי פיירו", "דני בלמי"],
       wc18: "לא העפילה", wc22: "לא העפילה",
       continental: "גביע הזהב: הופעות צנועות. רבע גמר 2023",
-      qual26: "סנסציית המוקדמות של CONCACAF — מונדיאל ראשון מאז 1974, על רקע משבר הומניטרי בבית ('משחקי בית' בניכר)",
+      qual26: "סנסציית המוקדמות של CONCACAF — השתתפות ראשונה מאז 1974, על רקע משבר הומניטרי בבית ('משחקי בית' בניכר)",
       tenYear: "סיפור הלב של הטורניר. סגל מליגות צרפת/MLS, אפס ציפיות",
       note: "האנדרדוג הגדול בטורניר יחד עם קוראסאו. מול ברזיל — פער של ~530 נק' Elo"
     },
@@ -795,7 +775,7 @@ const DATA = {
       stars: ["סקוט מקטומיניי", "אנדי רוברטסון", "ג'ון מקגין", "בילי גילמור"],
       wc18: "לא העפילה", wc22: "לא העפילה",
       continental: "יורו 2020 + יורו 2024: שלב הבתים (נקודה אחת בכל אחד)",
-      qual26: "הדרמה של נובמבר 2025: ניצחון 4-2 על דנמרק עם שערי עקב ומחצית-מגרש — מונדיאל ראשון מאז 1998",
+      qual26: "הדרמה של נובמבר 2025: ניצחון 4-2 על דנמרק עם שערי עקב ומחצית-מגרש — השתתפות ראשונה מאז 1998",
       tenYear: "קולקטיב חזק מסכום חלקיו, מקטומיניי בכושר חייו (MVP בסרייה A 2025)",
       note: "תתחרה עם מרוקו... בעצם עם עצמה — יעד ריאלי: מקום 3 והעפלה כשלישייה טובה"
     },
@@ -819,7 +799,7 @@ const DATA = {
       stars: ["מיגל אלמירון", "חוליו אנסיסו", "אנטוניו סנאברה"],
       wc18: "לא העפילה", wc22: "לא העפילה",
       continental: "קופה אמריקה: רבע גמר 2019, הופעות אפורות. שיפור חד מ-2024",
-      qual26: "מקום 6 במוקדמות הדרום-אמריקאיות הרצחניות — מונדיאל ראשון מאז 2010. בבית לא הפסידה כמעט לאף אחת",
+      qual26: "מקום 6 במוקדמות הדרום-אמריקאיות הרצחניות — השתתפות ראשונה מאז 2010. בבית לא הפסידה כמעט לאף אחת",
       tenYear: "מסורת: הגנה, אגרסיביות, כדורים נייחים. אלפארו בנה קיר",
       note: "טיפוסית ל-0-0 ו-1-0. שוק 'מתחת 2.5' במשחקיה — כיוון קבוע"
     },
@@ -841,7 +821,7 @@ const DATA = {
       stars: ["ארדה גולר", "קנן יילדיז", "האקאן צ'להאנולו", "פרדי קדיאולו"],
       wc18: "לא העפילה", wc22: "לא העפילה",
       continental: "יורו 2024: רבע גמר מרשים (הדיחה את אוסטריה, נפלה בקושי מול הולנד)",
-      qual26: "מקום 2 אחרי ספרד (כולל 0-6 ביתי מולה), עברה את הפלייאוף — מונדיאל ראשון מאז 2002",
+      qual26: "מקום 2 אחרי ספרד (כולל 0-6 ביתי מולה), עברה את הפלייאוף — השתתפות ראשונה מאז 2002",
       tenYear: "דור הזהב: גולר ויילדיז הם צמד ההתקפה הצעיר המסעיר באירופה. הגנה פרוצה — משחקים שלה = שערים",
       note: "הדארק-הורס המסקרן של הטורניר. מול ארה\"ב — אולי משחק הבתים המעניין בטורניר. Over 2.5 קבוע"
     },
@@ -855,7 +835,7 @@ const DATA = {
       wc18: "שלב הבתים (!) — מקום אחרון בבית", wc22: "שלב הבתים (!) שוב",
       continental: "יורו 2024 (בבית): רבע גמר — הפסד דרמטי לספרד. ליגת האומות 2025: חצי גמר",
       qual26: "ניצחה את הבית שלה אחרי מעידה בפתיחה (הפסד בסלובקיה!)",
-      tenYear: "שתי מפלות מונדיאל היסטוריות, אך נאגלסמן + מוסיאלה/וירץ = מכונה מחודשת. שווי סגל Top-4 עולמי",
+      tenYear: "שתי מפלות היסטוריות בטורניר, אך נאגלסמן + מוסיאלה/וירץ = מכונה מחודשת. שווי סגל Top-4 עולמי",
       note: "בית E נוח מאוד — הדרך לזכייה בבית סלולה. השאלה היא הנוק-אאוט"
     },
     CUR: {
@@ -865,7 +845,7 @@ const DATA = {
       stars: ["לאנדרו בקונה", "ג'ורדן פאיו", "טאהית' צ'ונג"],
       wc18: "לא העפילה", wc22: "לא העפילה",
       continental: "גביע הזהב: הופעות בודדות",
-      qual26: "ההיסטוריה הגדולה: המדינה הקטנה ביותר אי-פעם במונדיאל (~155 אלף תושבים). סגל הולנדי-קריבי שלם",
+      qual26: "ההיסטוריה הגדולה: המדינה הקטנה ביותר אי-פעם בטורניר (~155 אלף תושבים). סגל הולנדי-קריבי שלם",
       tenYear: "פרויקט של התאחדות חכמה: גיוס שחקנים הולנדים ממוצא קוראסאואי. אדבוקאט = ארגון הגנתי קפדני",
       note: "מול גרמניה והולנד-לשעבר שלה — סיפור אגדה. ריאלית: מקום אחרון, אך תמכור את עורה ביוקר"
     },
@@ -876,7 +856,7 @@ const DATA = {
       stars: ["סבסטיאן האלר", "פרנק קסיה", "אמאד דיאלו", "סימון אדינגרה"],
       wc18: "לא העפילה", wc22: "לא העפילה",
       continental: "אליפות אפריקה 2023 (בבית): זכייה אגדית אחרי כמעט-הדחה בבתים. רבע גמר 2025",
-      qual26: "זכתה בבית המוקדמות שלה בביטחון — מונדיאל ראשון מאז 2014",
+      qual26: "זכתה בבית המוקדמות שלה בביטחון — השתתפות ראשונה מאז 2014",
       tenYear: "מהדור של דרוגבה לדור חדש: אמאד בכושר חיים. נבחרת של מומנטום — מסוכנת כשחמה",
       note: "המועמדת הטבעית למקום 2 בבית E מול אקוודור — מאבק חזק"
     },
@@ -889,7 +869,7 @@ const DATA = {
       continental: "קופה אמריקה 2024: רבע גמר (פנדלים מול ארגנטינה)",
       qual26: "מקום 2 במוקדמות CONMEBOL (אחרי ארגנטינה!) למרות שהתחילה עם 3- נקודות עונש. ההגנה הטובה במוקדמות: 5 שערי חובה ב-18 משחקים",
       tenYear: "המהפכה השקטה של דרום אמריקה: דור צעיר (קאיסדו, פאצ'ו, הינקפיה) + הגנת ברזל",
-      note: "מדורגת FIFA 12 — מעל גרמניה כמעט. ערך אפשרי בשוק 'זוכת בית E' ו'מתחת 2.5' במשחקיה"
+      note: "מדורגת 12 בעולם — מעל גרמניה כמעט. מועמדת מעניינת לצמרת בית E ולמשחקים סגורים (מתחת 2.5)"
     },
 
     /* ===== בית F ===== */
@@ -968,7 +948,7 @@ const DATA = {
       stars: ["מהדי טארמי", "סרדאר אזמון", "אליראזה ג'הנבחש"],
       wc18: "שלב הבתים — 4 נק', כמעט עברה (0-1 מול ספרד, 1-1 פורטוגל)", wc22: "שלב הבתים — ניצחון על ויילס, הפסד דרמטי לארה\"ב",
       continental: "אליפות אסיה 2023: חצי גמר",
-      qual26: "העפילה בקלות — מהיציבות באסיה (6 מונדיאלים מ-7)",
+      qual26: "העפילה בקלות — מהיציבות באסיה (6 טורנירים מ-7)",
       tenYear: "תבנית עקבית: בלוק הגנתי מצוין, טארמי קליני, אף פעם לא עוברת שלב בתים (אך תמיד קרובה)",
       note: "הבית הנוח ביותר שהיה לה אי-פעם — הסיכוי הטוב בהיסטוריה לשמינית ראשונה"
     },
@@ -979,9 +959,9 @@ const DATA = {
       stars: ["כריס ווד", "ליברטו קקאצ'ה", "מרקו סטמניץ'"],
       wc18: "לא העפילה", wc22: "לא העפילה (הפסד פלייאוף לקוסטה ריקה)",
       continental: "אלופת אוקיאניה הקבועה",
-      qual26: "המקום הישיר הראשון של אוקיאניה בפורמט החדש — העפילה בקלות. מונדיאל ראשון מאז 2010",
+      qual26: "המקום הישיר הראשון של אוקיאניה בפורמט החדש — העפילה בקלות. השתתפות ראשונה מאז 2010",
       tenYear: "ווד (Top-10 כובשי הפרמייר ליג 2024/25) הוא ההבדל בין נבחרת חובבת לקבוצה מסוכנת בכדורים גבוהים",
-      note: "ב-2010 סיימה מונדיאל בלי הפסד (3 תיקו). אל תצחקו על X מולה"
+      note: "ב-2010 סיימה את הטורניר בלי הפסד (3 תיקו). אל תצחקו על X מולה"
     },
 
     /* ===== בית H ===== */
@@ -1003,7 +983,7 @@ const DATA = {
       stars: ["ריאן מנדס", "דיילון ליבראמנטו", "לוגאן קוסטה"],
       wc18: "לא העפילה", wc22: "לא העפילה",
       continental: "אליפות אפריקה: רבע גמר 2023 — הפתעת הטורניר",
-      qual26: "ההיסטוריה: זכתה בבית מוקדמות מעל קמרון — מונדיאל ראשון אי-פעם למדינת איים של ~520 אלף תושבים",
+      qual26: "ההיסטוריה: זכתה בבית מוקדמות מעל קמרון — השתתפות ראשונה אי-פעם בטורניר למדינת איים של ~520 אלף תושבים",
       tenYear: "הפלא האפריקאי הקטן: ארגון, רוח, וסולידריות של פזורה. בלי כוכב-על",
       note: "תפגוש את רונאלדו... רגע, לא — את ספרד. המטרה: לא 0-7. כל נקודה = נס"
     },
@@ -1049,7 +1029,7 @@ const DATA = {
       stars: ["איימן חוסיין", "עלי אל-חמאדי", "זידאן אקבל"],
       wc18: "לא העפילה", wc22: "לא העפילה",
       continental: "אליפות אסיה 2023: זכתה בבית מעל יפן! הודחה בשמינית בדרמה",
-      qual26: "עברה את הפלייאוף הבין-יבשתי (מרץ 2026) — מונדיאל ראשון מאז 1986",
+      qual26: "עברה את הפלייאוף הבין-יבשתי (מרץ 2026) — השתתפות ראשונה מאז 1986",
       tenYear: "כדורגל של רגש ולאומיות בוערת. ביתיות בבצרה הפכה למבצר במוקדמות",
       note: "40 שנה של ציפייה. מול צרפת ונורווגיה — רק שלא יכאב. מול סנגל אולי תילחם על כבוד"
     },
@@ -1061,7 +1041,7 @@ const DATA = {
       wc18: "לא העפילה", wc22: "לא העפילה",
       continental: "לא העפילה ליורו בעשור — הכישלון שהפך לדלק",
       qual26: "מוקדמות מושלמות: 8 מ-8, כולל 3-0 ו-4-1 על איטליה (!) ששלחו אותה לפלייאוף. הולאנד: 16 שערי מוקדמות",
-      tenYear: "מונדיאל ראשון מאז 1998. ההתקפה הכי רצחנית שהביאה נבחרת 'חדשה' אי-פעם: הולאנד+אודגור+סורלות'. הגנה — סימן השאלה",
+      tenYear: "השתתפות ראשונה מאז 1998. ההתקפה הכי רצחנית שהביאה נבחרת 'חדשה' אי-פעם: הולאנד+אודגור+סורלות'. הגנה — סימן השאלה",
       note: "אף אחד לא רוצה לפגוש אותה. מול צרפת במחזור 3 — קרב על ראשות הבית. Over 2.5 בכל משחקיה"
     },
     SEN: {
@@ -1081,12 +1061,12 @@ const DATA = {
       nameHe: "ארגנטינה", nameEn: "Argentina", flag: "🇦🇷", iso: "ar", confed: "CONMEBOL",
       elo: 2120, fifa: 1, host: false, tier: 1, attMod: 1.0, defMod: 0.92,
       coach: "ליונל סקאלוני",
-      stars: ["ליאו מסי (39 — המונדיאל האחרון)", "חוליאן אלברס", "לאוטרו מרטינס", "אנסו פרננדס", "אמיליאנו מרטינס"],
+      stars: ["ליאו מסי (39 — הטורניר האחרון)", "חוליאן אלברס", "לאוטרו מרטינס", "אנסו פרננדס", "אמיליאנו מרטינס"],
       wc18: "שמינית (הפסד לצרפת)", wc22: "זכייה 🏆 — הגמר הגדול בהיסטוריה",
       continental: "קופה אמריקה: זכייה 2021 + זכייה 2024. פינליסימה 2022: זכייה",
       qual26: "מקום 1 במוקדמות CONMEBOL בפער, כולל 4-1 על ברזיל",
       tenYear: "מ-3 גמרים אבודים לשושלת: 3 תארים גדולים רצופים. ההגנה הטובה בעולם (מאזן ספיגות מדהים), מסי במשורה — אלברס נושא",
-      note: "דירוג FIFA #1. מחזיקת התואר. השוק מתמחר אותה רק ב-9-10% (גיל מסי?) — פער מעניין מול ה-Elo שלה. בית J נוח"
+      note: "מדורגת #1 בעולם. מחזיקת התואר. ה-Elo הגבוה שלה הופך אותה למועמדת בולטת לתואר — בית J נוח"
     },
     ALG: {
       nameHe: "אלג'יריה", nameEn: "Algeria", flag: "🇩🇿", iso: "dz", confed: "CAF",
@@ -1097,7 +1077,7 @@ const DATA = {
       continental: "אליפות אפריקה: זכייה 2019 🏆, שתי הדחות-בתים משפילות 2021/2023, רבע גמר 2025",
       qual26: "מוקדמות חלקות — העפילה בנוחות. עמורה התפוצץ (מחזור שערים מטורף בבונדסליגה)",
       tenYear: "תנודתיות קיצונית: מאלופת אפריקה מושלמת (2019, בלי הפסד) לשפל. מחרז דועך, עמורה עולה",
-      note: "מונדיאל ראשון מאז 2014. מול אוסטריה — קרב אמיתי על מקום 2 בבית J"
+      note: "השתתפות ראשונה מאז 2014. מול אוסטריה — קרב אמיתי על מקום 2 בבית J"
     },
     AUT: {
       nameHe: "אוסטריה", nameEn: "Austria", flag: "🇦🇹", iso: "at", confed: "UEFA",
@@ -1106,9 +1086,9 @@ const DATA = {
       stars: ["דויד אלאבה (33)", "מרסל זאביצר", "כריסטוף באומגרטנר", "קונרד ליימר"],
       wc18: "לא העפילה", wc22: "לא העפילה",
       continental: "יורו 2024: זכתה בבית מעל צרפת והולנד (!) — הודחה בשמינית מטורקיה. הפתעת הטורניר",
-      qual26: "מקום 1 בבית המוקדמות — מונדיאל ראשון מאז 1998",
+      qual26: "מקום 1 בבית המוקדמות — השתתפות ראשונה מאז 1998",
       tenYear: "פרויקט רנגניק: פרסינג-על שיטתי, קולקטיב מעל כוכבים. בלי חוד עולמי — הפגם היחיד",
-      note: "28 שנה בלי מונדיאל ופתאום נבחרת שכולם מפחדים ממנה. X מול ארגנטינה? לא דמיוני"
+      note: "28 שנה בלי טורניר ופתאום נבחרת שכולם מפחדים ממנה. X מול ארגנטינה? לא דמיוני"
     },
     JOR: {
       nameHe: "ירדן", nameEn: "Jordan", flag: "🇯🇴", iso: "jo", confed: "AFC",
@@ -1117,7 +1097,7 @@ const DATA = {
       stars: ["מוסא אל-תעמרי", "יזן אל-נעימאת", "יזיד אבו ליילה"],
       wc18: "לא העפילה", wc22: "לא העפילה",
       continental: "אליפות אסיה 2023: גמר (!!) — הדיחה את קוריאה בדרך. ההישג הגדול בתולדותיה",
-      qual26: "העפילה ישירות — מונדיאל ראשון אי-פעם",
+      qual26: "העפילה ישירות — השתתפות ראשונה אי-פעם בטורניר",
       tenYear: "מאלמוניות לגמר אסיה תוך שנתיים. אל-תעמרי (מונפלייה) הוא הכוכב האמיתי היחיד — אבל איזה כוכב",
       note: "מול מסי בטורניר האחרון שלו — סיפור בפני עצמו. כל נקודה היסטורית"
     },
@@ -1152,7 +1132,7 @@ const DATA = {
       stars: ["יואן ויסה", "סדריק באקאמבו", "שאנסל מבמבה"],
       wc18: "לא העפילה", wc22: "לא העפילה",
       continental: "אליפות אפריקה 2023: חצי גמר (מקום 4)",
-      qual26: "עברה את הפלייאוף האפריקאי ואז את הבין-יבשתי (מרץ 2026) — מונדיאל ראשון מאז 1974 (אז זאיר)",
+      qual26: "עברה את הפלייאוף האפריקאי ואז את הבין-יבשתי (מרץ 2026) — השתתפות ראשונה בטורניר מאז 1974 (אז זאיר)",
       tenYear: "52 שנות געגוע. קבוצה פיזית עם פזורה אירופית רחבה, מסע פלייאוף מטורף דרך 5 משחקי חיים-ומוות",
       note: "מומנטום רגשי אדיר, פער איכות מול פורטוגל וקולומביה. היעד: המשחק מול אוזבקיסטן"
     },
@@ -1163,7 +1143,7 @@ const DATA = {
       stars: ["אבדוקודיר חוסאנוב (מנצ'סטר סיטי)", "אלדור שומורודוב", "אבוסחיד שוקורוב"],
       wc18: "לא העפילה", wc22: "לא העפילה",
       continental: "אליפות אסיה 2023: רבע גמר. אליפות אסיה עד 23: זכייה 2018",
-      qual26: "העפילה ישירות — מונדיאל ראשון אי-פעם, פרי פרויקט נוער של עשור",
+      qual26: "העפילה ישירות — השתתפות ראשונה אי-פעם בטורניר, פרי פרויקט נוער של עשור",
       tenYear: "המעצמה הבאה של מרכז אסיה: דור שלם שגדל יחד (אלופת אסיה צעירה), חוסאנוב פרץ לעלית העולמית",
       note: "קנאווארו על הקווים, הגנה מצוינת — מול קונגו זה 'גמר' אמיתי על מקום 3 ואולי יותר"
     },
@@ -1188,7 +1168,7 @@ const DATA = {
       wc18: "גמר! (הפסד לצרפת)", wc22: "מקום 3",
       continental: "ליגת האומות: גמר 2023 (פנדלים מול ספרד). יורו 2024: שלב הבתים (דקה 90+5 מול איטליה)",
       qual26: "העפילה בביטחון — מודריץ' עדיין מנגן את הקצב בן 40",
-      tenYear: "נס מתמשך: 4 מיליון תושבים, גמר + מקום 3 בשני מונדיאלים רצופים. מלכת ההארכות והפנדלים. הדור מזדקן בו-זמנית",
+      tenYear: "נס מתמשך: 4 מיליון תושבים, גמר + מקום 3 בשני טורנירים רצופים. מלכת ההארכות והפנדלים. הדור מזדקן בו-זמנית",
       note: "הניסיון הטורנירי הגדול בעולם. מול אנגליה במחזור הפותח (כנראה) — המשחק הכבד של שלב הבתים"
     },
     GHA: {
@@ -1198,7 +1178,7 @@ const DATA = {
       stars: ["מוחמד קודוס", "תומאס פארטיי", "אנטואן סמניו", "אינאקי וויליאמס"],
       wc18: "לא העפילה", wc22: "שלב הבתים (נקמת אורוגוואי וסוארס)",
       continental: "אליפות אפריקה: גמר 2015, הדחות-בתים מביכות 2021/2023, לא העפילה 2025 (!)",
-      qual26: "דווקא במוקדמות המונדיאל — חלקה והעפילה בביטחון",
+      qual26: "דווקא במוקדמות לטורניר — חלקה והעפילה בביטחון",
       tenYear: "הפרדוקס הגאנאי: כישרון פרטני עצום (קודוס!), כאוס מערכתי. הנבחרת הכי לא-צפויה באפריקה",
       note: "יכולה להפתיע את קרואטיה ויכולה להפסיד לפנמה — באותו שבוע. תמחור עצמי קשה"
     },
@@ -1207,7 +1187,7 @@ const DATA = {
       elo: 1670, fifa: 33, host: false, tier: 4, attMod: 0.96, defMod: 0.97,
       coach: "תומאס כריסטיאנסן",
       stars: ["אדלברטו קראסקייה", "חוסה פאחארדו", "סזר בלקבורן"],
-      wc18: "שלב הבתים — המונדיאל הראשון בתולדותיה", wc22: "לא העפילה",
+      wc18: "שלב הבתים — הטורניר הראשון בתולדותיה", wc22: "לא העפילה",
       continental: "גביע הזהב: גמר 2023! חצי גמר קבוע. ליגת האומות CONCACAF: מקום 3 2024",
       qual26: "זכתה בבית המוקדמות שלה מעל קוסטה ריקה — העפלה שנייה בתולדותיה",
       tenYear: "הכוח העולה השקט של CONCACAF: קולקטיב מצוין, בלי כוכבים, מנצחת את מי שצריך. ב-2018 הייתה תיירת — ב-2026 היא קבוצה",
@@ -1228,11 +1208,10 @@ if (typeof module !== "undefined") module.exports = DATA;
    ============================================================ */
 
 const MODEL = (() => {
-  const BASE_GOALS = 1.32;   // ממוצע שערים לקבוצה במשחק מונדיאל
+  const BASE_GOALS = 1.32;   // ממוצע שערים לקבוצה במשחק בטורניר
   const ELO_GOAL_SCALE = 1100; // מכויל: פער 300 Elo → ~73% לפייבוריט ב-1X2
   const DC_RHO = 0.10;       // ניפוח תיקו נמוך בסגנון Dixon-Coles
   const MAX_GOALS = 8;
-  const EDGE_MARGIN = 1.07;  // מרווח ביטחון ליחס מינימלי כדאי
 
   function poissonPmf(lambda, max) {
     const p = [Math.exp(-lambda)];
@@ -1245,7 +1224,7 @@ const MODEL = (() => {
      התוצאה מול הציפייה (בשיטת eloratings.net). הדירוג המעודכן
      מזין מכאן והלאה את כל התחזיות — בתים, נוק-אאוט, ביטחון ותצוגה.
      שמרני בכוונה (K נמוך) כי מדגם המשחקים עדיין קטן.            */
-  const LEARN_K = 20;          // פקטור עדכון שמרני (סטנדרט מונדיאל ~40)
+  const LEARN_K = 20;          // פקטור עדכון שמרני (סטנדרט טורניר ~40)
   const LEARN_HOME_ADJ = 60;   // יתרון מארחת/ביתיות לצורך הציפייה בלבד
   // למידת התקפה/הגנה נפרדת (סגנון Dixon-Coles): כמה שערים נבחרת מבקיעה/סופגת
   // יחסית לציפייה מ-Elo, עם החלקה בייסיאנית סביב 1.0 ודעיכת זמן.
@@ -1576,13 +1555,8 @@ const MODEL = (() => {
     };
   }
 
-  const fairOdds = (p) => p > 0 ? 1 / p : Infinity;
-  const minWorthOdds = (p) => p > 0 ? EDGE_MARGIN / p : Infinity;
-  // Edge מול יחס ווינר אמיתי: חיובי = הימור ערך
-  const edge = (p, odds) => p * odds - 1;
-
   /* ============================================================
-     שווקים מורחבים (ווינר): יתרון, טווחי שערים, מחציות, מבקיעה ראשונה
+     שווקים מורחבים: יתרון, טווחי שערים, מחציות, מבקיעה ראשונה
      ============================================================ */
 
   // מטריצת פואסון גנרית (ללא תיקון DC — משמשת למחציות)
@@ -1651,7 +1625,7 @@ const MODEL = (() => {
     return {
       hcapA_minus1: handicap(-1),  // הקבוצה הראשונה פותחת ב-0:1
       hcapA_plus1: handicap(1),    // הקבוצה הראשונה פותחת ב-1:0
-      hcapA_minus2: handicap(-2),  // הקבוצה הראשונה פותחת ב-0:2 (קו ה-+2 של ווינר)
+      hcapA_minus2: handicap(-2),  // הקבוצה הראשונה פותחת ב-0:2
       hcapA_plus2: handicap(2),    // הקבוצה הראשונה פותחת ב-2:0
       range01: r01, range23: r23, range4plus: r4p,
       odd, even: 1 - odd,
@@ -1758,7 +1732,7 @@ const MODEL = (() => {
     return out;
   }
 
-  /* ---------- נוק-אאוט מקורב → P(זוכת המונדיאל) ----------
+  /* ---------- נוק-אאוט מקורב → P(זוכת הטורניר) ----------
      הגרלה אקראית תחת אילוץ אי-מפגש בני אותו בית בסיבוב ה-32.
      תיקו ב-90 ד' מוכרע בהסתברות מוטת-Elo (הארכה/פנדלים).      */
   function koWinProb(idA, idB) {
@@ -2011,12 +1985,11 @@ const MODEL = (() => {
   }
 
   return {
-    lambdas, scoreMatrix, markets, extendedMarkets, fairOdds, minWorthOdds, edge,
+    lambdas, scoreMatrix, markets, extendedMarkets,
     simulateGroups, simulateChampion, groupFixtures, confidence, effElo,
     koAdvanceProb, koPropagate, koWinProb, gradeMarket,
     learnedElo, learnedEloAsOf, resetLearned, resultDate, h1ShareOf,
-    strengthOf, teamGamesPlayed,
-    EDGE_MARGIN
+    strengthOf, teamGamesPlayed
   };
 })();
 
@@ -2187,7 +2160,7 @@ const PROFILE = (() => {
       facts.push(`🔥🛡️ קרב סגנונות: ההתקפה של ${strongAtt.nameHe} (${strongAtt.attack}/10) מול ההגנה של ${strongDef.nameHe} (${strongDef.defense}/10).`);
     else if (strongAtt.attack >= 7.5 && strongAtt.defense >= 7)
       facts.push(`💪 ${strongAtt.nameHe} מובילה גם בהתקפה (${strongAtt.attack}/10) וגם בהגנה (${strongAtt.defense}/10).`);
-    // 4) וו היסטורי — אם לאחת יש הישג מונדיאל בולט
+    // 4) וו היסטורי — אם לאחת יש הישג טורניר בולט
     for (const c of [ca, cb]) {
       const p = c.pedigree;
       if (p.wc22 && /גמר|מקום [34]|חצי/.test(p.wc22)) { facts.push(`🏅 ${c.nameHe} ב-2022: ${p.wc22.split("—")[0].split("(")[0].trim()}.`); break; }
@@ -2238,7 +2211,6 @@ const STORE = (() => {
 
 let SIM = null;   // תוצאות סימולציית בתים
 let KO = null;    // תוצאות סימולציית אלוף
-let ODDS = JSON.parse(STORE.getItem("fw_odds") || "{}");
 // סוגריים הנוק-אאוט — ממולאים בממשק בסוף שלב הבתים (27.6)
 let BRACKET = JSON.parse(STORE.getItem("fw_bracket") || "null")
   || { r32: Array.from({ length: 16 }, () => [null, null]), winners: {} };
@@ -2268,7 +2240,6 @@ const fmtDate = (iso) => {
   return p.length === 3 ? `${+p[2]}.${+p[1]}.${p[0]}` : "";
 };
 
-function saveOdds() { STORE.setItem("fw_odds", JSON.stringify(ODDS)); }
 function saveBracket() { STORE.setItem("fw_bracket", JSON.stringify(BRACKET)); }
 
 function playedSet() {
@@ -2492,7 +2463,7 @@ function generateRecs() {
           why: `הסיכוי הגבוה ביותר — פער ${Math.abs(gap)} נק' Elo לטובת ${T(b).nameHe}` },
       ];
       const best = outcomes.sort((x, y) => y.p - x.p)[0];
-      // תקרה 0.85: מעליה היחס ההוגן < ~1.18 — עמלת הווינר הופכת זאת להימור גרוע תמיד.
+      // תקרה 0.85: מעליה ההסתברות גבוהה מדי מכדי להיחשב להמלצה מעניינת.
       // רף תחתון 0.40: התוצאה הסבירה ביותר חייבת להיות מספיק בולטת כדי להמליץ עליה.
       if (best.p >= 0.40 && best.p <= 0.85)
         recs.push({ ...base, market: "1X2", pick: best.lbl, p: best.p,
@@ -2549,19 +2520,12 @@ function generateRecs() {
   const champs = Object.keys(DATA.teams).map(id => [id, KO[id].pChampion])
     .sort((x, y) => y[1] - x[1]).slice(0, 3);
   for (const [id, p] of champs) {
-    const mkt = DATA.meta.marketChampion[id];
-    recs.push({ group: "🏆", match: "זוכת המונדיאל", market: "אלופה", pick: tn(id), p,
+    recs.push({ group: "🏆", match: "זוכת הטורניר", market: "אלופה", pick: tn(id), p,
       conf: 2, key: `CHAMP:${id}`,
-      why: mkt ? `המודל: ${pct1(p)} · השוק העולמי: ${pct1(mkt)}` : `המודל: ${pct1(p)}` });
+      why: `הערכת המודל: ${pct1(p)}` });
   }
 
-  for (const r of recs) {
-    r.fair = MODEL.fairOdds(r.p);
-    r.minOdds = MODEL.minWorthOdds(r.p);
-    const userOdds = ODDS[r.key];
-    if (userOdds) r.edge = MODEL.edge(r.p, userOdds);
-  }
-  recs.sort((x, y) => (y.edge ?? -9) - (x.edge ?? -9) || y.conf - x.conf || y.p - x.p);
+  recs.sort((x, y) => y.conf - x.conf || y.p - x.p);
   return recs;
 }
 
@@ -2578,24 +2542,12 @@ function odds1x2Html(o, key) {
 }
 
 function recHtml(r) {
-  const isVal = r.edge !== undefined && r.edge > 0;
-  const edgeHtml = r.edge !== undefined
-    ? (isVal
-      ? `<span class="pill value-flag">VALUE +${(r.edge * 100).toFixed(1)}%</span>`
-      : `<span class="pill">Edge ${(r.edge * 100).toFixed(1)}%</span>`)
-    : "";
-  return `<div class="rec${isVal ? " is-value" : ""}">
+  return `<div class="rec">
     <div class="badge"><b>${pct(r.p)}</b>${r.market}</div>
     <div class="what">
-      <b>${r.pick}</b> <span class="pill">${r.match}</span> ${edgeHtml}
+      <b>${r.pick}</b> <span class="pill">${r.match}</span>
       <div class="why">${r.why} · ביטחון: <span class="stars">${stars(r.conf)}</span></div>
       ${odds1x2Html(r.odds1x2, r.key)}
-    </div>
-    <div class="nums">
-      יחס הוגן: <b class="fair">${odds(r.fair)}</b><br>
-      כדאי מ-: <b>${odds(r.minOdds)}</b><br>
-      יחס ווינר: <input type="number" step="0.01" min="1" data-oddskey="${r.key}"
-        value="${ODDS[r.key] || ""}" placeholder="הזן">
     </div>
   </div>`;
 }
@@ -2684,19 +2636,17 @@ function viewRecs() {
     ? `<h2 style="margin:18px 0 10px">${title}</h2>${fxs.map(dayMatchCard).join("")}` : "";
 
   const recs = generateRecs();
-  const valueRecs = recs.filter(r => r.edge !== undefined && r.edge > 0);
   // נבחרות כלליות: מגוונות, בלי משחקי היום/מחר (כבר מוצגים למעלה)
   const shown = new Set([...todayFx, ...tomFx].map(f => `${f.h}-${f.a}`));
   const top = [], seen = new Set();
   for (const r of recs) {
-    if (valueRecs.includes(r)) continue;
     if (r.key && [...shown].some(s => r.key.startsWith(s + ":"))) continue;
     if (seen.has(r.group)) continue;
     seen.add(r.group);
     top.push(r);
     if (top.length === 5) break;
   }
-  const rest = recs.filter(r => !valueRecs.includes(r) && !top.includes(r));
+  const rest = recs.filter(r => !top.includes(r));
   const tr = trackRecord();
   const successPct = tr.total ? Math.round(tr.hit / tr.total * 100) : 0;
   const trBanner = tr.total
@@ -2712,12 +2662,11 @@ function viewRecs() {
   return `
   ${trBanner}
   ${scoreboardHtml()}
-  ${valueRecs.length ? `<div class="card value-band"><h3><span class="pulse-dot"></span>הימורי ערך מאומתים <span class="note" style="display:inline;font-weight:400">לפי היחסים שהזנת</span></h3>${valueRecs.map(recHtml).join("")}</div>` : ""}
   ${daySection("⚽ משחקי היום — " + hebDate(today), todayFx)}
   ${daySection("📅 משחקי מחר — " + hebDate(tomorrow), tomFx)}
   ${todayFx.length || tomFx.length ? "" : `<div class="card"><p class="note">אין משחקים היום או מחר בלוח.</p></div>`}
   <h2 style="margin:22px 0 10px">🎯 הזדמנויות נוספות מכל הטורניר</h2>
-  <p class="note">"כדאי מ-" = היחס המינימלי בווינר שממנו יש ערך. גבוה ממנו — מהמרים; נמוך — מוותרים. הזנת יחס מחשבת Edge ומסמנת <span class="pill value-flag">VALUE</span>.</p>
+  <p class="note">ההמלצות מדורגות לפי רמת הביטחון של המודל וההסתברות שהוא מעניק — מהחזקות לפחות.</p>
   ${top.map(recHtml).join("")}
   <details style="margin-top:16px">
     <summary style="cursor:pointer;color:var(--gold);font-weight:700;padding:10px">📋 עוד ${rest.length} המלצות (כל הבתים, העפלות, אלופה...)</summary>
@@ -2755,15 +2704,6 @@ function viewMatches() {
   ${detail}`;
 }
 
-function oddsInputCell(key) {
-  return `<td><input type="number" step="0.01" min="1" data-oddskey="${key}" value="${ODDS[key] || ""}" placeholder="—"></td>`;
-}
-function edgeCell(p, key) {
-  const o = ODDS[key];
-  if (!o) return "<td>—</td>";
-  const e = MODEL.edge(p, o);
-  return `<td class="${e > 0 ? "edge-pos" : "edge-neg"}">${e > 0 ? "+" : ""}${(e * 100).toFixed(1)}%</td>`;
-}
 // סימון ✓/✗ קטן לתא שם-שוק בטבלה (אם המשחק הסתיים והשוק ניתן לשיפוט)
 function verdictMark(key) {
   const g = gradeKey(key);
@@ -2793,7 +2733,7 @@ function buildMatchCandidates(a, b, ko) {
     { label: `ניצחון ${bn} (2)`, p: m.p2, key: k("2"), family: "result", why: "תוצאת 90 דקות" },
     { label: "תיקו (X)", p: m.px, key: k("X"), family: "result", why: "תוצאת 90 דקות" },
     { label: `${an} בהפרש 2+ שערים (הנדיקאפ: יתרון 0:1 ל${bn})`, p: ex.hcapA_minus1.p1, key: k("H-1:1"), family: "result", why: `הנדיקאפ +1: ${an} מנצחת גם אחרי שמזכים את ${bn} בשער — ניצחון בהפרש 2+` },
-    { label: `${an} בהפרש 3+ שערים (הנדיקאפ ווינר: יתרון 0:2 ל${bn})`, p: ex.hcapA_minus2.p1, key: k("H-2:1"), family: "result", why: `קו ה-+2 של ווינר: ${an} מנצחת גם אחרי שמזכים את ${bn} בשני שערים — ניצחון בהפרש 3+` },
+    { label: `${an} בהפרש 3+ שערים (הנדיקאפ: יתרון 0:2 ל${bn})`, p: ex.hcapA_minus2.p1, key: k("H-2:1"), family: "result", why: `${an} מנצחת גם אחרי שמזכים את ${bn} בשני שערים — ניצחון בהפרש 3+` },
     { label: `${an} מנצחת ביותר משער`, p: ex.winBy2A, key: k("WB2A"), family: "result", why: "ניצחון בהפרש 2+ שערים" },
     { label: `${bn} מנצחת ביותר משער`, p: ex.winBy2B, key: k("WB2B"), family: "result", why: "ניצחון בהפרש 2+ שערים" },
     { label: "מעל 2.5 שערים", p: m.over25, key: k("O25"), family: "goals", why: "תוחלת שערים גבוהה במשחק" },
@@ -2801,7 +2741,7 @@ function buildMatchCandidates(a, b, ko) {
     { label: "מעל 1.5 שערים", p: m.over15, key: k("O15"), family: "goals", why: "לפחות שני שערים במשחק" },
     { label: "שתי הקבוצות מבקיעות", p: m.btts, key: k("BTTS"), family: "goals", why: "שתי התקפות מתפקדות מול הגנות פגיעות" },
     { label: "לא — שתיהן מבקיעות", p: m.noBtts, key: k("NBTTS"), family: "goals", why: "לפחות צד אחד צפוי לשמור על רשת נקייה" },
-    { label: "סה\"כ שערים: 2–3", p: ex.range23, key: k("R23"), family: "goals", why: "הטווח השכיח ביותר במונדיאל" },
+    { label: "סה\"כ שערים: 2–3", p: ex.range23, key: k("R23"), family: "goals", why: "הטווח השכיח ביותר בטורניר" },
     { label: `מבקיעה ראשונה: ${an}`, p: ex.firstGoalA, key: k("FG1"), family: "halves", why: "מרוץ לשער הראשון לפי תוחלות ההבקעה" },
     { label: `מבקיעה ראשונה: ${bn}`, p: ex.firstGoalB, key: k("FG2"), family: "halves", why: "מרוץ לשער הראשון לפי תוחלות ההבקעה" },
     { label: `מחצית ראשונה: ${an} (1)`, p: ex.ht1, key: k("HT1"), family: "halves", why: "יתרון כבר במחצית" },
@@ -2970,23 +2910,15 @@ function likelyScoresHtml(a, b, asOf) {
 
 function pickCard(x, idx) {
   const medals = ["🥇", "🥈", "🥉"];
-  const userOdds = ODDS[x.key];
-  const edgeHtml = userOdds
-    ? (MODEL.edge(x.p, userOdds) > 0
-      ? `<span class="pill value-flag">VALUE +${(MODEL.edge(x.p, userOdds) * 100).toFixed(1)}%</span>`
-      : `<span class="pill">Edge ${(MODEL.edge(x.p, userOdds) * 100).toFixed(1)}%</span>`)
-    : "";
   const verdict = gradeKey(x.key);            // ✓/✗ אם המשחק הסתיים והשוק ניתן לשיפוט
   const cls = verdict === true ? " ok" : verdict === false ? " bad" : "";
   return `<div class="pick-card${cls}">
-    <div class="odds-box"><b>${odds(MODEL.fairOdds(x.p))}</b><span>יחס הוגן</span></div>
+    <div class="odds-box"><b>${pct1(x.p)}</b><span>סבירות</span></div>
     <div class="pick-body">
-      <div class="pick-title">${medals[idx]} ${x.label} ${verdictBadge(verdict)} ${edgeHtml}</div>
-      <div class="why">${x.why} · הסתברות: <b>${pct1(x.p)}</b> · ביטחון: <span class="stars">${stars(x.conf)}</span></div>
+      <div class="pick-title">${medals[idx]} ${x.label} ${verdictBadge(verdict)}</div>
+      <div class="why">${x.why} · ביטחון: <span class="stars">${stars(x.conf)}</span></div>
       <div class="bar" style="margin-top:6px"><i style="width:${(x.p * 100).toFixed(0)}%"></i></div>
     </div>
-    <div class="nums">כדאי מ-: <b>${odds(MODEL.minWorthOdds(x.p))}</b><br>
-      יחס ווינר: <input type="number" step="0.01" min="1" data-oddskey="${x.key}" value="${userOdds || ""}" placeholder="הזן"></div>
   </div>`;
 }
 
@@ -3016,7 +2948,7 @@ function matchDetail(a, b, ko = false) {
     [`🥊 ${T(b).nameHe} מעפילה (כולל הארכה/פנדלים)`, 1 - advA, k("ADV2")]
   );
 
-  // שווקים מורחבים של ווינר
+  // שווקים מורחבים
   const ex = MODEL.extendedMarkets(T(a), T(b), asOf);
   const htftOrder = Object.entries(ex.htft).sort((x, y) => y[1] - x[1]).slice(0, 5);
   const exRows = [
@@ -3072,27 +3004,20 @@ function matchDetail(a, b, ko = false) {
     <p class="note">Elo: ${T(a).nameHe} ${MODEL.effElo(T(a), asOf)}${T(a).host ? " (כולל ביתיות)" : ""} מול ${T(b).nameHe} ${MODEL.effElo(T(b), asOf)}${T(b).host ? " (כולל ביתיות)" : ""}
        · תוחלת שערים: ${lA.toFixed(2)} — ${lB.toFixed(2)}</p>
     <table class="market-table">
-      <tr><th>שוק</th><th>P מודל</th><th>יחס הוגן</th><th>כדאי מ-</th><th>יחס ווינר</th><th>Edge</th></tr>
+      <tr><th>שוק</th><th>הסתברות המודל</th></tr>
       ${rows.map(([lbl, p, key]) => `<tr>
         <td class="lbl">${verdictMark(key)}${lbl}</td><td>${pct1(p)}</td>
-        <td class="fair">${odds(MODEL.fairOdds(p))}</td>
-        <td>${odds(MODEL.minWorthOdds(p))}</td>
-        ${oddsInputCell(key)}${edgeCell(p, key)}
       </tr>`).join("")}
     </table>
     <details style="margin-top:14px">
       <summary style="cursor:pointer;color:var(--gold);font-weight:700">➕ שווקים מורחבים (יתרון, מחציות, מבקיעה ראשונה, תוצאה מדויקת...)</summary>
       <table class="market-table" style="margin-top:10px">
-        <tr><th>שוק</th><th>P מודל</th><th>יחס הוגן</th><th>כדאי מ-</th><th>יחס ווינר</th><th>Edge</th></tr>
+        <tr><th>שוק</th><th>הסתברות המודל</th></tr>
         ${exRows.map(([lbl, p, key]) => `<tr>
           <td class="lbl">${verdictMark(key)}${lbl}</td><td>${pct1(p)}</td>
-          <td class="fair">${odds(MODEL.fairOdds(p))}</td>
-          <td>${odds(MODEL.minWorthOdds(p))}</td>
-          ${oddsInputCell(key)}${edgeCell(p, key)}
         </tr>`).join("")}
       </table>
-      <p class="note">שווקי המחציות מחושבים בהנחת חלוקת 45%/55% של תוחלת השערים בין המחציות (ממוצע היסטורי).
-      ⚠️ ביחסים גבוהים (תוצאה מדויקת, מחצית/סיום) עמלת הווינר גבוהה במיוחד — דרשו פער גדול מ"כדאי מ-".</p>
+      <p class="note">שווקי המחציות מחושבים בהנחת חלוקת 45%/55% של תוחלת השערים בין המחציות (ממוצע היסטורי).</p>
     </details>
     </details>
   </div>`;
@@ -3151,40 +3076,30 @@ function viewFutures() {
     .sort((x, y) => y.p - x.p).slice(0, 16);
   return `
   <div class="card">
-    <h3>🏆 זוכת המונדיאל — מודל מול שוק עולמי</h3>
+    <h3>🏆 זוכת הטורניר — תחזית המודל</h3>
     <table class="market-table">
-      <tr><th>נבחרת</th><th>אלופה</th><th>גמר</th><th>חצי גמר</th><th>יחס הוגן</th><th>כדאי מ-</th><th>שוק עולמי</th><th>יחס ווינר</th><th>Edge</th></tr>
+      <tr><th>נבחרת</th><th>אלופה</th><th>גמר</th><th>חצי גמר</th></tr>
       ${champRows.map(r => {
-        const mkt = DATA.meta.marketChampion[r.id];
-        const key = `CHAMP:${r.id}`;
         return `<tr>
           <td class="lbl">${tn(r.id)}</td>
           <td><b>${pct1(r.p)}</b></td><td>${pct1(r.f)}</td><td>${pct1(r.s)}</td>
-          <td class="fair">${odds(MODEL.fairOdds(r.p))}</td>
-          <td>${odds(MODEL.minWorthOdds(r.p))}</td>
-          <td>${mkt ? pct1(mkt) : "—"}</td>
-          ${oddsInputCell(key)}${edgeCell(r.p, key)}
         </tr>`;
       }).join("")}
     </table>
-    <p class="note">סימולציית הנוק-אאוט מקורבת (הגרלת מסלולים אקראית תחת אילוצים) — ראו docs/methodology.md.
-    פערים בין המודל לשוק: המודל מאמין בארגנטינה (Elo גבוה) יותר מהשוק; השוק מאמין בצרפת ובברזיל יותר מהמודל.</p>
+    <p class="note">סימולציית הנוק-אאוט מקורבת (הגרלת מסלולים אקראית תחת אילוצים) — ראו docs/methodology.md.</p>
   </div>
   <div class="card">
     <h3>📈 העפלה משלב הבתים — הבטוחות והמסוכנות</h3>
     <table class="market-table">
-      <tr><th>נבחרת</th><th>בית</th><th>העפלה</th><th>יחס הוגן</th><th>כדאי מ-</th><th>יחס ווינר</th><th>Edge</th></tr>
+      <tr><th>נבחרת</th><th>בית</th><th>העפלה</th></tr>
       ${ids.map(id => ({ id, p: SIM[id].pAdvance })).sort((x, y) => y.p - x.p)
         .filter(r => r.p >= 0.45 && r.p <= 0.97)
         .map(r => `<tr>
           <td class="lbl">${tn(r.id)}</td><td>${T(r.id).group || groupOfTeam(r.id)}</td>
           <td><b>${pct1(r.p)}</b></td>
-          <td class="fair">${odds(MODEL.fairOdds(r.p))}</td>
-          <td>${odds(MODEL.minWorthOdds(r.p))}</td>
-          ${oddsInputCell("ADV:" + r.id)}${edgeCell(r.p, "ADV:" + r.id)}
         </tr>`).join("")}
     </table>
-    <p class="note">מוצגות רק נבחרות בטווח 45%–97% — מתחת/מעל לזה היחסים בווינר בדרך כלל לא מעניינים.</p>
+    <p class="note">מוצגות רק נבחרות בטווח 45%–97% — סביב הגבול הזה ההכרעה הכי צמודה.</p>
   </div>`;
 }
 
@@ -3270,14 +3185,11 @@ function viewKO() {
     propagation = `<div class="card">
       <h3>📐 חישוב מסלול מדויק (מחליף את הסימולציה המקורבת)</h3>
       <table class="market-table">
-        <tr><th>נבחרת</th><th>שמינית</th><th>רבע</th><th>חצי</th><th>גמר</th><th>אלופה</th><th>יחס הוגן (אלופה)</th><th>כדאי מ-</th><th>יחס ווינר</th><th>Edge</th></tr>
+        <tr><th>נבחרת</th><th>שמינית</th><th>רבע</th><th>חצי</th><th>גמר</th><th>אלופה</th></tr>
         ${rows.map(r => `<tr>
           <td class="lbl">${tn(r.id)}</td>
           <td>${pct1(r.pR16)}</td><td>${pct1(r.pQF)}</td><td>${pct1(r.pSF)}</td><td>${pct1(r.pF)}</td>
           <td><b>${pct1(r.pChampion)}</b></td>
-          <td class="fair">${odds(MODEL.fairOdds(r.pChampion))}</td>
-          <td>${odds(MODEL.minWorthOdds(r.pChampion))}</td>
-          ${oddsInputCell("KOCHAMP:" + r.id)}${edgeCell(r.pChampion, "KOCHAMP:" + r.id)}
         </tr>`).join("")}
       </table>
       <p class="note">מנצחות שסומנו "בפועל" מקובעות (הסתברות 1) והחישוב מתעדכן בהתאם. שוק "מי יעפיל" של כל משחק — בכפתור ניתוח.</p>
@@ -3288,12 +3200,12 @@ function viewKO() {
   <div class="card">
     <h3>🥊 שלב הנוק-אאוט — עדכון בסוף שלב הבתים</h3>
     <p class="note">
-      המסלולים הרשמיים ננעלים ב-<b>27.6.2026</b> בסוף שלב הבתים (שיבוץ השלישיות תלוי ב-495 תרחישי FIFA — אי אפשר לדעת מראש).
+      המסלולים הרשמיים ננעלים ב-<b>27.6.2026</b> בסוף שלב הבתים (שיבוץ השלישיות תלוי ב-495 תרחישים אפשריים — אי אפשר לדעת מראש).
       ברגע שהלוח יתפרסם: מלאו כאן את 16 מפגשי שלב ה-32 <b>לפי סדר הסוגריים הרשמי</b>
       (מנצחות משחקים 1–2 נפגשות בשמינית הגמר הראשונה, 3–4 בשנייה וכן הלאה).
       הנתונים נשמרים בדפדפן. סטטוס: <b>${filled}/16</b> ${dupes ? '<span class="pill" style="color:var(--red)">⚠️ נבחרת מופיעה פעמיים!</span>' : ""}
     </p>
-    <p class="note">💡 <b>חשוב לווינר:</b> בנוק-אאוט שוק 1X2 נסגר ב-90 דקות (תיקו = X משלם!), ושוק "מי יעפיל" כולל הארכה ופנדלים — המערכת מציגה את שניהם.</p>
+    <p class="note">💡 <b>שימו לב:</b> בנוק-אאוט שוק 1X2 נסגר ב-90 דקות (תיקו = X), ושוק "מי יעפיל" כולל הארכה ופנדלים — המערכת מציגה את שניהם.</p>
   </div>
   ${propagation}
   ${rounds.map(([name, matches], idx) => `<div class="card">
@@ -3354,12 +3266,6 @@ function bindEvents() {
       if (d) d.scrollIntoView({ behavior: "smooth" });
     }));
 
-  document.querySelectorAll("input[data-oddskey]").forEach(inp =>
-    inp.addEventListener("change", () => {
-      const v = parseFloat(inp.value);
-      if (v > 1) ODDS[inp.dataset.oddskey] = v; else delete ODDS[inp.dataset.oddskey];
-      saveOdds(); render();
-    }));
 }
 
 function showTeam(id) {
@@ -3368,11 +3274,11 @@ function showTeam(id) {
     <div class="modal">
       <button class="close" id="modal-close">✕</button>
       <h2>${flag(id)} ${t.nameHe} <span class="pill">${t.nameEn}</span></h2>
-      <p class="note">בית ${groupOfTeam(id)} · ${t.confed} · דירוג FIFA: ${t.fifa} · Elo מודל: ${t.elo}${t.host ? " (+50 ביתיות)" : ""} · מאמן: ${t.coach}</p>
+      <p class="note">בית ${groupOfTeam(id)} · ${t.confed} · דירוג עולמי: ${t.fifa} · Elo מודל: ${t.elo}${t.host ? " (+50 ביתיות)" : ""} · מאמן: ${t.coach}</p>
       <dl>
         <dt>סימולציה</dt><dd>זוכת בית: ${pct1(SIM[id].pWinGroup)} · העפלה: ${pct1(SIM[id].pAdvance)} · אלופה: ${pct1(KO[id].pChampion)}</dd>
-        <dt>מונדיאל 2018</dt><dd>${t.wc18}</dd>
-        <dt>מונדיאל 2022</dt><dd>${t.wc22}</dd>
+        <dt>אליפות 2018</dt><dd>${t.wc18}</dd>
+        <dt>אליפות 2022</dt><dd>${t.wc22}</dd>
         <dt>אליפויות יבשתיות (10 שנים)</dt><dd>${t.continental}</dd>
         <dt>מוקדמות 2026</dt><dd>${t.qual26}</dd>
         <dt>תמונת עשור</dt><dd>${t.tenYear}</dd>
