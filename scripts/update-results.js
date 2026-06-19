@@ -233,14 +233,19 @@ async function tsdbFirstScorer(idH, idA, dateISO) {
 
   console.log(`סיכום: נוספו ${added}, הושלמו ${enriched}, לא-זוהו ${skippedUnmatched}, מחוץ-ללוח ${skippedNoFixture}.`);
 
-  // המשיכה הצליחה — תמיד מעדכנים את תאריך "הנתונים נכונים ל-" לזמן הבדיקה,
-  // גם כשאין תוצאות חדשות, כדי שהפוטר ישקף את הבדיקה האחרונה ולא רק תוצאה אחרונה.
+  // אין תוצאה חדשה ולא הושלם נתון-על → אין מה לכתוב.
+  // יוצאים מיד בלי לגעת בקובץ, כדי שלא ייווצר קומיט מיותר (כל קומיט = build ב-Netlify).
+  // התאריך בפוטר מתרענן רק כשבאמת נדחפת תוצאה — ריצות "ריקות" שקופות לחלוטין.
+  if (!added && !enriched) {
+    console.log("אין תוצאות חדשות — אין שינוי (לא נדחף קומיט, נחסך build ב-Netlify).");
+    return;
+  }
+
   const today = new Date().toLocaleDateString("en-CA");
   const file = path.join(root, "js/data.js");
   let src = fs.readFileSync(file, "utf8");
-  const prevUpdated = (src.match(/updated:\s*"([^"]*)"/) || [])[1] || null;
 
-  if (added || enriched) {
+  {
     // סדר התוצאות לפי הופעתן בלוח (יציב), ושכתוב הבלוק בין הסמנים
     const order = new Map(DATA.schedule.map((x, i) => [x.h + "|" + x.a, i]));
     DATA.results.sort((a, b) => (order.get(a.home + "|" + a.away) ?? 99) - (order.get(b.home + "|" + b.away) ?? 99));
@@ -257,14 +262,7 @@ async function tsdbFirstScorer(idH, idA, dateISO) {
       `/* RESULTS:START — נערך אוטומטית; אל תוסיפו טקסט בתוך הבלוק הזה */\n${lines}\n    /* RESULTS:END */`);
   }
 
-  if (!added && !enriched && prevUpdated === today) {
-    console.log("אין תוצאות חדשות והתאריך כבר עדכני — אין שינוי.");
-    return;
-  }
-
   src = src.replace(/updated:\s*"[^"]*"/, `updated: "${today}"`);
   fs.writeFileSync(file, src);
-  console.log((added || enriched)
-    ? `עודכנו ${added} תוצאות חדשות, ${enriched} הושלמו בנתוני-על. סה"כ ${DATA.results.length}. תאריך: ${today}`
-    : `אין תוצאות חדשות — עודכן רק תאריך הבדיקה ל-${today}.`);
+  console.log(`עודכנו ${added} תוצאות חדשות, ${enriched} הושלמו בנתוני-על. סה"כ ${DATA.results.length}. תאריך: ${today}`);
 })();
