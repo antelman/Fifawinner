@@ -847,13 +847,21 @@ function viewGroups() {
           <th title="משחקים">מ׳</th><th title="ניצחונות">נ׳</th><th title="תיקו">ת׳</th><th title="הפסדים">ה׳</th>
           <th title="שערים זכות:חובה">שערים</th><th title="הפרש שערים">הפרש</th><th>נק׳</th>
         </tr>
-        ${standings.map((s, i) => `<tr${i === 1 ? ' style="border-bottom:2px solid var(--gold)"' : ''}>
-          <td class="team" data-team="${s.id}">${tn(s.id)}</td>
+        ${standings.map((s, i) => {
+          // קו זהוב מלא מתחת ל-2 הראשונים (העפלה בטוחה: זוכת+סגנית).
+          // קו זהוב מקווקו מתחת למקום ה-3 (העפלה מותנית: 8 השלישיות הטובות מ-12).
+          const border = i === 1 ? "2px solid var(--gold)"
+            : i === 2 ? "2px dashed var(--gold)" : "";
+          const thirdP = i === 2 ? (SIM[s.id] ? SIM[s.id].pThirdAdv : null) : null;
+          return `<tr${border ? ` style="border-bottom:${border}"` : ""}>
+          <td class="team" data-team="${s.id}">${tn(s.id)}${i === 2 && thirdP != null
+            ? ` <span class="pill" title="סיכוי שמקום 3 זה ייכלל ב-8 השלישיות הטובות">3 (${pct(thirdP)})</span>` : ""}</td>
           <td>${s.p}</td><td>${s.w}</td><td>${s.d}</td><td>${s.l}</td>
           <td>${s.gf}:${s.ga}</td>
           <td>${s.gd > 0 ? "+" + s.gd : s.gd}</td>
           <td><b>${s.pts}</b></td>
-        </tr>`).join("")}
+        </tr>`;
+        }).join("")}
       </table>
       <details style="margin-top:8px">
         <summary style="cursor:pointer;color:var(--muted);font-size:.82rem">תחזית סימולציה (זוכת בית / העפלה)</summary>
@@ -870,7 +878,7 @@ function viewGroups() {
       </details>
     </div>`;
   }).join("")}</div>
-  <p class="note">הטבלה למעלה היא <b>מצב אמת</b> לפי תוצאות שכבר נרשמו (${DATA.results.length} משחקים) — מתעדכנת אוטומטית עם כל תוצאה חדשה. הקו הזהוב מסמן את גבול 2 הראשונים. "העפלה" בתחזית כוללת גם מסלול מקום-3 (8 השלישיות הטובות מ-12 עולות). לחצו על שם נבחרת לפרופיל מלא.</p>`;
+  <p class="note">הטבלה למעלה היא <b>מצב אמת</b> לפי תוצאות שכבר נרשמו (${DATA.results.length} משחקים) — מתעדכנת אוטומטית עם כל תוצאה חדשה. <b>הקו המלא</b> מסמן את 2 המעפילות הבטוחות (זוכת+סגנית); <b>הקו המקווקו</b> מסמן את מקום ה-3, שמעפיל רק אם ייכלל ב-8 השלישיות הטובות מבין 12 הבתים (האחוז שליד הנבחרת = הסיכוי לכך). לחצו על שם נבחרת לפרופיל מלא.</p>`;
 }
 
 /* ============================================================
