@@ -107,7 +107,8 @@ const DATA = {
     { g: "E", home: "GER", away: "CIV", hg: 2, ag: 1, htHg: 0, htAg: 1 },
     { g: "E", home: "ECU", away: "CUR", hg: 0, ag: 0, htHg: 0, htAg: 0, firstScorer: "none" },
     { g: "F", home: "JPN", away: "TUN", hg: 4, ag: 0, htHg: 2, htAg: 0, firstScorer: "H" },
-    { g: "H", home: "ESP", away: "KSA", hg: 5, ag: 0, htHg: 3, htAg: 0 }
+    { g: "H", home: "ESP", away: "KSA", hg: 5, ag: 0, htHg: 3, htAg: 0 },
+    { g: "G", home: "BEL", away: "IRN", hg: 0, ag: 0, htHg: 0, htAg: 0, firstScorer: "none" }
     /* RESULTS:END */
   ],
 
