@@ -197,10 +197,20 @@ async function tsdbFirstScorer(idH, idA, dateISO) {
 
     const prev = existing.get(fx.h + "|" + fx.a);
     if (prev) {
-      // שורה קיימת — משלימים נתון חסר (לא נוגעים בתוצאה)
+      // שורה קיימת — מסנכרנים מול המקור: המקור הוא מקור-האמת.
+      // קריטי: ספק הנתונים עלול לסמן "הסתיים" עם תוצאה זמנית/שגויה ואז לתקן
+      // (למשל שער שנפסל ב-VAR). לכן אנו *מתקנים* תוצאה קיימת אם השתנתה במקור,
+      // ולא רק משלימים נתון חסר — אחרת קריאה שגויה חד-פעמית נצרבת לתמיד.
       let changed = false;
-      // תוצאת מחצית: נשמרת תמיד כשזמינה — נחוצה ללמידת נטיית-מחציות לכל נבחרת
-      if (prev.htHg == null && htHg != null) { prev.htHg = htHg; prev.htAg = htAg; changed = true; }
+      // תיקון תוצאת 90 הדקות אם המקור עדכן אותה
+      if (prev.hg !== hg || prev.ag !== ag) {
+        console.log(`⚠️ תוצאה תוקנה במקור: ${fx.h}-${fx.a} ${prev.hg}-${prev.ag} → ${hg}-${ag}`);
+        prev.hg = hg; prev.ag = ag; changed = true;
+      }
+      // תוצאת מחצית: ממלאים כשחסר, ומתקנים אם השתנתה במקור (כשזמינה)
+      if (htHg != null && (prev.htHg !== htHg || prev.htAg !== htAg)) {
+        prev.htHg = htHg; prev.htAg = htAg; changed = true;
+      }
       // מבקיע-ראשון: נמשך רק אם המלצנו על השוק (חוסך בקשות TheSportsDB)
       if (need.first && !prev.firstScorer) {
         const fs1 = await tsdbFirstScorer(fx.h, fx.a, fx.d);
@@ -209,7 +219,7 @@ async function tsdbFirstScorer(idH, idA, dateISO) {
       }
       if (changed) {
         enriched++;
-        console.log(`~ ${fx.h}-${fx.a} הושלם:${prev.htHg != null ? ` מחצית ${prev.htHg}-${prev.htAg}` : ""}${prev.firstScorer ? ` מבקיע ${prev.firstScorer}` : ""}`);
+        console.log(`~ ${fx.h}-${fx.a} סונכרן: ${prev.hg}-${prev.ag}${prev.htHg != null ? ` (מחצית ${prev.htHg}-${prev.htAg})` : ""}${prev.firstScorer ? ` מבקיע ${prev.firstScorer}` : ""}`);
       }
       continue;
     }
