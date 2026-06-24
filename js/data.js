@@ -22,7 +22,7 @@
 
 const DATA = {
   meta: {
-    updated: "2026-06-23",
+    updated: "2026-06-24",
     tournament: "אליפות העולם 2026 — ארה\"ב, מקסיקו, קנדה",
     eloNote: "דירוגי הכוח הם הערכות מודל נכון ליוני 2026",
     hostBonus: 50,
@@ -116,7 +116,9 @@ const DATA = {
     { g: "I", home: "NOR", away: "SEN", hg: 3, ag: 2, htHg: 1, htAg: 0 },
     { g: "J", home: "ALG", away: "JOR", hg: 2, ag: 1, htHg: 0, htAg: 1, firstScorer: "A" },
     { g: "K", home: "POR", away: "UZB", hg: 5, ag: 0, htHg: 3, htAg: 0 },
-    { g: "L", home: "ENG", away: "GHA", hg: 0, ag: 0, htHg: 0, htAg: 0 }
+    { g: "L", home: "ENG", away: "GHA", hg: 0, ag: 0, htHg: 0, htAg: 0 },
+    { g: "K", home: "COL", away: "COD", hg: 1, ag: 0, htHg: 0, htAg: 0 },
+    { g: "L", home: "CRO", away: "PAN", hg: 1, ag: 0, htHg: 0, htAg: 0 }
     /* RESULTS:END */
   ],
 
