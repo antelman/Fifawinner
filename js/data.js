@@ -120,7 +120,7 @@ const DATA = {
     { g: "K", home: "COL", away: "COD", hg: 1, ag: 0, htHg: 0, htAg: 0, firstScorer: "none" },
     { g: "L", home: "CRO", away: "PAN", hg: 1, ag: 0, htHg: 0, htAg: 0, firstScorer: "H" },
     { g: "A", home: "CZE", away: "MEX", hg: 0, ag: 3, htHg: 0, htAg: 0 },
-    { g: "A", home: "RSA", away: "KOR", hg: 1, ag: 0, htHg: 0, htAg: 0 },
+    { g: "A", home: "RSA", away: "KOR", hg: 1, ag: 0, htHg: 0, htAg: 0, firstScorer: "H" },
     { g: "B", home: "CAN", away: "SUI", hg: 1, ag: 2, htHg: 0, htAg: 0 },
     { g: "B", home: "QAT", away: "BIH", hg: 1, ag: 3, htHg: 1, htAg: 2 },
     { g: "C", home: "BRA", away: "SCO", hg: 3, ag: 0, htHg: 2, htAg: 0, firstScorer: "H" },
