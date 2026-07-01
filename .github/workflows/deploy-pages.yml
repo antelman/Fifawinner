@@ -1,0 +1,41 @@
+name: פריסת האתר ל-GitHub Pages
+
+on:
+  # פריסה בכל דחיפה ל-main (כולל עדכוני התוצאות האוטומטיים)
+  push:
+    branches: ["main"]
+  # אפשר גם להריץ ידנית מלשונית Actions
+  workflow_dispatch: {}
+
+# הרשאות נדרשות לפריסת Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# פריסה אחת בכל פעם; לא מבטלים פריסה שכבר רצה
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: העלאת האתר (שורש הריפו)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "."
+
+      - name: פריסה ל-GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
