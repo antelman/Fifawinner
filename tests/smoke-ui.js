@@ -105,6 +105,10 @@ const htmlFut = viewFutures();
 check("טאב עתידיים מרונדר", htmlFut.includes("זוכת הטורניר"));
 
 // טאב נוק-אאוט: ריק → הנחיות; מלא → טבלת מסלול מדויק
+// מאפסים במפורש לסוגריים ריקים — מאז קליטת הנוק-אאוט האוטומטית ייתכן ש-
+// DATA.knockout מאוכלס ו-seedBracket ממלא את BRACKET, אז בדיקת מצב-הריק
+// חייבת לשלוט בסוגריים בעצמה (לא להסתמך על ברירת-המחדל).
+BRACKET = { r32: Array.from({ length: 16 }, () => [null, null]), winners: {} };
 const htmlKoEmpty = viewKO();
 check("נוק-אאוט ריק: הנחיות מילוי", htmlKoEmpty.includes("0/16"));
 const top32 = Object.keys(DATA.teams).map(id => [id, DATA.teams[id].elo])
