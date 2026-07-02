@@ -124,11 +124,13 @@ function koAdvancer(score, idH, idA) {
 }
 
 // תיוג סיבוב לשורת-למידה: כמו classifyRound, אבל משחק המקום השלישי
-// מקבל תג "3P" — הוא לא חלק מהסוגריים אך כן נלמד כתוצאה.
+// מקבל תג "3P" (לא חלק מהסוגריים אך כן נלמד), והגמר מקבל "FIN" —
+// כי התג יושב בשדה g של DATA.results, ושם "F" הוא אות בית F.
 function koRoundOf(stage) {
   const s = String(stage || "").toUpperCase();
   if (/THIRD[\s_-]*PLACE|3RD[\s_-]*PLACE/.test(s)) return "3P";
-  return classifyRound(stage);
+  const r = classifyRound(stage);
+  return r === "F" ? "FIN" : r;
 }
 
 // חילוץ תוצאת-למידה מאובייקט score של football-data:
