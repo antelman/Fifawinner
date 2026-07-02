@@ -120,6 +120,18 @@ check("נוק-אאוט מלא: טבלת מסלול מדויק", htmlKoFull.inclu
 const recsKo = generateRecs();
 check("המלצות 'מי יעפיל' נוצרות", recsKo.some(r => r.market === "מי יעפיל"));
 
+// ===== קליטת נוק-אאוט אוטומטית: לוח תוצאות אחרונות + משחקי היום =====
+const _savedKoMatches = DATA.knockout.matches;
+DATA.knockout.matches = [
+  { id: "R32-1", round: "R32", a: "ESP", b: "URU", d: "2026-06-28", hg: 2, ag: 1, winner: "ESP" },
+  { id: "R16-1", round: "R16", a: "ESP", b: "GER", d: localISO(0) } // "היום" — טרם שוחק
+];
+const htmlRecsKo = viewRecs();
+check("לוח תוצאות כולל תוצאת נוק-אאוט", htmlRecsKo.includes("🥊 שלב ה-32") && htmlRecsKo.includes("2 – 1"));
+check("משחק נוק-אאוט של היום מוצג", htmlRecsKo.includes("🥊 שמינית גמר")
+  && !htmlRecsKo.includes("אין משחקים היום או מחר"));
+DATA.knockout.matches = _savedKoMatches;
+
 console.log("\nדוגמת 5 המלצות מובילות:");
 for (const r of recs.slice(0, 5))
   console.log(`   [${r.market}] ${r.pick.replace(/[\u{1F1E6}-\u{1F1FF}\u{1F3F4}\u{E0060}-\u{E007F}]/gu, "").trim()} | ${r.match.replace(/[\u{1F1E6}-\u{1F1FF}\u{1F3F4}\u{E0060}-\u{E007F}]/gu, "").trim()} | P=${(r.p * 100).toFixed(1)}%`);

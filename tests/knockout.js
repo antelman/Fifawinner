@@ -43,12 +43,27 @@ const norm = KOA.normalizeKnockout(rawR32, rid);
 check("normalize: מסנן שלב-בתים + TBD", norm.length === 2, `${norm.length} משחקי נוק-אאוט`);
 check("normalize: מבנה תקין", eq(norm[0], { round: "R32", a: "ESP", b: "URU", winner: "ESP", date: "2026-06-28" }));
 
+/* ---------- normalize: תוצאות, הארכה ומשחקים עתידיים ---------- */
+const rawScored = [
+  { stage: "LAST_16", utcDate: "2026-07-01T19:00Z", homeTeam: { tla: "ENG" }, awayTeam: { tla: "CIV" },
+    score: { winner: "HOME_TEAM", duration: "REGULAR", fullTime: { home: 2, away: 1 } } },
+  { stage: "LAST_16", utcDate: "2026-07-01T22:00Z", homeTeam: { tla: "ESP" }, awayTeam: { tla: "GER" },
+    score: { winner: "DRAW", duration: "PENALTY_SHOOTOUT", fullTime: { home: 1, away: 1 }, penalties: { home: 4, away: 3 } } },
+  { stage: "QUARTER_FINALS", utcDate: "2026-07-04T19:00Z", homeTeam: { tla: "ENG" }, awayTeam: { tla: "FRA" }, score: {} }
+];
+const ns = KOA.normalizeKnockout(rawScored, rid);
+check("normalize: תוצאה נשמרת (90/סיום)", ns[0].hg === 2 && ns[0].ag === 1 && !ns[0].et);
+check("normalize: פנדלים + הארכה מסומנים", ns[1].et === true && ns[1].penH === 4 && ns[1].penA === 3 && ns[1].winner === "ESP");
+check("normalize: משחק עתידי ידוע ללא תוצאה", ns[2].hg == null && ns[2].winner === null && ns[2].date === "2026-07-04");
+
 /* ---------- assembleKnockout: R32 חלקי (כמו 2.7 — לפני שהושלמו כל 16) ---------- */
 const partial = KOA.assembleKnockout(norm);
 check("R32 חלקי: 16 סלוטים", partial.r32.length === 16);
 check("R32 חלקי: 2 זוגות מלאים", partial.r32.filter(p => p[0] && p[1]).length === 2);
 check("R32 חלקי: מנצחות מקובעות", eq(partial.winners, { "R32-1": "ARG", "R32-2": "ESP" }) || eq(partial.winners, { "R32-1": "ESP", "R32-2": "ARG" }));
 check("R32 חלקי: stage=R32", partial.stage === "R32");
+check("R32 חלקי: matches שטוח עם מזהים", partial.matches.length === 2
+  && partial.matches.every((m, i) => m.id === "R32-" + (i + 1) && m.a && m.b));
 
 /* ---------- assembleKnockout: R32 מלא + R16 → בדיקת שחזור צמידות ---------- */
 // 32 קבוצות דמה T01..T32; R32: (T1,T2),(T3,T4)... כל אי-זוגית מנצחת.
@@ -76,6 +91,19 @@ check("שחזור צמידות: זוג R32-1/R32-2 מזין את R16-1",
   `${w0}+${w1} vs R16-1=${r16[0].a}+${r16[0].b}`);
 check("R16 מנצחות מקובעות (8)", Object.keys(full.winners).filter(k => k.startsWith("R16")).length === 8);
 
+/* ---------- רגרסיה: סיבוב עתידי חלקי (רק ענף אחד ידוע) לא מפיל את ההרכבה ---------- */
+// QF אחד ידוע (ENG-ESP) בעוד רוב ה-R16/R32 טרם שוחקו — orderByFeeders חייב
+// לשרוד אבות ריקים (placeholder) בשרשרת ולא לקרוס.
+const sparse = KOA.assembleKnockout([
+  { round: "R32", a: "ENG", b: "COD", winner: "ENG", date: "2026-06-28", hg: 3, ag: 0 },
+  { round: "R16", a: "ENG", b: "CIV", winner: "ENG", date: "2026-07-01", hg: 2, ag: 1 },
+  { round: "QF", a: "ENG", b: "ESP", winner: null, date: "2026-07-04" }
+]);
+check("ענף חלקי: לא קורס ומחזיר stage=QF", sparse.stage === "QF");
+check("ענף חלקי: כל המשחקים ברשימה", sparse.matches.length === 3
+  && sparse.matches.some(m => m.round === "QF" && m.hg == null)
+  && sparse.matches.some(m => m.round === "R16" && m.hg === 2 && m.ag === 1));
+
 /* ---------- koPropagate עובד על סוגריים מורכבים מנבחרות אמת ---------- */
 // 32 החזקות לפי Elo, מזווגות ל-16 משחקי R32, ומורכבות דרך assembleKnockout
 const top32 = Object.keys(DATA.teams).map(id => [id, DATA.teams[id].elo])
@@ -97,6 +125,15 @@ check("serialize: r32 מתפרסר ל-16", Array.isArray(parsed.r32) && parsed.r
 check("serialize: winners נשמר", eq(parsed.winners, partial.winners));
 check("serialize: ריק → []/{}/null", KOA.serializeKnockout({ r32: [], winners: {}, stage: null })
   .includes("r32: []") );
+// משחק עם תוצאה/הארכה/פנדלים עובר סריאליזציה ופרסור נאמנים
+const serM = KOA.serializeKnockout({ r32: [], winners: {}, stage: "R16", matches: [
+  { id: "R16-1", round: "R16", a: "ENG", b: "CIV", d: "2026-07-01", hg: 2, ag: 1, et: true, penH: 4, penA: 3, winner: "ENG" },
+  { id: "QF-1", round: "QF", a: "ENG", b: "FRA", d: "2026-07-04" }
+] });
+const pm = eval("({" + serM.replace(/\n/g, " ") + "})");
+check("serialize: משחק עם הארכה/פנדלים נאמן", pm.matches[0].et === true
+  && pm.matches[0].penH === 4 && pm.matches[0].hg === 2 && pm.matches[0].winner === "ENG");
+check("serialize: משחק עתידי ללא תוצאה", pm.matches[1].hg === undefined && pm.matches[1].d === "2026-07-04");
 
 /* ---------- data.js: מבנה knockout קיים ותקין ---------- */
 check("DATA.knockout קיים", DATA.knockout && Array.isArray(DATA.knockout.r32));

@@ -48,6 +48,8 @@ function orderByFeeders(children, parents) {
     return children.findIndex((c, i) => !used.has(i) && c && c.winner === teamId);
   };
   for (const p of parents) {
+    // אב חסר (placeholder מסיבוב גבוה יותר שטרם נודע) — שני סלוטים ריקים
+    if (!p) { out.push(null, null); continue; }
     for (const part of [p.a, p.b]) {
       const idx = findChild(part);
       if (idx >= 0) { out.push(children[idx]); used.add(idx); }
@@ -70,7 +72,7 @@ function assembleKnockout(koMatches) {
   let topIdx = -1;
   for (let i = ROUNDS.length - 1; i >= 0; i--)
     if (byRound[ROUNDS[i]].length) { topIdx = i; break; }
-  if (topIdx < 0) return { r32: [], winners: {}, stage: null };
+  if (topIdx < 0) return { r32: [], winners: {}, stage: null, matches: [] };
 
   const ordered = {};
   ordered[ROUNDS[topIdx]] = byRound[ROUNDS[topIdx]].slice();
@@ -84,13 +86,27 @@ function assembleKnockout(koMatches) {
   });
 
   const winners = {};
+  // רשימה שטוחה של כל משחקי הנוק-אאוט הידועים (ששוחקו או שטרם שוחקו אך
+  // הנבחרות בהם ידועות) עם מזהה-סוגריים, תאריך ותוצאה — לתצוגת
+  // "תוצאות אחרונות" ו"משחקי היום" בעמוד הראשי.
+  const matches = [];
   for (let i = 0; i <= topIdx; i++) {
     (ordered[ROUNDS[i]] || []).forEach((m, k) => {
-      if (m && m.winner) winners[ROUNDS[i] + "-" + (k + 1)] = m.winner;
+      if (!m) return;
+      const id = ROUNDS[i] + "-" + (k + 1);
+      if (m.winner) winners[id] = m.winner;
+      const row = { id, round: ROUNDS[i], a: m.a, b: m.b, d: m.date || null };
+      if (m.hg != null) {
+        row.hg = m.hg; row.ag = m.ag;
+        if (m.et) row.et = true;
+        if (m.penH != null) { row.penH = m.penH; row.penA = m.penA; }
+      }
+      if (m.winner) row.winner = m.winner;
+      matches.push(row);
     });
   }
 
-  return { r32, winners, stage: ROUNDS[topIdx] };
+  return { r32, winners, stage: ROUNDS[topIdx], matches };
 }
 
 // הנבחרת שהעפילה ממשחק נוק-אאוט לפי אובייקט score של football-data
@@ -107,8 +123,10 @@ function koAdvancer(score, idH, idA) {
   return null;
 }
 
-// המרת משחקי-API לצורה המנורמלת ({round,a,b,winner,date}).
+// המרת משחקי-API לצורה המנורמלת ({round,a,b,winner,date,hg,ag,et,penH,penA}).
 // resolveId(teamObj) — פונקציה שמזהה קוד-נבחרת מאובייקט קבוצה של ה-API.
+// נכללים גם משחקים עתידיים שהנבחרות בהם כבר ידועות (ללא תוצאה) — הם
+// נותנים ללוח "משחקי היום" את מפגשי הנוק-אאוט הקרובים.
 function normalizeKnockout(allMatches, resolveId) {
   const out = [];
   for (const m of allMatches || []) {
@@ -117,8 +135,18 @@ function normalizeKnockout(allMatches, resolveId) {
     const idH = resolveId(m.homeTeam || {});
     const idA = resolveId(m.awayTeam || {});
     if (!idH || !idA) continue; // נבחרות טרם נקבעו (TBD)
-    out.push({ round, a: idH, b: idA, winner: koAdvancer(m.score, idH, idA),
-      date: (m.utcDate || "").slice(0, 10) });
+    const sc = m.score || {};
+    const ft = sc.fullTime || {};
+    const row = { round, a: idH, b: idA, winner: koAdvancer(sc, idH, idA),
+      date: (m.utcDate || "").slice(0, 10) };
+    if (ft.home != null && ft.away != null) {
+      // fullTime כולל הארכה (לא פנדלים) — התוצאה הסופית להצגה
+      row.hg = +ft.home; row.ag = +ft.away;
+      if (sc.duration && sc.duration !== "REGULAR") row.et = true;
+      const pen = sc.penalties || {};
+      if (pen.home != null && pen.away != null) { row.penH = +pen.home; row.penA = +pen.away; }
+    }
+    out.push(row);
   }
   return out;
 }
@@ -133,7 +161,18 @@ function serializeKnockout(ko) {
   const winners = wk.length
     ? "{\n" + wk.map(k => `      "${k}": "${ko.winners[k]}"`).join(",\n") + "\n    }"
     : "{}";
-  return `    r32: ${r32},\n    winners: ${winners},\n    stage: ${ko.stage ? `"${ko.stage}"` : "null"}`;
+  const ms = ko.matches || [];
+  const matches = ms.length
+    ? "[\n" + ms.map(m => {
+        let s = `      { id: "${m.id}", round: "${m.round}", a: "${m.a}", b: "${m.b}", d: ${m.d ? `"${m.d}"` : "null"}`;
+        if (m.hg != null) s += `, hg: ${m.hg}, ag: ${m.ag}`;
+        if (m.et) s += ", et: true";
+        if (m.penH != null) s += `, penH: ${m.penH}, penA: ${m.penA}`;
+        if (m.winner) s += `, winner: "${m.winner}"`;
+        return s + " }";
+      }).join(",\n") + "\n    ]"
+    : "[]";
+  return `    r32: ${r32},\n    winners: ${winners},\n    stage: ${ko.stage ? `"${ko.stage}"` : "null"},\n    matches: ${matches}`;
 }
 
 module.exports = {
