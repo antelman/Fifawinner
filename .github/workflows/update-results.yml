@@ -46,8 +46,17 @@ jobs:
             git config user.email "actions@github.com"
             git add -A
             git commit -m "עדכון תוצאות אוטומטי ($(date -u +%Y-%m-%d\ %H:%M) UTC)"
-            git push
-            echo "נדחפו עדכונים."
+            # דחיפה עמידה למרוץ: אם ריצה מקבילה (cron+ידני) דחפה בינתיים,
+            # הדחיפה נדחית (non-fast-forward). מסנכרנים ברבייס ומנסים שוב.
+            # הבלוקים האוטומטיים (RESULTS/KO) זהים בין ריצות (אותו מקור) —
+            # רבייס על שינוי זהה נבלע, ולא מאבדים נתונים.
+            for i in 1 2 3 4 5; do
+              if git push; then echo "נדחפו עדכונים."; exit 0; fi
+              echo "דחיפה נדחתה (ניסיון $i/5) — מסנכרן (rebase) ומנסה שוב..."
+              git pull --rebase --autostash origin main || true
+              sleep $((i * 2))
+            done
+            echo "❌ דחיפה נכשלה אחרי 5 ניסיונות."; exit 1
           else
             echo "אין שינוי — לא נדחף דבר."
           fi
