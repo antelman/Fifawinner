@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write
+  actions: write   # נדרש להפעלת פריסת Pages אחרי דחיפת נתונים (ראו צעד אחרון)
 
 concurrency:
   group: update-results
@@ -40,6 +41,7 @@ jobs:
         run: node scripts/build-standalone.js
 
       - name: Commit & Push אם יש שינוי
+        id: push
         run: |
           if [[ -n "$(git status --porcelain)" ]]; then
             git config user.name "fifawinner-bot"
@@ -51,7 +53,11 @@ jobs:
             # הבלוקים האוטומטיים (RESULTS/KO) זהים בין ריצות (אותו מקור) —
             # רבייס על שינוי זהה נבלע, ולא מאבדים נתונים.
             for i in 1 2 3 4 5; do
-              if git push; then echo "נדחפו עדכונים."; exit 0; fi
+              if git push; then
+                echo "נדחפו עדכונים."
+                echo "pushed=true" >> "$GITHUB_OUTPUT"
+                exit 0
+              fi
               echo "דחיפה נדחתה (ניסיון $i/5) — מסנכרן (rebase) ומנסה שוב..."
               git pull --rebase --autostash origin main || true
               sleep $((i * 2))
@@ -59,4 +65,15 @@ jobs:
             echo "❌ דחיפה נכשלה אחרי 5 ניסיונות."; exit 1
           else
             echo "אין שינוי — לא נדחף דבר."
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
           fi
+
+      # דחיפה עם GITHUB_TOKEN לא מפעילה workflows אחרים (מניעת רקורסיה של
+      # GitHub) — כלומר commit הנתונים של הבוט לא מפעיל את פריסת ה-Pages
+      # לבדו, והאתר החי לא היה מתעדכן. workflow_dispatch הוא חריג מותר,
+      # אז מפעילים את הפריסה במפורש אחרי כל דחיפת נתונים.
+      - name: הפעלת פריסת Pages (דחיפת בוט לא מפעילה אותה לבד)
+        if: steps.push.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy-pages.yml --ref main
