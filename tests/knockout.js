@@ -21,6 +21,26 @@ check("classifyRound: FINAL → F", KOA.classifyRound("FINAL") === "F");
 check("classifyRound: THIRD_PLACE → null", KOA.classifyRound("THIRD_PLACE") === null);
 check("classifyRound: GROUP_STAGE → null", KOA.classifyRound("GROUP_STAGE") === null);
 
+/* ---------- koRoundOf (תיוג שורת-למידה, כולל מקום שלישי) ---------- */
+check("koRoundOf: LAST_16 → R16", KOA.koRoundOf("LAST_16") === "R16");
+check("koRoundOf: THIRD_PLACE → 3P", KOA.koRoundOf("THIRD_PLACE") === "3P");
+check("koRoundOf: GROUP_STAGE → null", KOA.koRoundOf("GROUP_STAGE") === null);
+
+/* ---------- koResultScore (תוצאת 90 דקות + הכרעת הארכה) ---------- */
+const eq2 = eq;
+check("koResultScore: משחק רגיל", eq2(
+  KOA.koResultScore({ duration: "REGULAR", fullTime: { home: 2, away: 1 }, halfTime: { home: 1, away: 0 } }),
+  { hg: 2, ag: 1, htHg: 1, htAg: 0 }));
+check("koResultScore: הארכה → תוצאת 90 דקות + koWin", eq2(
+  KOA.koResultScore({ duration: "EXTRA_TIME", winner: "AWAY_TEAM",
+    fullTime: { home: 1, away: 2 }, regularTime: { home: 1, away: 1 }, halfTime: { home: 0, away: 1 } }),
+  { hg: 1, ag: 1, htHg: 0, htAg: 1, koWin: "A" }));
+check("koResultScore: פנדלים → תיקו ללא koWin", eq2(
+  KOA.koResultScore({ duration: "PENALTY_SHOOTOUT", winner: "HOME_TEAM",
+    fullTime: { home: 0, away: 0 }, regularTime: { home: 0, away: 0 } }),
+  { hg: 0, ag: 0 }));
+check("koResultScore: אין תוצאה → null", KOA.koResultScore({ fullTime: {} }) === null);
+
 /* ---------- koAdvancer (כולל פנדלים) ---------- */
 check("advancer: HOME_TEAM", KOA.koAdvancer({ winner: "HOME_TEAM" }, "ESP", "GER") === "ESP");
 check("advancer: AWAY_TEAM", KOA.koAdvancer({ winner: "AWAY_TEAM" }, "ESP", "GER") === "GER");

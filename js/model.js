@@ -41,8 +41,10 @@ const MODEL = (() => {
     return (11 + a) / 8;       // 3→1.75, 4→1.875, ...
   }
 
-  // תאריך משחק מהלוח הרשמי (לצורך מיון כרונולוגי + דעיכת זמן)
+  // תאריך משחק (לצורך מיון כרונולוגי + דעיכת זמן): שורות נוק-אאוט
+  // נושאות תאריך משלהן (d) — הן אינן בלוח שלב הבתים.
   function resultDate(m) {
+    if (m.d) return m.d;
     if (!DATA.schedule) return null;
     const fx = DATA.schedule.find(x =>
       (x.h === m.home && x.a === m.away) || (x.h === m.away && x.a === m.home));
@@ -72,7 +74,10 @@ const MODEL = (() => {
       const homeAdj = h.host ? DATA.meta.hostBonus : LEARN_HOME_ADJ;
       const dr = (r[m.home] + homeAdj) - r[m.away];
       const expH = 1 / (1 + Math.pow(10, -dr / 400));
-      const actH = m.hg > m.ag ? 1 : (m.hg < m.ag ? 0 : 0.5);
+      // hg/ag הם תוצאת 90 הדקות. בנוק-אאוט, הכרעה בהארכה (koWin) נלמדת
+      // כניצחון; הכרעה בפנדלים נשארת תיקו — כמו בשיטת eloratings.net.
+      const actH = m.hg > m.ag ? 1 : (m.hg < m.ag ? 0 :
+        (m.koWin === "H" ? 1 : m.koWin === "A" ? 0 : 0.5));
       // משקל דעיכת זמן: 1.0 למשחק האחרון, יורד אקספוננציאלית לאחור
       const age = (n - 1) - idx;
       const decay = Math.pow(0.5, age / DECAY_HALFLIFE);
@@ -457,10 +462,13 @@ const MODEL = (() => {
     return fx;
   }
 
-  // תוצאות אמת שכבר נרשמו — ממופות לקיבוע בסימולציה
+  // תוצאות אמת שכבר נרשמו — ממופות לקיבוע בסימולציה.
+  // רק שורות שלב-בתים: שורת נוק-אאוט (רימאץ' אפשרי מ-R16 והלאה)
+  // אסור שתקבע תוצאה של משחק-בתים בסימולציה.
   function playedMap() {
     const map = {};
     for (const r of DATA.results) {
+      if (!DATA.groups[r.g]) continue;
       map[r.home + "|" + r.away] = [r.hg, r.ag];
       map[r.away + "|" + r.home] = [r.ag, r.hg];
     }

@@ -123,6 +123,38 @@ function koAdvancer(score, idH, idA) {
   return null;
 }
 
+// תיוג סיבוב לשורת-למידה: כמו classifyRound, אבל משחק המקום השלישי
+// מקבל תג "3P" — הוא לא חלק מהסוגריים אך כן נלמד כתוצאה.
+function koRoundOf(stage) {
+  const s = String(stage || "").toUpperCase();
+  if (/THIRD[\s_-]*PLACE|3RD[\s_-]*PLACE/.test(s)) return "3P";
+  return classifyRound(stage);
+}
+
+// חילוץ תוצאת-למידה מאובייקט score של football-data:
+//   hg/ag   — תוצאת 90 הדקות (regularTime כשהמשחק נמשך להארכה) —
+//             זו התוצאה שכל שווקי ההימורים נשפטים לפיה.
+//   htHg/htAg — תוצאת מחצית (אם קיימת).
+//   koWin   — "H"/"A" כשהמשחק הוכרע בהארכה (למידת Elo סופרת זאת
+//             כניצחון; הכרעה בפנדלים נשארת תיקו, כמו eloratings.net).
+// מחזיר null אם אין תוצאה מלאה.
+// שים לב: שונה בכוונה מ-hg/ag של knockout.matches (תוצאה סופית כולל
+// הארכה, לתצוגה) — כאן תוצאת 90 דקות, לשיפוט שווקים וללמידה.
+function koResultScore(score) {
+  const sc = score || {};
+  const et = sc.duration && sc.duration !== "REGULAR";
+  const reg = (et && sc.regularTime) ? sc.regularTime : (sc.fullTime || {});
+  if (reg.home == null || reg.away == null) return null;
+  const out = { hg: +reg.home, ag: +reg.away };
+  const ht = sc.halfTime || {};
+  if (ht.home != null && ht.away != null) { out.htHg = +ht.home; out.htAg = +ht.away; }
+  if (sc.duration === "EXTRA_TIME") {
+    if (sc.winner === "HOME_TEAM") out.koWin = "H";
+    else if (sc.winner === "AWAY_TEAM") out.koWin = "A";
+  }
+  return out;
+}
+
 // המרת משחקי-API לצורה המנורמלת ({round,a,b,winner,date,hg,ag,et,penH,penA}).
 // resolveId(teamObj) — פונקציה שמזהה קוד-נבחרת מאובייקט קבוצה של ה-API.
 // נכללים גם משחקים עתידיים שהנבחרות בהם כבר ידועות (ללא תוצאה) — הם
@@ -177,5 +209,6 @@ function serializeKnockout(ko) {
 
 module.exports = {
   classifyRound, orderByFeeders, assembleKnockout, ROUNDS,
-  koAdvancer, normalizeKnockout, serializeKnockout
+  koAdvancer, normalizeKnockout, serializeKnockout,
+  koRoundOf, koResultScore
 };
