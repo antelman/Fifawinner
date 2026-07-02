@@ -34,7 +34,7 @@ jobs:
         run: node scripts/update-results.js
 
       - name: בדיקות שפיות
-        run: node tests/sanity.js && node tests/smoke-ui.js
+        run: node tests/sanity.js && node tests/smoke-ui.js && node tests/knockout.js
 
       - name: בניית גרסה עצמאית
         run: node scripts/build-standalone.js

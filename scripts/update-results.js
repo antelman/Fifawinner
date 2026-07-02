@@ -16,6 +16,7 @@ const DATA = require(path.join(root, "js/data.js"));
 global.DATA = DATA;
 const MODEL = require(path.join(root, "js/model.js"));
 const PICKS = require(path.join(root, "js/picks.js"));
+const KOA = require(path.join(__dirname, "ko-assemble.js"));
 
 const API_KEY = process.env.FOOTBALL_DATA_KEY || "";
 const COMPETITION = process.env.FOOTBALL_DATA_COMP || "WC"; // World Cup
@@ -91,6 +92,27 @@ async function fetchFinishedMatches() {
     return matches;
   } catch (e) {
     console.error("⚠️  שגיאת רשת/timeout:", e.message, "— יוצא ללא שינוי.");
+    return null;
+  }
+}
+
+/* ---------- שלב הנוק-אאוט ----------
+   מושך את כל משחקי התחרות (כל הסטטוסים) כדי לקבל גם זיווגים שטרם שוחקו,
+   מסנן לשלבי הנוק-אאוט, וממיר לצורה מנורמלת ל-ko-assemble. */
+async function fetchAllMatches() {
+  if (!API_KEY) return null;
+  const url = `${BASE}/competitions/${COMPETITION}/matches`;
+  try {
+    const res = await fetch(url, {
+      headers: { "X-Auth-Token": API_KEY },
+      signal: AbortSignal.timeout(20000)
+    });
+    console.log(`HTTP ${res.status} ${url}`);
+    if (!res.ok) return null;
+    const j = await res.json();
+    return Array.isArray(j.matches) ? j.matches : [];
+  } catch (e) {
+    console.error("⚠️  שגיאת רשת (נוק-אאוט):", e.message);
     return null;
   }
 }
@@ -233,11 +255,31 @@ async function tsdbFirstScorer(idH, idA, dateISO) {
 
   console.log(`סיכום: נוספו ${added}, הושלמו ${enriched}, לא-זוהו ${skippedUnmatched}, מחוץ-ללוח ${skippedNoFixture}.`);
 
-  // אין תוצאה חדשה ולא הושלם נתון-על → אין מה לכתוב.
-  // יוצאים מיד בלי לגעת בקובץ, כדי שלא ייווצר קומיט מיותר (כל קומיט = build ב-Netlify).
-  // התאריך בפוטר מתרענן רק כשבאמת נדחפת תוצאה — ריצות "ריקות" שקופות לחלוטין.
-  if (!added && !enriched) {
-    console.log("אין תוצאות חדשות — אין שינוי (לא נדחף קומיט, נחסך build ב-Netlify).");
+  // ---------- שלב הנוק-אאוט ----------
+  // נמשך בנפרד (כל הסטטוסים) ומורכב לסוגריים. אי-משיכה → משאירים כמו שהוא.
+  let koChanged = false, ko = DATA.knockout;
+  const allMatches = await fetchAllMatches();
+  if (allMatches !== null) {
+    const koMatches = KOA.normalizeKnockout(allMatches, resolveId);
+    const built = KOA.assembleKnockout(koMatches);
+    if (JSON.stringify(built) !== JSON.stringify({
+      r32: DATA.knockout.r32 || [], winners: DATA.knockout.winners || {},
+      stage: DATA.knockout.stage ?? null
+    })) {
+      ko = built; koChanged = true;
+      console.log(`נוק-אאוט עודכן: שלב=${built.stage}, זיווגי R32=${built.r32.filter(p => p[0] && p[1]).length}, מנצחות=${Object.keys(built.winners).length}`);
+    } else {
+      console.log(`נוק-אאוט: אין שינוי (${koMatches.length} משחקי נוק-אאוט במקור).`);
+    }
+  } else {
+    console.log("נוק-אאוט: משיכה נכשלה/אין מפתח — נשאר כפי שהוא.");
+  }
+
+  // אין תוצאה חדשה, לא הושלם נתון-על, ואין שינוי בנוק-אאוט → אין מה לכתוב.
+  // יוצאים מיד בלי לגעת בקובץ, כדי שלא ייווצר קומיט מיותר (כל קומיט = build/deploy).
+  // התאריך בפוטר מתרענן רק כשבאמת נדחף עדכון — ריצות "ריקות" שקופות לחלוטין.
+  if (!added && !enriched && !koChanged) {
+    console.log("אין תוצאות חדשות ואין שינוי בנוק-אאוט — אין שינוי (לא נדחף קומיט).");
     return;
   }
 
@@ -262,7 +304,12 @@ async function tsdbFirstScorer(idH, idA, dateISO) {
       `/* RESULTS:START — נערך אוטומטית; אל תוסיפו טקסט בתוך הבלוק הזה */\n${lines}\n    /* RESULTS:END */`);
   }
 
+  // בלוק הנוק-אאוט — נכתב תמיד (אידמפוטנטי; משתנה רק כשהסוגריים השתנו)
+  src = src.replace(
+    /\/\* KO:START[\s\S]*?KO:END \*\//,
+    `/* KO:START — נערך אוטומטית; אל תוסיפו טקסט בתוך הבלוק הזה */\n${KOA.serializeKnockout(ko)}\n    /* KO:END */`);
+
   src = src.replace(/updated:\s*"[^"]*"/, `updated: "${today}"`);
   fs.writeFileSync(file, src);
-  console.log(`עודכנו ${added} תוצאות חדשות, ${enriched} הושלמו בנתוני-על. סה"כ ${DATA.results.length}. תאריך: ${today}`);
+  console.log(`עודכנו ${added} תוצאות חדשות, ${enriched} הושלמו בנתוני-על${koChanged ? ", + נוק-אאוט" : ""}. סה"כ ${DATA.results.length}. תאריך: ${today}`);
 })();
