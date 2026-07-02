@@ -264,10 +264,10 @@ async function tsdbFirstScorer(idH, idA, dateISO) {
     const built = KOA.assembleKnockout(koMatches);
     if (JSON.stringify(built) !== JSON.stringify({
       r32: DATA.knockout.r32 || [], winners: DATA.knockout.winners || {},
-      stage: DATA.knockout.stage ?? null
+      stage: DATA.knockout.stage ?? null, matches: DATA.knockout.matches || []
     })) {
       ko = built; koChanged = true;
-      console.log(`נוק-אאוט עודכן: שלב=${built.stage}, זיווגי R32=${built.r32.filter(p => p[0] && p[1]).length}, מנצחות=${Object.keys(built.winners).length}`);
+      console.log(`נוק-אאוט עודכן: שלב=${built.stage}, זיווגי R32=${built.r32.filter(p => p[0] && p[1]).length}, מנצחות=${Object.keys(built.winners).length}, משחקים=${(built.matches || []).length}`);
     } else {
       console.log(`נוק-אאוט: אין שינוי (${koMatches.length} משחקי נוק-אאוט במקור).`);
     }

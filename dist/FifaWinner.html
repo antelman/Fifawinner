@@ -690,6 +690,10 @@ const DATA = {
   //             ריק (מערך ריק) כל עוד שלב הנוק-אאוט לא החל.
   //   winners — { "R32-1": "ESP", "R16-2": ... } מנצחת בפועל לכל משחק שהוכרע.
   //   stage   — הסיבוב הרחוק ביותר שנצפה (R32/R16/QF/SF/F) או null.
+  //   matches — רשימה שטוחה של משחקי הנוק-אאוט הידועים (ששוחקו/מתוכננים):
+  //             { id, round, a, b, d, hg?, ag?, et?, penH?, penA?, winner? }
+  //             hg/ag = תוצאה סופית (כולל הארכה); penH/penA = פנדלים.
+  //             משמשת ל"תוצאות אחרונות" ו"משחקי היום" בעמוד הראשי.
   // בדפדפן, סוגריים אלה משמשים כברירת מחדל (seed) לטאב הנוק-אאוט — כך שכל
   // מבקר רואה את הסוגריים הרשמיים; עריכה ידנית מקומית (localStorage) גוברת.
   knockout: {
@@ -724,7 +728,8 @@ const DATA = {
       "R32-9": "USA",
       "R32-10": "BEL"
     },
-    stage: "R16"
+    stage: "R16",
+    matches: []
     /* KO:END */
   },
 
@@ -2692,16 +2697,66 @@ function dayMatchCard(fx) {
   </div>`;
 }
 
-// לוח תוצאות אחרונות (עד 6 משחקים אחרונים שהסתיימו, לפי סדר הלוח)
+/* כרטיס משחק נוק-אאוט יומי — מפגש מהסוגריים שנקלט אוטומטית מה-API */
+function koDayCard(m) {
+  const fin = m.hg != null;
+  const extra = m.penH != null ? ` (${m.penH}–${m.penA} בפנדלים)`
+    : m.et ? " (לאחר הארכה)" : "";
+  const head = `<h3>${tn(m.a)} <span class="vs">נגד</span> ${tn(m.b)}
+    <span class="pill">🥊 ${KO_ROUND_NAMES[m.round]}</span>
+    ${fin ? `<span class="pill score-pill">הסתיים ${m.hg}–${m.ag}${extra}</span>` : ""}</h3>
+    ${match1x2Html(m.a, m.b)}`;
+  if (fin) {
+    // משחק נוק-אאוט שהסתיים: תוצאה + מי העפילה (שיפוט המלצות — שלב הבתים בלבד)
+    return `<div class="card finished">${head}
+      ${m.winner ? `<p class="note">✅ ${T(m.winner).nameHe} העפילה לשלב הבא</p>` : ""}
+      <button class="tab-btn open-ko" data-a="${m.a}" data-b="${m.b}"
+        style="padding:5px 14px;font-size:.85rem;margin-top:8px">📊 פירוט</button></div>`;
+  }
+  const picks = matchTopPicks(m.a, m.b, true);
+  return `<div class="card">${head}
+    ${picks.map(pickCard).join("")}
+    <button class="tab-btn open-ko" data-a="${m.a}" data-b="${m.b}"
+      style="padding:6px 16px;font-size:.9rem">📊 ניתוח מלא + כל השווקים</button>
+  </div>`;
+}
+
+// משחקי הנוק-אאוט שנקלטו אוטומטית מה-API (ששוחקו או שטרם — נבחרות ידועות)
+function koMatchList() {
+  return (DATA.knockout && DATA.knockout.matches) || [];
+}
+
+// לוח תוצאות אחרונות (עד 6 משחקים אחרונים שהסתיימו — בתים + נוק-אאוט, לפי תאריך)
 function scoreboardHtml() {
-  const finished = DATA.schedule.filter(fx => orientedResult(fx.h, fx.a));
-  if (!finished.length) return "";
-  const recent = finished.slice(-6).reverse();
+  const items = [];
+  for (const fx of DATA.schedule) {
+    const r = orientedResult(fx.h, fx.a);
+    if (r) items.push({ ko: null, d: fx.d, fx, r });
+  }
+  for (const m of koMatchList())
+    if (m.hg != null) items.push({ ko: m, d: m.d || "" });
+  if (!items.length) return "";
+  items.sort((x, y) => (x.d || "").localeCompare(y.d || ""));
+  const recent = items.slice(-6).reverse();
   return `<div class="card scoreboard">
     <h3>📋 תוצאות אחרונות <span class="pill">${fmtDate(DATA.meta.updated)}</span></h3>
     <div class="score-grid">
-      ${recent.map(fx => {
-        const r = orientedResult(fx.h, fx.a);
+      ${recent.map(it => {
+        if (it.ko) {
+          // משחק נוק-אאוט: תוצאה סופית (כולל הארכה) + סיבוב; פנדלים אם היו
+          const m = it.ko;
+          const extra = m.penH != null ? `${m.penH}–${m.penA} בפנדלים`
+            : m.et ? "לאחר הארכה" : "";
+          return `<div class="score-item open-ko" data-a="${m.a}" data-b="${m.b}">
+            <div class="score-line">
+              <span>${flag(m.a)} <span class="team-name">${T(m.a).nameHe}</span></span>
+              <b>${m.hg} – ${m.ag}</b>
+              <span><span class="team-name">${T(m.b).nameHe}</span> ${flag(m.b)}</span>
+            </div>
+            <div class="score-verdict pending">🥊 ${KO_ROUND_NAMES[m.round]}${extra ? ` · ${extra}` : ""}${m.winner ? ` · ${T(m.winner).nameHe} העפילה` : ""}</div>
+          </div>`;
+        }
+        const fx = it.fx, r = it.r;
         let h = 0, mm = 0, pending = 0;
         for (const p of matchTopPicks(fx.h, fx.a, false)) {
           const g = gradeKey(p.key);
@@ -2728,12 +2783,18 @@ function viewRecs() {
   const today = localISO(0), tomorrow = localISO(1);
   const todayFx = DATA.schedule.filter(m => m.d === today);
   const tomFx = DATA.schedule.filter(m => m.d === tomorrow);
-  const daySection = (title, fxs) => fxs.length
-    ? `<h2 style="margin:18px 0 10px">${title}</h2>${fxs.map(dayMatchCard).join("")}` : "";
+  // משחקי נוק-אאוט של היום/מחר — מהרשימה שנקלטת אוטומטית מה-API
+  const todayKo = koMatchList().filter(m => m.d === today);
+  const tomKo = koMatchList().filter(m => m.d === tomorrow);
+  const daySection = (title, fxs, kos = []) => (fxs.length || kos.length)
+    ? `<h2 style="margin:18px 0 10px">${title}</h2>${fxs.map(dayMatchCard).join("")}${kos.map(koDayCard).join("")}` : "";
 
   const recs = generateRecs();
   // נבחרות כלליות: מגוונות, בלי משחקי היום/מחר (כבר מוצגים למעלה)
-  const shown = new Set([...todayFx, ...tomFx].map(f => `${f.h}-${f.a}`));
+  const shown = new Set([
+    ...[...todayFx, ...tomFx].map(f => `${f.h}-${f.a}`),
+    ...[...todayKo, ...tomKo].map(m => `${m.a}-${m.b}`)
+  ]);
   const top = [], seen = new Set();
   for (const r of recs) {
     if (r.key && [...shown].some(s => r.key.startsWith(s + ":"))) continue;
@@ -2758,9 +2819,9 @@ function viewRecs() {
   return `
   ${trBanner}
   ${scoreboardHtml()}
-  ${daySection("⚽ משחקי היום — " + hebDate(today), todayFx)}
-  ${daySection("📅 משחקי מחר — " + hebDate(tomorrow), tomFx)}
-  ${todayFx.length || tomFx.length ? "" : `<div class="card"><p class="note">אין משחקים היום או מחר בלוח.</p></div>`}
+  ${daySection("⚽ משחקי היום — " + hebDate(today), todayFx, todayKo)}
+  ${daySection("📅 משחקי מחר — " + hebDate(tomorrow), tomFx, tomKo)}
+  ${todayFx.length || tomFx.length || todayKo.length || tomKo.length ? "" : `<div class="card"><p class="note">אין משחקים היום או מחר בלוח.</p></div>`}
   <h2 style="margin:22px 0 10px">🎯 הזדמנויות נוספות מכל הטורניר</h2>
   <p class="note">ההמלצות מדורגות לפי רמת הביטחון של המודל וההסתברות שהוא מעניק — מהחזקות לפחות.</p>
   ${top.map(recHtml).join("")}
@@ -3337,6 +3398,17 @@ function bindEvents() {
       activeTab = "matches";
       document.querySelectorAll(".tab-btn[data-tab]").forEach(b =>
         b.classList.toggle("active", b.dataset.tab === "matches"));
+      render();
+      window.scrollTo({ top: 0 });
+    }));
+
+  // מעבר מהעמוד הראשי לניתוח משחק נוק-אאוט (בטאב הנוק-אאוט)
+  document.querySelectorAll(".open-ko").forEach(btn =>
+    btn.addEventListener("click", () => {
+      selKoMatch = [btn.dataset.a, btn.dataset.b];
+      activeTab = "ko";
+      document.querySelectorAll(".tab-btn[data-tab]").forEach(b =>
+        b.classList.toggle("active", b.dataset.tab === "ko"));
       render();
       window.scrollTo({ top: 0 });
     }));
