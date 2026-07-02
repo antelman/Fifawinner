@@ -28,7 +28,13 @@ const check = (name, cond, detail = "") => {
 };
 
 const recs = generateRecs();
-check("נוצרו המלצות", recs.length >= 15, recs.length + " המלצות");
+// כמה משחקי-בתים עדיין לא שוחקו — קובע כמה המלצות-משחק אפשריות בכלל.
+// בזמן שלב הבתים מצפים לשפע (≥15); משהסתיים — נשארות רק המלצות עתיד
+// (אלופה/העפלה), ומיעוט המלצות הוא מצב תקין ולא כשל שיחסום את העדכון האוטומטי.
+const _openGroupFixtures = Object.keys(DATA.groups).reduce((n, g) =>
+  n + MODEL.groupFixtures(g).filter(([a, b]) => !resultOf(a, b)).length, 0);
+check("נוצרו המלצות", _openGroupFixtures > 0 ? recs.length >= 15 : recs.length >= 1,
+  `${recs.length} המלצות, ${_openGroupFixtures} משחקי בתים פתוחים`);
 check("לכל המלצה הסתברות תקינה", recs.every(r => r.p > 0 && r.p <= 1));
 check("אין המלצה על משחק שהסתיים", !recs.some(r => r.match.includes("מקסיקו") && r.match.includes("דרום אפריקה")));
 
