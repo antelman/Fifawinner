@@ -607,7 +607,10 @@ const DATA = {
   ],
 
   // תוצאות אמת — מתעדכן אוטומטית ע"י .github/workflows/update-results.yml (פעמיים ביום)
-  // וניתן גם ידנית. כיוון home/away חייב להתאים ל-schedule.  עדכון אחרון: 14.6.2026
+  // וניתן גם ידנית. שורת בתים: g=אות הבית, כיוון home/away תואם ל-schedule.
+  // שורת נוק-אאוט: g=סיבוב (R32/R16/QF/SF/3P/F), d=תאריך, hg/ag=תוצאת 90 דקות,
+  // koWin="H"/"A" כשהוכרע בהארכה (פנדלים נשארים תיקו ללמידת ה-Elo).
+  // המודל לומד (Elo, התקפה/הגנה, מחציות) מכל השורות — בתים ונוק-אאוט כאחד.
   results: [
     /* RESULTS:START — נערך אוטומטית; אל תוסיפו טקסט בתוך הבלוק הזה */
     { g: "A", home: "MEX", away: "RSA", hg: 2, ag: 0, htHg: 1, htAg: 0, firstScorer: "H" },
@@ -1359,8 +1362,10 @@ const MODEL = (() => {
     return (11 + a) / 8;       // 3→1.75, 4→1.875, ...
   }
 
-  // תאריך משחק מהלוח הרשמי (לצורך מיון כרונולוגי + דעיכת זמן)
+  // תאריך משחק (לצורך מיון כרונולוגי + דעיכת זמן): שורות נוק-אאוט
+  // נושאות תאריך משלהן (d) — הן אינן בלוח שלב הבתים.
   function resultDate(m) {
+    if (m.d) return m.d;
     if (!DATA.schedule) return null;
     const fx = DATA.schedule.find(x =>
       (x.h === m.home && x.a === m.away) || (x.h === m.away && x.a === m.home));
@@ -1390,7 +1395,10 @@ const MODEL = (() => {
       const homeAdj = h.host ? DATA.meta.hostBonus : LEARN_HOME_ADJ;
       const dr = (r[m.home] + homeAdj) - r[m.away];
       const expH = 1 / (1 + Math.pow(10, -dr / 400));
-      const actH = m.hg > m.ag ? 1 : (m.hg < m.ag ? 0 : 0.5);
+      // hg/ag הם תוצאת 90 הדקות. בנוק-אאוט, הכרעה בהארכה (koWin) נלמדת
+      // כניצחון; הכרעה בפנדלים נשארת תיקו — כמו בשיטת eloratings.net.
+      const actH = m.hg > m.ag ? 1 : (m.hg < m.ag ? 0 :
+        (m.koWin === "H" ? 1 : m.koWin === "A" ? 0 : 0.5));
       // משקל דעיכת זמן: 1.0 למשחק האחרון, יורד אקספוננציאלית לאחור
       const age = (n - 1) - idx;
       const decay = Math.pow(0.5, age / DECAY_HALFLIFE);
@@ -1775,10 +1783,13 @@ const MODEL = (() => {
     return fx;
   }
 
-  // תוצאות אמת שכבר נרשמו — ממופות לקיבוע בסימולציה
+  // תוצאות אמת שכבר נרשמו — ממופות לקיבוע בסימולציה.
+  // רק שורות שלב-בתים: שורת נוק-אאוט (רימאץ' אפשרי מ-R16 והלאה)
+  // אסור שתקבע תוצאה של משחק-בתים בסימולציה.
   function playedMap() {
     const map = {};
     for (const r of DATA.results) {
+      if (!DATA.groups[r.g]) continue;
       map[r.home + "|" + r.away] = [r.hg, r.ag];
       map[r.away + "|" + r.home] = [r.ag, r.hg];
     }
@@ -2384,6 +2395,7 @@ function groupStandings(groupId) {
     table[id] = { id, p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, gd: 0, pts: 0 };
   }
   for (const r of DATA.results) {
+    if (r.g !== groupId) continue; // שורות נוק-אאוט/בתים אחרים אינן נספרות
     if (!(r.home in table) || !(r.away in table)) continue;
     const home = table[r.home], away = table[r.away];
     home.p++; away.p++;
@@ -2402,6 +2414,8 @@ function groupStandings(groupId) {
 // תוצאה מכוונת לפי סדר הפיקסצ'ר (a=בית, b=חוץ) — לשיפוט שווקים.
 // כולל נתוני-על מכוונים: תוצאת מחצית (htHg/htAg) ומבקיע ראשון (firstScorer).
 // אם השורה ב-DATA.results בכיוון ההפוך — מחליפים בית↔חוץ בכל הנתונים.
+// מגבלה ידועה: המפתח אינו נושא שלב, ולכן ברימאץ' (זוג שנפגש גם בבתים
+// וגם בנוק-אאוט, אפשרי מ-R16) תוחזר שורת הבתים — הראשונה במערך.
 function orientedResult(a, b) {
   for (const r of DATA.results) {
     if (r.home === a && r.away === b)
@@ -2898,7 +2912,11 @@ function verdictMark(key) {
 function matchAsOf(a, b) {
   const fx = DATA.schedule.find(x =>
     (x.h === a && x.a === b) || (x.h === b && x.a === a));
-  return fx ? fx.d : null;
+  if (fx) return fx.d;
+  // משחק נוק-אאוט שכבר הוכרע — התאריך יושב על שורת התוצאה עצמה
+  const r = DATA.results.find(r =>
+    (r.home === a && r.away === b) || (r.home === b && r.away === a));
+  return (r && r.d) || null;
 }
 
 function buildMatchCandidates(a, b, ko) {
@@ -3251,7 +3269,7 @@ function viewGroups() {
       </details>
     </div>`;
   }).join("")}</div>
-  <p class="note">הטבלה למעלה היא <b>מצב אמת</b> לפי תוצאות שכבר נרשמו (${DATA.results.length} משחקים) — מתעדכנת אוטומטית עם כל תוצאה חדשה. <b>הקו המלא</b> מסמן את 2 המעפילות הבטוחות (זוכת+סגנית); <b>הקו המקווקו</b> מסמן את מקום ה-3, שמעפיל רק אם ייכלל ב-8 השלישיות הטובות מבין 12 הבתים (האחוז שליד הנבחרת = הסיכוי לכך). לחצו על שם נבחרת לפרופיל מלא.</p>`;
+  <p class="note">הטבלה למעלה היא <b>מצב אמת</b> לפי תוצאות שכבר נרשמו (${DATA.results.filter(r => DATA.groups[r.g]).length} משחקי בתים) — מתעדכנת אוטומטית עם כל תוצאה חדשה. <b>הקו המלא</b> מסמן את 2 המעפילות הבטוחות (זוכת+סגנית); <b>הקו המקווקו</b> מסמן את מקום ה-3, שמעפיל רק אם ייכלל ב-8 השלישיות הטובות מבין 12 הבתים (האחוז שליד הנבחרת = הסיכוי לכך). לחצו על שם נבחרת לפרופיל מלא.</p>`;
 }
 
 /* ============================================================

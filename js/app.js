@@ -74,6 +74,7 @@ function groupStandings(groupId) {
     table[id] = { id, p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, gd: 0, pts: 0 };
   }
   for (const r of DATA.results) {
+    if (r.g !== groupId) continue; // שורות נוק-אאוט/בתים אחרים אינן נספרות
     if (!(r.home in table) || !(r.away in table)) continue;
     const home = table[r.home], away = table[r.away];
     home.p++; away.p++;
@@ -92,6 +93,8 @@ function groupStandings(groupId) {
 // תוצאה מכוונת לפי סדר הפיקסצ'ר (a=בית, b=חוץ) — לשיפוט שווקים.
 // כולל נתוני-על מכוונים: תוצאת מחצית (htHg/htAg) ומבקיע ראשון (firstScorer).
 // אם השורה ב-DATA.results בכיוון ההפוך — מחליפים בית↔חוץ בכל הנתונים.
+// מגבלה ידועה: המפתח אינו נושא שלב, ולכן ברימאץ' (זוג שנפגש גם בבתים
+// וגם בנוק-אאוט, אפשרי מ-R16) תוחזר שורת הבתים — הראשונה במערך.
 function orientedResult(a, b) {
   for (const r of DATA.results) {
     if (r.home === a && r.away === b)
@@ -588,7 +591,11 @@ function verdictMark(key) {
 function matchAsOf(a, b) {
   const fx = DATA.schedule.find(x =>
     (x.h === a && x.a === b) || (x.h === b && x.a === a));
-  return fx ? fx.d : null;
+  if (fx) return fx.d;
+  // משחק נוק-אאוט שכבר הוכרע — התאריך יושב על שורת התוצאה עצמה
+  const r = DATA.results.find(r =>
+    (r.home === a && r.away === b) || (r.home === b && r.away === a));
+  return (r && r.d) || null;
 }
 
 function buildMatchCandidates(a, b, ko) {
@@ -941,7 +948,7 @@ function viewGroups() {
       </details>
     </div>`;
   }).join("")}</div>
-  <p class="note">הטבלה למעלה היא <b>מצב אמת</b> לפי תוצאות שכבר נרשמו (${DATA.results.length} משחקים) — מתעדכנת אוטומטית עם כל תוצאה חדשה. <b>הקו המלא</b> מסמן את 2 המעפילות הבטוחות (זוכת+סגנית); <b>הקו המקווקו</b> מסמן את מקום ה-3, שמעפיל רק אם ייכלל ב-8 השלישיות הטובות מבין 12 הבתים (האחוז שליד הנבחרת = הסיכוי לכך). לחצו על שם נבחרת לפרופיל מלא.</p>`;
+  <p class="note">הטבלה למעלה היא <b>מצב אמת</b> לפי תוצאות שכבר נרשמו (${DATA.results.filter(r => DATA.groups[r.g]).length} משחקי בתים) — מתעדכנת אוטומטית עם כל תוצאה חדשה. <b>הקו המלא</b> מסמן את 2 המעפילות הבטוחות (זוכת+סגנית); <b>הקו המקווקו</b> מסמן את מקום ה-3, שמעפיל רק אם ייכלל ב-8 השלישיות הטובות מבין 12 הבתים (האחוז שליד הנבחרת = הסיכוי לכך). לחצו על שם נבחרת לפרופיל מלא.</p>`;
 }
 
 /* ============================================================

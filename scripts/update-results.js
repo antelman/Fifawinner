@@ -4,6 +4,8 @@
    מקור: football-data.org (תחרות World Cup, קוד "WC").
    ממפה שמות/קודי-נבחרת → קודי DATA.teams, מתאים לכיוון הפיקסצ'ר
    בלוח, וכותב בחזרה ל-js/data.js בין הסמנים.
+   נקלטים גם משחקי נוק-אאוט (כולל מקום שלישי) כשורות תוצאה עם
+   סיבוב+תאריך — כך המודל ממשיך ללמוד Elo/מחציות גם אחרי שלב הבתים.
    בטוח: אם המשיכה נכשלת/אין חדש — יוצא ללא שינוי (לא מוחק כלום).
    דורש secret:  FOOTBALL_DATA_KEY  (מפתח חינמי מ-football-data.org)
    הרצה ידנית:  FOOTBALL_DATA_KEY=xxx node scripts/update-results.js
@@ -187,17 +189,14 @@ async function tsdbFirstScorer(idH, idA, dateISO) {
   const matches = await fetchFinishedMatches();
   if (matches === null) return; // כשל משיכה — לא נוגעים בנתונים
 
-  const existing = new Map(); // "HOME|AWAY" → row
-  for (const r of DATA.results) existing.set(r.home + "|" + r.away, r);
+  // מפתח כולל את השלב (אות-בית / סיבוב נוק-אאוט): מ-R16 והלאה ייתכן
+  // רימאץ' של זוג שכבר נפגש בבתים — אסור שיתמזג לשורת הבתים.
+  const keyOf = (g, h, a) => g + "|" + h + "|" + a;
+  const existing = new Map(); // "STAGE|HOME|AWAY" → row
+  for (const r of DATA.results) existing.set(keyOf(r.g, r.home, r.away), r);
 
   let added = 0, enriched = 0, skippedUnmatched = 0, skippedNoFixture = 0;
   for (const m of matches) {
-    const ft = (m.score && m.score.fullTime) || {};
-    const hs = ft.home, as = ft.away;
-    if (hs == null || as == null) continue; // ללא תוצאת 90 דקות
-    const htScore = (m.score && m.score.halfTime) || {};
-    const htHsrc = htScore.home, htAsrc = htScore.away; // תוצאת מחצית מהמקור (אם קיימת)
-
     const idH = resolveId(m.homeTeam || {});
     const idA = resolveId(m.awayTeam || {});
     if (!idH || !idA) {
@@ -206,6 +205,53 @@ async function tsdbFirstScorer(idH, idA, dateISO) {
       skippedUnmatched++;
       continue;
     }
+
+    /* ---- תוצאת נוק-אאוט (כולל מקום שלישי): נשמרת עם תאריך וסיבוב,
+            והמודל לומד ממנה Elo/מחציות/התקפה-הגנה כמו ממשחק בתים ---- */
+    const round = KOA.koRoundOf(m.stage);
+    if (round) {
+      const sc = KOA.koResultScore(m.score);
+      if (!sc) continue; // ללא תוצאה מלאה
+      const d = (m.utcDate || "").slice(0, 10);
+      const need = PICKS.neededExtras(MODEL, DATA.teams[idH], DATA.teams[idA], d);
+      const prev = existing.get(keyOf(round, idH, idA));
+      if (prev) {
+        // שורה קיימת — משלימים נתון חסר בלבד (לא נוגעים בתוצאה)
+        let changed = false;
+        if (prev.htHg == null && sc.htHg != null) { prev.htHg = sc.htHg; prev.htAg = sc.htAg; changed = true; }
+        if (!prev.koWin && sc.koWin) { prev.koWin = sc.koWin; changed = true; }
+        if (need.first && !prev.firstScorer) {
+          const fs1 = await tsdbFirstScorer(idH, idA, d);
+          if (fs1) { prev.firstScorer = fs1; changed = true; }
+          else console.warn(`  ⚠️ מבקיע-ראשון לא נמצא ל-${round} ${idH}-${idA} (יישאר ממתין)`);
+        }
+        if (changed) { enriched++; console.log(`~ ${round} ${idH}-${idA} הושלם בנתוני-על`); }
+        continue;
+      }
+      const row = { g: round, home: idH, away: idA, hg: sc.hg, ag: sc.ag, d };
+      if (sc.htHg != null) { row.htHg = sc.htHg; row.htAg = sc.htAg; }
+      if (sc.koWin) row.koWin = sc.koWin;
+      if (need.first) {
+        const fs1 = await tsdbFirstScorer(idH, idA, d);
+        if (fs1) row.firstScorer = fs1;
+        else console.warn(`  ⚠️ מבקיע-ראשון לא נמצא ל-${round} ${idH}-${idA} (יישאר ממתין)`);
+      }
+      DATA.results.push(row);
+      existing.set(keyOf(round, idH, idA), row);
+      added++;
+      console.log(`+ ${round} ${idH} ${sc.hg}-${sc.ag} ${idA} (${d})` +
+        `${sc.koWin ? ` (הוכרע בהארכה: ${sc.koWin})` : ""}` +
+        `${row.htHg != null ? ` (מחצית ${row.htHg}-${row.htAg})` : ""}`);
+      continue;
+    }
+
+    /* ---- שלב הבתים ---- */
+    const ft = (m.score && m.score.fullTime) || {};
+    const hs = ft.home, as = ft.away;
+    if (hs == null || as == null) continue; // ללא תוצאת 90 דקות
+    const htScore = (m.score && m.score.halfTime) || {};
+    const htHsrc = htScore.home, htAsrc = htScore.away; // תוצאת מחצית מהמקור (אם קיימת)
+
     const fx = fixtureFor(idH, idA);
     if (!fx) { skippedNoFixture++; continue; } // לא בלוח שלב הבתים שלנו
 
@@ -217,7 +263,7 @@ async function tsdbFirstScorer(idH, idA, dateISO) {
     // אילו נתונים משלימים נדרשים לפי ההמלצות שנתנו למשחק
     const need = PICKS.neededExtras(MODEL, DATA.teams[fx.h], DATA.teams[fx.a], fx.d);
 
-    const prev = existing.get(fx.h + "|" + fx.a);
+    const prev = existing.get(keyOf(fx.g, fx.h, fx.a));
     if (prev) {
       // שורה קיימת — משלימים נתון חסר (לא נוגעים בתוצאה)
       let changed = false;
@@ -246,7 +292,7 @@ async function tsdbFirstScorer(idH, idA, dateISO) {
       else console.warn(`  ⚠️ מבקיע-ראשון לא נמצא ל-${fx.h}-${fx.a} (יישאר ממתין)`);
     }
     DATA.results.push(row);
-    existing.set(fx.h + "|" + fx.a, row);
+    existing.set(keyOf(fx.g, fx.h, fx.a), row);
     added++;
     console.log(`+ ${fx.h} ${hg}-${ag} ${fx.a}` +
       `${row.htHg != null ? ` (מחצית ${row.htHg}-${row.htAg})` : ""}` +
@@ -288,14 +334,22 @@ async function tsdbFirstScorer(idH, idA, dateISO) {
   let src = fs.readFileSync(file, "utf8");
 
   {
-    // סדר התוצאות לפי הופעתן בלוח (יציב), ושכתוב הבלוק בין הסמנים
+    // סדר יציב: משחקי בתים לפי הלוח, ואחריהם נוק-אאוט לפי סיבוב ותאריך
     const order = new Map(DATA.schedule.map((x, i) => [x.h + "|" + x.a, i]));
-    DATA.results.sort((a, b) => (order.get(a.home + "|" + a.away) ?? 99) - (order.get(b.home + "|" + b.away) ?? 99));
+    const ROUND_POS = { R32: 0, R16: 1, QF: 2, SF: 3, "3P": 4, F: 5 };
+    const pos = (r) => r.g in ROUND_POS
+      ? 1000 + ROUND_POS[r.g] * 100
+      : (order.get(r.home + "|" + r.away) ?? 999);
+    DATA.results.sort((a, b) => pos(a) - pos(b) ||
+      String(a.d || "").localeCompare(String(b.d || "")) ||
+      (a.home + a.away).localeCompare(b.home + b.away));
     const lines = DATA.results.map(r => {
-      // שדות חובה + נתוני-על אופציונליים (מחצית/מבקיע ראשון) כשקיימים —
-      // כך נשמר גם מידע שמולא ידנית להמלצות מחצית/מבקיעה-ראשונה.
+      // שדות חובה + נתוני-על אופציונליים (תאריך-נוק-אאוט/מחצית/הכרעת-
+      // הארכה/מבקיע ראשון) כשקיימים — כך נשמר גם מידע שמולא ידנית.
       let s = `    { g: "${r.g}", home: "${r.home}", away: "${r.away}", hg: ${r.hg}, ag: ${r.ag}`;
+      if (r.d) s += `, d: "${r.d}"`;
       if (r.htHg != null && r.htAg != null) s += `, htHg: ${r.htHg}, htAg: ${r.htAg}`;
+      if (r.koWin) s += `, koWin: "${r.koWin}"`;
       if (r.firstScorer) s += `, firstScorer: "${r.firstScorer}"`;
       return s + " }";
     }).join(",\n");

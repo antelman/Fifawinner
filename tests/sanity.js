@@ -36,8 +36,15 @@ for (const g of groupIds) {
   if (pairs.size !== 6) check(`כל הזוגות בבית ${g}`, false);
 }
 console.log("✅ לוח משחקים: 72 משחקים, 6 לכל בית, כל זוג פעם אחת");
-check("כל תוצאה רשומה קיימת בלוח", DATA.results.every(r =>
+const KO_ROUNDS = ["R32", "R16", "QF", "SF", "3P", "F"];
+const groupRows = DATA.results.filter(r => DATA.groups[r.g]);
+const koRows = DATA.results.filter(r => !DATA.groups[r.g]);
+check("כל תוצאת-בתים רשומה קיימת בלוח", groupRows.every(r =>
   DATA.schedule.some(x => (x.h === r.home && x.a === r.away) || (x.h === r.away && x.a === r.home))));
+check("שורות נוק-אאוט: סיבוב תקין + תאריך", koRows.every(r =>
+  KO_ROUNDS.includes(r.g) && /^\d{4}-\d{2}-\d{2}$/.test(r.d || "") &&
+  DATA.teams[r.home] && DATA.teams[r.away]),
+  `${koRows.length} שורות נוק-אאוט`);
 
 // 2. שווקים מסתכמים ל-1
 const m = MODEL.markets(DATA.teams.ESP, DATA.teams.URU);
@@ -85,6 +92,33 @@ check("פייבוריט בפער ~300 בטווח 65-80%", big.p1 > 0.65 && big.p
 const twin = { id: "TWIN", elo: 1700, host: false, attMod: 1.0, defMod: 1.0 };
 const even = MODEL.markets(twin, { ...twin, id: "TWIN2" });
 check("קבוצות שוות מאוזנות", Math.abs(even.p1 - even.p2) < 0.001, `1=${(even.p1 * 100).toFixed(1)}% 2=${(even.p2 * 100).toFixed(1)}%`);
+
+// 4ב. למידה מתוצאות נוק-אאוט: שורת נוק-אאוט (g=סיבוב, d=תאריך) מזיזה Elo,
+//     אבל אסור שתשפיע על קיבוע תוצאות שלב הבתים בסימולציה.
+MODEL.resetLearned();
+const eloBefore = { ...MODEL.learnedElo() };
+const gamesBefore = MODEL.teamGamesPlayed(DATA.teams.MEX);
+const koTestRow = { g: "R16", home: "MEX", away: "KOR", hg: 0, ag: 5, d: "2026-07-20" };
+DATA.results.push(koTestRow);
+MODEL.resetLearned();
+const eloAfterLoss = MODEL.learnedElo();
+check("נוק-אאוט נלמד: הפסד 0-5 מוריד Elo למפסידה ומעלה למנצחת",
+  eloAfterLoss.MEX < eloBefore.MEX && eloAfterLoss.KOR > eloBefore.KOR,
+  `MEX ${eloBefore.MEX.toFixed(0)}→${eloAfterLoss.MEX.toFixed(0)}`);
+check("resultDate קורא תאריך משורת נוק-אאוט", MODEL.resultDate(koTestRow) === "2026-07-20");
+check("teamGamesPlayed סופר גם משחקי נוק-אאוט",
+  MODEL.teamGamesPlayed(DATA.teams.MEX) === gamesBefore + 1,
+  `${gamesBefore}→${MODEL.teamGamesPlayed(DATA.teams.MEX)}`);
+// הכרעה בהארכה (koWin) נלמדת כניצחון — תיקו 1-1 עם koWin:"H" מעלה את הבית
+DATA.results.push({ g: "QF", home: "MEX", away: "KOR", hg: 1, ag: 1, d: "2026-07-24", koWin: "H" });
+MODEL.resetLearned();
+check("הכרעה בהארכה נלמדת כניצחון", MODEL.learnedElo().MEX > eloAfterLoss.MEX);
+// הגנת קיבוע: רימאץ' נוק-אאוט של זוג מאותו בית לא דורס את תוצאת הבתים
+const simGuard = MODEL.simulateGroups(500);
+check("שורת נוק-אאוט לא מזהמת את קיבוע הבתים", simGuard.MEX.pWinGroup > 0.5,
+  (simGuard.MEX.pWinGroup * 100).toFixed(1) + "%");
+DATA.results.pop(); DATA.results.pop();
+MODEL.resetLearned();
 
 // 5. סימולציית בתים
 console.log("\nמריץ מונטה-קרלו (20,000)...");
