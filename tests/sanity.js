@@ -36,7 +36,7 @@ for (const g of groupIds) {
   if (pairs.size !== 6) check(`כל הזוגות בבית ${g}`, false);
 }
 console.log("✅ לוח משחקים: 72 משחקים, 6 לכל בית, כל זוג פעם אחת");
-const KO_ROUNDS = ["R32", "R16", "QF", "SF", "3P", "F"];
+const KO_ROUNDS = ["R32", "R16", "QF", "SF", "3P", "FIN"];
 const groupRows = DATA.results.filter(r => DATA.groups[r.g]);
 const koRows = DATA.results.filter(r => !DATA.groups[r.g]);
 check("כל תוצאת-בתים רשומה קיימת בלוח", groupRows.every(r =>

@@ -336,7 +336,7 @@ async function tsdbFirstScorer(idH, idA, dateISO) {
   {
     // סדר יציב: משחקי בתים לפי הלוח, ואחריהם נוק-אאוט לפי סיבוב ותאריך
     const order = new Map(DATA.schedule.map((x, i) => [x.h + "|" + x.a, i]));
-    const ROUND_POS = { R32: 0, R16: 1, QF: 2, SF: 3, "3P": 4, F: 5 };
+    const ROUND_POS = { R32: 0, R16: 1, QF: 2, SF: 3, "3P": 4, FIN: 5 };
     const pos = (r) => r.g in ROUND_POS
       ? 1000 + ROUND_POS[r.g] * 100
       : (order.get(r.home + "|" + r.away) ?? 999);

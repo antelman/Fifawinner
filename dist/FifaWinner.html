@@ -608,7 +608,8 @@ const DATA = {
 
   // תוצאות אמת — מתעדכן אוטומטית ע"י .github/workflows/update-results.yml (פעמיים ביום)
   // וניתן גם ידנית. שורת בתים: g=אות הבית, כיוון home/away תואם ל-schedule.
-  // שורת נוק-אאוט: g=סיבוב (R32/R16/QF/SF/3P/F), d=תאריך, hg/ag=תוצאת 90 דקות,
+  // שורת נוק-אאוט: g=סיבוב (R32/R16/QF/SF/3P/FIN — הגמר "FIN" כדי לא
+  // להתנגש באות בית F), d=תאריך, hg/ag=תוצאת 90 דקות,
   // koWin="H"/"A" כשהוכרע בהארכה (פנדלים נשארים תיקו ללמידת ה-Elo).
   // המודל לומד (Elo, התקפה/הגנה, מחציות) מכל השורות — בתים ונוק-אאוט כאחד.
   results: [
@@ -623,6 +624,8 @@ const DATA = {
     { g: "D", home: "AUS", away: "TUR", hg: 1, ag: 0, htHg: 1, htAg: 0 },
     { g: "E", home: "GER", away: "CUR", hg: 7, ag: 1, htHg: 3, htAg: 1 },
     { g: "E", home: "CIV", away: "ECU", hg: 1, ag: 0, htHg: 0, htAg: 0 },
+    { g: "F", home: "NED", away: "JPN", hg: 2, ag: 2, htHg: 0, htAg: 0, firstScorer: "H" },
+    { g: "F", home: "SWE", away: "TUN", hg: 5, ag: 1, htHg: 2, htAg: 1 },
     { g: "H", home: "ESP", away: "CPV", hg: 0, ag: 0, htHg: 0, htAg: 0 },
     { g: "G", home: "BEL", away: "EGY", hg: 1, ag: 1, htHg: 0, htAg: 1, firstScorer: "A" },
     { g: "H", home: "KSA", away: "URU", hg: 1, ag: 1, htHg: 1, htAg: 0, firstScorer: "H" },
@@ -643,8 +646,10 @@ const DATA = {
     { g: "C", home: "SCO", away: "MAR", hg: 0, ag: 1, htHg: 0, htAg: 1, firstScorer: "A" },
     { g: "C", home: "BRA", away: "HAI", hg: 3, ag: 0, htHg: 3, htAg: 0 },
     { g: "D", home: "TUR", away: "PAR", hg: 0, ag: 1, htHg: 0, htAg: 1 },
+    { g: "F", home: "NED", away: "SWE", hg: 5, ag: 1, htHg: 2, htAg: 0, firstScorer: "H" },
     { g: "E", home: "GER", away: "CIV", hg: 2, ag: 1, htHg: 0, htAg: 1 },
     { g: "E", home: "ECU", away: "CUR", hg: 0, ag: 0, htHg: 0, htAg: 0, firstScorer: "none" },
+    { g: "F", home: "JPN", away: "TUN", hg: 4, ag: 0, htHg: 2, htAg: 0, firstScorer: "H" },
     { g: "H", home: "ESP", away: "KSA", hg: 5, ag: 0, htHg: 3, htAg: 0 },
     { g: "H", home: "URU", away: "CPV", hg: 2, ag: 2, htHg: 2, htAg: 1, firstScorer: "A" },
     { g: "G", home: "NZL", away: "EGY", hg: 1, ag: 3, htHg: 1, htAg: 0, firstScorer: "H" },
@@ -667,6 +672,8 @@ const DATA = {
     { g: "D", home: "PAR", away: "AUS", hg: 0, ag: 0, htHg: 0, htAg: 0, firstScorer: "none" },
     { g: "E", home: "GER", away: "ECU", hg: 1, ag: 2, htHg: 1, htAg: 1, firstScorer: "H" },
     { g: "E", home: "CUR", away: "CIV", hg: 0, ag: 2, htHg: 0, htAg: 1 },
+    { g: "F", home: "NED", away: "TUN", hg: 3, ag: 1, htHg: 2, htAg: 0, firstScorer: "H" },
+    { g: "F", home: "JPN", away: "SWE", hg: 1, ag: 1, htHg: 0, htAg: 0, firstScorer: "H" },
     { g: "G", home: "EGY", away: "IRN", hg: 1, ag: 1, htHg: 1, htAg: 1 },
     { g: "G", home: "NZL", away: "BEL", hg: 1, ag: 5, htHg: 0, htAg: 1, firstScorer: "A" },
     { g: "H", home: "CPV", away: "KSA", hg: 0, ag: 0, htHg: 0, htAg: 0 },
@@ -688,13 +695,7 @@ const DATA = {
     { g: "R32", home: "BEL", away: "SEN", hg: 2, ag: 2, d: "2026-07-01", htHg: 0, htAg: 1, koWin: "H" },
     { g: "R32", home: "ENG", away: "COD", hg: 2, ag: 1, d: "2026-07-01", htHg: 0, htAg: 1 },
     { g: "R32", home: "MEX", away: "ECU", hg: 2, ag: 0, d: "2026-07-01", htHg: 2, htAg: 0, firstScorer: "H" },
-    { g: "R32", home: "USA", away: "BIH", hg: 2, ag: 0, d: "2026-07-02", htHg: 1, htAg: 0 },
-    { g: "F", home: "JPN", away: "SWE", hg: 1, ag: 1, htHg: 0, htAg: 0, firstScorer: "H" },
-    { g: "F", home: "JPN", away: "TUN", hg: 4, ag: 0, htHg: 2, htAg: 0, firstScorer: "H" },
-    { g: "F", home: "NED", away: "JPN", hg: 2, ag: 2, htHg: 0, htAg: 0, firstScorer: "H" },
-    { g: "F", home: "NED", away: "SWE", hg: 5, ag: 1, htHg: 2, htAg: 0, firstScorer: "H" },
-    { g: "F", home: "NED", away: "TUN", hg: 3, ag: 1, htHg: 2, htAg: 0, firstScorer: "H" },
-    { g: "F", home: "SWE", away: "TUN", hg: 5, ag: 1, htHg: 2, htAg: 1 }
+    { g: "R32", home: "USA", away: "BIH", hg: 2, ag: 0, d: "2026-07-02", htHg: 1, htAg: 0 }
     /* RESULTS:END */
   ],
 

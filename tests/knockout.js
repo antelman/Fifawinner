@@ -24,6 +24,7 @@ check("classifyRound: GROUP_STAGE → null", KOA.classifyRound("GROUP_STAGE") ==
 /* ---------- koRoundOf (תיוג שורת-למידה, כולל מקום שלישי) ---------- */
 check("koRoundOf: LAST_16 → R16", KOA.koRoundOf("LAST_16") === "R16");
 check("koRoundOf: THIRD_PLACE → 3P", KOA.koRoundOf("THIRD_PLACE") === "3P");
+check("koRoundOf: FINAL → FIN (לא מתנגש באות בית F)", KOA.koRoundOf("FINAL") === "FIN");
 check("koRoundOf: GROUP_STAGE → null", KOA.koRoundOf("GROUP_STAGE") === null);
 
 /* ---------- koResultScore (תוצאת 90 דקות + הכרעת הארכה) ---------- */
