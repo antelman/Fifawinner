@@ -17,9 +17,16 @@ const STORE = (() => {
 
 let SIM = null;   // תוצאות סימולציית בתים
 let KO = null;    // תוצאות סימולציית אלוף
-// סוגריים הנוק-אאוט — ממולאים בממשק בסוף שלב הבתים (27.6)
-let BRACKET = JSON.parse(STORE.getItem("fw_bracket") || "null")
-  || { r32: Array.from({ length: 16 }, () => [null, null]), winners: {} };
+// סוגריים הנוק-אאוט. סדר עדיפות: עריכה מקומית של המשתמש (localStorage) >
+// הסוגריים הרשמיים שנדחפו ב-DATA.knockout (מתעדכן אוטומטית) > ריק.
+// כך מבקר ללא עריכה מקומית רואה מיד את הסוגריים הרשמיים והמנצחות בפועל.
+function seedBracket() {
+  const k = DATA.knockout;
+  if (k && Array.isArray(k.r32) && k.r32.length === 16)
+    return { r32: k.r32.map(p => [p[0] || null, p[1] || null]), winners: { ...(k.winners || {}) } };
+  return { r32: Array.from({ length: 16 }, () => [null, null]), winners: {} };
+}
+let BRACKET = JSON.parse(STORE.getItem("fw_bracket") || "null") || seedBracket();
 let selKoMatch = null;
 let activeTab = "recs";
 let selGroup = "A";
