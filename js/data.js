@@ -201,7 +201,8 @@ const DATA = {
       "R32-7": "MEX",
       "R32-8": "ENG",
       "R32-9": "USA",
-      "R32-10": "BEL"
+      "R32-10": "BEL",
+      "R32-11": "ESP"
     },
     stage: "R16",
     matches: [
@@ -215,7 +216,7 @@ const DATA = {
       { id: "R32-8", round: "R32", a: "ENG", b: "COD", d: "2026-07-01", hg: 2, ag: 1, winner: "ENG" },
       { id: "R32-9", round: "R32", a: "USA", b: "BIH", d: "2026-07-02", hg: 2, ag: 0, winner: "USA" },
       { id: "R32-10", round: "R32", a: "BEL", b: "SEN", d: "2026-07-01", hg: 3, ag: 2, et: true, winner: "BEL" },
-      { id: "R32-11", round: "R32", a: "ESP", b: "AUT", d: "2026-07-02" },
+      { id: "R32-11", round: "R32", a: "ESP", b: "AUT", d: "2026-07-02", hg: 1, ag: 0, winner: "ESP" },
       { id: "R32-12", round: "R32", a: "POR", b: "CRO", d: "2026-07-02" },
       { id: "R32-13", round: "R32", a: "ARG", b: "CPV", d: "2026-07-03" },
       { id: "R32-14", round: "R32", a: "AUS", b: "EGY", d: "2026-07-03" },
