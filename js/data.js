@@ -22,7 +22,7 @@
 
 const DATA = {
   meta: {
-    updated: "2026-07-02",
+    updated: "2026-07-03",
     tournament: "אליפות העולם 2026 — ארה\"ב, מקסיקו, קנדה",
     eloNote: "דירוגי הכוח הם הערכות מודל נכון ליוני 2026",
     hostBonus: 50,
@@ -218,7 +218,7 @@ const DATA = {
       { id: "R32-9", round: "R32", a: "USA", b: "BIH", d: "2026-07-02", hg: 2, ag: 0, winner: "USA" },
       { id: "R32-10", round: "R32", a: "BEL", b: "SEN", d: "2026-07-01", hg: 3, ag: 2, et: true, winner: "BEL" },
       { id: "R32-11", round: "R32", a: "ESP", b: "AUT", d: "2026-07-02", hg: 3, ag: 0, winner: "ESP" },
-      { id: "R32-12", round: "R32", a: "POR", b: "CRO", d: "2026-07-02" },
+      { id: "R32-12", round: "R32", a: "POR", b: "CRO", d: "2026-07-02", hg: 0, ag: 0 },
       { id: "R32-13", round: "R32", a: "ARG", b: "CPV", d: "2026-07-03" },
       { id: "R32-14", round: "R32", a: "AUS", b: "EGY", d: "2026-07-03" },
       { id: "R32-15", round: "R32", a: "SUI", b: "ALG", d: "2026-07-03" },
