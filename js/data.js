@@ -159,9 +159,10 @@ const DATA = {
     { g: "R32", home: "ESP", away: "AUT", hg: 3, ag: 0, d: "2026-07-02", htHg: 1, htAg: 0, firstScorer: "H" },
     { g: "R32", home: "POR", away: "CRO", hg: 2, ag: 1, d: "2026-07-02", htHg: 0, htAg: 0, firstScorer: "A" },
     { g: "R32", home: "USA", away: "BIH", hg: 2, ag: 0, d: "2026-07-02", htHg: 1, htAg: 0 },
+    { g: "R32", home: "ARG", away: "CPV", hg: 1, ag: 1, d: "2026-07-03", htHg: 1, htAg: 0, koWin: "H" },
     { g: "R32", home: "AUS", away: "EGY", hg: 1, ag: 1, d: "2026-07-03", htHg: 0, htAg: 1 },
     { g: "R32", home: "SUI", away: "ALG", hg: 2, ag: 0, d: "2026-07-03", htHg: 1, htAg: 0, firstScorer: "H" },
-    { g: "R32", home: "COL", away: "GHA", hg: 2, ag: 0, d: "2026-07-04", htHg: 1, htAg: 0 }
+    { g: "R32", home: "COL", away: "GHA", hg: 2, ag: 0, d: "2026-07-04", htHg: 1, htAg: 0, firstScorer: "H" }
     /* RESULTS:END */
   ],
 
@@ -187,14 +188,14 @@ const DATA = {
       ["CIV", "NOR"],
       ["MEX", "ECU"],
       ["ENG", "COD"],
-      ["USA", "BIH"],
-      ["BEL", "SEN"],
-      ["ESP", "AUT"],
       ["POR", "CRO"],
+      ["ESP", "AUT"],
       ["ARG", "CPV"],
       ["AUS", "EGY"],
       ["SUI", "ALG"],
-      ["COL", "GHA"]
+      ["COL", "GHA"],
+      ["USA", "BIH"],
+      ["BEL", "SEN"]
     ],
     winners: {
       "R32-1": "CAN",
@@ -205,13 +206,14 @@ const DATA = {
       "R32-6": "NOR",
       "R32-7": "MEX",
       "R32-8": "ENG",
-      "R32-9": "USA",
-      "R32-10": "BEL",
-      "R32-11": "ESP",
-      "R32-12": "POR",
-      "R32-13": "ARG",
-      "R32-15": "SUI",
-      "R32-16": "COL"
+      "R32-9": "POR",
+      "R32-10": "ESP",
+      "R32-11": "ARG",
+      "R32-12": "EGY",
+      "R32-13": "SUI",
+      "R32-14": "COL",
+      "R32-15": "USA",
+      "R32-16": "BEL"
     },
     stage: "R16",
     matches: [
@@ -223,19 +225,22 @@ const DATA = {
       { id: "R32-6", round: "R32", a: "CIV", b: "NOR", d: "2026-06-30", hg: 1, ag: 2, winner: "NOR" },
       { id: "R32-7", round: "R32", a: "MEX", b: "ECU", d: "2026-07-01", hg: 2, ag: 0, winner: "MEX" },
       { id: "R32-8", round: "R32", a: "ENG", b: "COD", d: "2026-07-01", hg: 2, ag: 1, winner: "ENG" },
-      { id: "R32-9", round: "R32", a: "USA", b: "BIH", d: "2026-07-02", hg: 2, ag: 0, winner: "USA" },
-      { id: "R32-10", round: "R32", a: "BEL", b: "SEN", d: "2026-07-01", hg: 3, ag: 2, et: true, winner: "BEL" },
-      { id: "R32-11", round: "R32", a: "ESP", b: "AUT", d: "2026-07-02", hg: 3, ag: 0, winner: "ESP" },
-      { id: "R32-12", round: "R32", a: "POR", b: "CRO", d: "2026-07-02", hg: 2, ag: 1, winner: "POR" },
-      { id: "R32-13", round: "R32", a: "ARG", b: "CPV", d: "2026-07-03", hg: 3, ag: 2, et: true, winner: "ARG" },
-      { id: "R32-14", round: "R32", a: "AUS", b: "EGY", d: "2026-07-03", hg: 3, ag: 5, et: true, penH: 4, penA: 4 },
-      { id: "R32-15", round: "R32", a: "SUI", b: "ALG", d: "2026-07-03", hg: 2, ag: 0, winner: "SUI" },
-      { id: "R32-16", round: "R32", a: "COL", b: "GHA", d: "2026-07-04", hg: 1, ag: 0, winner: "COL" },
+      { id: "R32-9", round: "R32", a: "POR", b: "CRO", d: "2026-07-02", hg: 2, ag: 1, winner: "POR" },
+      { id: "R32-10", round: "R32", a: "ESP", b: "AUT", d: "2026-07-02", hg: 3, ag: 0, winner: "ESP" },
+      { id: "R32-11", round: "R32", a: "ARG", b: "CPV", d: "2026-07-03", hg: 3, ag: 2, et: true, winner: "ARG" },
+      { id: "R32-12", round: "R32", a: "AUS", b: "EGY", d: "2026-07-03", hg: 3, ag: 5, et: true, penH: 2, penA: 4, winner: "EGY" },
+      { id: "R32-13", round: "R32", a: "SUI", b: "ALG", d: "2026-07-03", hg: 2, ag: 0, winner: "SUI" },
+      { id: "R32-14", round: "R32", a: "COL", b: "GHA", d: "2026-07-04", hg: 1, ag: 0, winner: "COL" },
+      { id: "R32-15", round: "R32", a: "USA", b: "BIH", d: "2026-07-02", hg: 2, ag: 0, winner: "USA" },
+      { id: "R32-16", round: "R32", a: "BEL", b: "SEN", d: "2026-07-01", hg: 3, ag: 2, et: true, winner: "BEL" },
       { id: "R16-1", round: "R16", a: "CAN", b: "MAR", d: "2026-07-04" },
       { id: "R16-2", round: "R16", a: "PAR", b: "FRA", d: "2026-07-04" },
       { id: "R16-3", round: "R16", a: "BRA", b: "NOR", d: "2026-07-05" },
       { id: "R16-4", round: "R16", a: "MEX", b: "ENG", d: "2026-07-06" },
-      { id: "R16-5", round: "R16", a: "USA", b: "BEL", d: "2026-07-07" }
+      { id: "R16-5", round: "R16", a: "POR", b: "ESP", d: "2026-07-06" },
+      { id: "R16-6", round: "R16", a: "ARG", b: "EGY", d: "2026-07-07" },
+      { id: "R16-7", round: "R16", a: "SUI", b: "COL", d: "2026-07-07" },
+      { id: "R16-8", round: "R16", a: "USA", b: "BEL", d: "2026-07-07" }
     ]
     /* KO:END */
   },
