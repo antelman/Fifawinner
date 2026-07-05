@@ -182,10 +182,10 @@ const DATA = {
   knockout: {
     /* KO:START — נערך אוטומטית; אל תוסיפו טקסט בתוך הבלוק הזה */
     r32: [
-      ["RSA", "CAN"],
-      ["NED", "MAR"],
       ["GER", "PAR"],
       ["FRA", "SWE"],
+      ["RSA", "CAN"],
+      ["NED", "MAR"],
       ["BRA", "JPN"],
       ["CIV", "NOR"],
       ["MEX", "ECU"],
@@ -200,10 +200,10 @@ const DATA = {
       ["BEL", "SEN"]
     ],
     winners: {
-      "R32-1": "CAN",
-      "R32-2": "MAR",
-      "R32-3": "PAR",
-      "R32-4": "FRA",
+      "R32-1": "PAR",
+      "R32-2": "FRA",
+      "R32-3": "CAN",
+      "R32-4": "MAR",
       "R32-5": "BRA",
       "R32-6": "NOR",
       "R32-7": "MEX",
@@ -216,15 +216,15 @@ const DATA = {
       "R32-14": "COL",
       "R32-15": "USA",
       "R32-16": "BEL",
-      "R16-1": "MAR",
-      "R16-2": "FRA"
+      "R16-1": "FRA",
+      "R16-2": "MAR"
     },
-    stage: "R16",
+    stage: "QF",
     matches: [
-      { id: "R32-1", round: "R32", a: "RSA", b: "CAN", d: "2026-06-28", hg: 0, ag: 1, winner: "CAN" },
-      { id: "R32-2", round: "R32", a: "NED", b: "MAR", d: "2026-06-30", hg: 3, ag: 4, et: true, penH: 2, penA: 3, winner: "MAR" },
-      { id: "R32-3", round: "R32", a: "GER", b: "PAR", d: "2026-06-29", hg: 4, ag: 5, et: true, penH: 3, penA: 4, winner: "PAR" },
-      { id: "R32-4", round: "R32", a: "FRA", b: "SWE", d: "2026-06-30", hg: 3, ag: 0, winner: "FRA" },
+      { id: "R32-1", round: "R32", a: "GER", b: "PAR", d: "2026-06-29", hg: 4, ag: 5, et: true, penH: 3, penA: 4, winner: "PAR" },
+      { id: "R32-2", round: "R32", a: "FRA", b: "SWE", d: "2026-06-30", hg: 3, ag: 0, winner: "FRA" },
+      { id: "R32-3", round: "R32", a: "RSA", b: "CAN", d: "2026-06-28", hg: 0, ag: 1, winner: "CAN" },
+      { id: "R32-4", round: "R32", a: "NED", b: "MAR", d: "2026-06-30", hg: 3, ag: 4, et: true, penH: 2, penA: 3, winner: "MAR" },
       { id: "R32-5", round: "R32", a: "BRA", b: "JPN", d: "2026-06-29", hg: 2, ag: 1, winner: "BRA" },
       { id: "R32-6", round: "R32", a: "CIV", b: "NOR", d: "2026-06-30", hg: 1, ag: 2, winner: "NOR" },
       { id: "R32-7", round: "R32", a: "MEX", b: "ECU", d: "2026-07-01", hg: 2, ag: 0, winner: "MEX" },
@@ -237,14 +237,15 @@ const DATA = {
       { id: "R32-14", round: "R32", a: "COL", b: "GHA", d: "2026-07-04", hg: 1, ag: 0, winner: "COL" },
       { id: "R32-15", round: "R32", a: "USA", b: "BIH", d: "2026-07-02", hg: 2, ag: 0, winner: "USA" },
       { id: "R32-16", round: "R32", a: "BEL", b: "SEN", d: "2026-07-01", hg: 3, ag: 2, et: true, winner: "BEL" },
-      { id: "R16-1", round: "R16", a: "CAN", b: "MAR", d: "2026-07-04", hg: 0, ag: 3, winner: "MAR" },
-      { id: "R16-2", round: "R16", a: "PAR", b: "FRA", d: "2026-07-04", hg: 0, ag: 1, winner: "FRA" },
+      { id: "R16-1", round: "R16", a: "PAR", b: "FRA", d: "2026-07-04", hg: 0, ag: 1, winner: "FRA" },
+      { id: "R16-2", round: "R16", a: "CAN", b: "MAR", d: "2026-07-04", hg: 0, ag: 3, winner: "MAR" },
       { id: "R16-3", round: "R16", a: "BRA", b: "NOR", d: "2026-07-05" },
       { id: "R16-4", round: "R16", a: "MEX", b: "ENG", d: "2026-07-06" },
       { id: "R16-5", round: "R16", a: "POR", b: "ESP", d: "2026-07-06" },
       { id: "R16-6", round: "R16", a: "ARG", b: "EGY", d: "2026-07-07" },
       { id: "R16-7", round: "R16", a: "SUI", b: "COL", d: "2026-07-07" },
-      { id: "R16-8", round: "R16", a: "USA", b: "BEL", d: "2026-07-07" }
+      { id: "R16-8", round: "R16", a: "USA", b: "BEL", d: "2026-07-07" },
+      { id: "QF-1", round: "QF", a: "FRA", b: "MAR", d: "2026-07-09" }
     ]
     /* KO:END */
   },
