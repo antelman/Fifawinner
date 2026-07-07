@@ -168,6 +168,7 @@ const DATA = {
     { g: "R16", home: "BRA", away: "NOR", hg: 1, ag: 2, d: "2026-07-05", htHg: 0, htAg: 0 },
     { g: "R16", home: "MEX", away: "ENG", hg: 2, ag: 3, d: "2026-07-06", htHg: 1, htAg: 2, firstScorer: "A" },
     { g: "R16", home: "POR", away: "ESP", hg: 0, ag: 1, d: "2026-07-06", htHg: 0, htAg: 0, firstScorer: "none" },
+    { g: "R16", home: "ARG", away: "EGY", hg: 3, ag: 2, d: "2026-07-07", htHg: 0, htAg: 1, firstScorer: "A" },
     { g: "R16", home: "USA", away: "BEL", hg: 1, ag: 4, d: "2026-07-07", htHg: 1, htAg: 2 }
     /* RESULTS:END */
   ],
@@ -226,7 +227,7 @@ const DATA = {
       "R16-4": "BEL",
       "R16-5": "NOR",
       "R16-6": "ENG",
-      "R16-7": "EGY"
+      "R16-7": "ARG"
     },
     stage: "QF",
     matches: [
@@ -252,7 +253,7 @@ const DATA = {
       { id: "R16-4", round: "R16", a: "USA", b: "BEL", d: "2026-07-07", hg: 1, ag: 4, winner: "BEL" },
       { id: "R16-5", round: "R16", a: "BRA", b: "NOR", d: "2026-07-05", hg: 1, ag: 2, winner: "NOR" },
       { id: "R16-6", round: "R16", a: "MEX", b: "ENG", d: "2026-07-06", hg: 2, ag: 3, winner: "ENG" },
-      { id: "R16-7", round: "R16", a: "ARG", b: "EGY", d: "2026-07-07", hg: 0, ag: 1, winner: "EGY" },
+      { id: "R16-7", round: "R16", a: "ARG", b: "EGY", d: "2026-07-07", hg: 3, ag: 2, winner: "ARG" },
       { id: "R16-8", round: "R16", a: "SUI", b: "COL", d: "2026-07-07" },
       { id: "QF-1", round: "QF", a: "FRA", b: "MAR", d: "2026-07-09" },
       { id: "QF-2", round: "QF", a: "ESP", b: "BEL", d: "2026-07-10" },
