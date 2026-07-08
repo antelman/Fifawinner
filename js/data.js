@@ -228,7 +228,8 @@ const DATA = {
       "R16-4": "BEL",
       "R16-5": "NOR",
       "R16-6": "ENG",
-      "R16-7": "ARG"
+      "R16-7": "ARG",
+      "R16-8": "SUI"
     },
     stage: "QF",
     matches: [
@@ -255,10 +256,11 @@ const DATA = {
       { id: "R16-5", round: "R16", a: "BRA", b: "NOR", d: "2026-07-05", hg: 1, ag: 2, winner: "NOR" },
       { id: "R16-6", round: "R16", a: "MEX", b: "ENG", d: "2026-07-06", hg: 2, ag: 3, winner: "ENG" },
       { id: "R16-7", round: "R16", a: "ARG", b: "EGY", d: "2026-07-07", hg: 3, ag: 2, winner: "ARG" },
-      { id: "R16-8", round: "R16", a: "SUI", b: "COL", d: "2026-07-07", hg: 4, ag: 3, et: true, penH: 3, penA: 3 },
+      { id: "R16-8", round: "R16", a: "SUI", b: "COL", d: "2026-07-07", hg: 4, ag: 3, et: true, penH: 4, penA: 3, winner: "SUI" },
       { id: "QF-1", round: "QF", a: "FRA", b: "MAR", d: "2026-07-09" },
       { id: "QF-2", round: "QF", a: "ESP", b: "BEL", d: "2026-07-10" },
-      { id: "QF-3", round: "QF", a: "NOR", b: "ENG", d: "2026-07-11" }
+      { id: "QF-3", round: "QF", a: "NOR", b: "ENG", d: "2026-07-11" },
+      { id: "QF-4", round: "QF", a: "ARG", b: "SUI", d: "2026-07-12" }
     ]
     /* KO:END */
   },
