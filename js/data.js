@@ -174,7 +174,8 @@ const DATA = {
     { g: "QF", home: "FRA", away: "MAR", hg: 2, ag: 0, d: "2026-07-09", htHg: 0, htAg: 0, firstScorer: "H" },
     { g: "QF", home: "ESP", away: "BEL", hg: 2, ag: 1, d: "2026-07-10", htHg: 1, htAg: 1, firstScorer: "H" },
     { g: "QF", home: "NOR", away: "ENG", hg: 1, ag: 1, d: "2026-07-11", htHg: 1, htAg: 1, koWin: "A", firstScorer: "H" },
-    { g: "QF", home: "ARG", away: "SUI", hg: 1, ag: 1, d: "2026-07-12", htHg: 1, htAg: 0, koWin: "H", firstScorer: "H" }
+    { g: "QF", home: "ARG", away: "SUI", hg: 1, ag: 1, d: "2026-07-12", htHg: 1, htAg: 0, koWin: "H", firstScorer: "H" },
+    { g: "SF", home: "FRA", away: "ESP", hg: 0, ag: 2, d: "2026-07-14", htHg: 0, htAg: 1, firstScorer: "A" }
     /* RESULTS:END */
   ],
 
@@ -270,7 +271,7 @@ const DATA = {
       { id: "QF-2", round: "QF", a: "ESP", b: "BEL", d: "2026-07-10", hg: 2, ag: 1, winner: "ESP" },
       { id: "QF-3", round: "QF", a: "NOR", b: "ENG", d: "2026-07-11", hg: 1, ag: 2, et: true, winner: "ENG" },
       { id: "QF-4", round: "QF", a: "ARG", b: "SUI", d: "2026-07-12", hg: 3, ag: 1, et: true, winner: "ARG" },
-      { id: "SF-1", round: "SF", a: "FRA", b: "ESP", d: "2026-07-14", hg: 0, ag: 1, winner: "ESP" },
+      { id: "SF-1", round: "SF", a: "FRA", b: "ESP", d: "2026-07-14", hg: 0, ag: 2, winner: "ESP" },
       { id: "SF-2", round: "SF", a: "ENG", b: "ARG", d: "2026-07-15" }
     ]
     /* KO:END */
